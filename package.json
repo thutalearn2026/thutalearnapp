@@ -1,0 +1,33 @@
+{
+  "name": "thuta_learn",
+  "version": "1.0.0",
+  "description": "for command line ",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc",
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "staging": "flutter run --dart-define=\"runType=staging\"",
+    "production": "flutter run --dart-define=\"runType=production\"",
+    "staging_release": "flutter run --release --dart-define=\"runType=staging\"",
+    "production_release": "flutter run --release --dart-define=\"runType=production\"",
+    "build_runner": "dart run build_runner build --delete-conflicting-outputs",
+    "build_staging": "flutter build apk --dart-define=\"runType=staging\"",
+    "build_production": "flutter build apk --dart-define=\"runType=production\"",
+    "build_production_abb": "flutter build appbundle --dart-define=\"runType=production\"",
+    "build_production_ipa": "flutter build ipa --dart-define=\"runType=production\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thutalearn2026/thutalearnapp"
+  },
+  "author": "thuta_it",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/thutalearn2026/thutalearnapp/issues"
+  },
+  "homepage": "https://github.com/thutalearn2026/thutalearnapp#readme"
+}

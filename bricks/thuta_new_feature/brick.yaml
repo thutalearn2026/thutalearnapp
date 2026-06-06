@@ -1,0 +1,27 @@
+name: thuta_new_feature
+description: This brick generate the folder structure of the clean architecture.
+
+version: 0.0.1+1
+
+
+
+vars:
+  name:
+    type: string
+    default: subject
+    description: The module name
+    prompt: What is the module name?
+  bloc_or_cubit:
+    type: enum
+    default: bloc
+    description: select bloc or cubit 
+    prompt: What is your weapon
+    values:
+      - bloc
+      - cubit
+
+
+# The following defines the environment for the current brick.
+# It includes the version of mason that the brick requires.
+environment:
+  mason: ">=0.1.2 <0.2.0"

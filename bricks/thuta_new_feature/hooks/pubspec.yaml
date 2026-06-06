@@ -1,0 +1,8 @@
+name: sai_clean_architecture_hooks
+
+environment:
+  sdk: '^3.0.0'
+
+dependencies:
+  mason: 
+  yaml: 
