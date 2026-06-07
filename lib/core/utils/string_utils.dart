@@ -10,4 +10,21 @@ class StringUtils {
   static const String onboardingContent3 = "Navigate housing, healthcare, banking and government services as you settle into your new home.";
   static const String continueLabel = "Continue";
   static const String skip = "Skip";
+  static const String welcomeBack = "Welcome Back";
+
+  static const String enterEmail = "Enter Email";
+  static const String enterPassword = "Enter Password";
+  static const String forgotPassword = "Forgot Password?";
+  static const String login = "Login";
+  static const String doNotHaveAccount = "Don’t have an account?";
+  static const String register = "Register";
+
+  static const String letsCreateAccount = "Let's create an account";
+  static const String alreadyHaveAccount = "Already Have an account?";
+  static const String codeVerification = "Code Verification";
+  static const String verify = "Verify";
+  static const String resendCode = "Resend Code";
+  static const String setAPassword = "Please set a password";
+
+  static const String enterMailOfRegisteredAccount = "Enter the email you used to register your account";
 }

@@ -14,6 +14,7 @@ class TtZoomTap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ZoomTapAnimation(
+      end: 0.97,
       onTap: () {
         HapticFeedback.mediumImpact();
         onTap();

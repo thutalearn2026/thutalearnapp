@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:thuta_learn/core/core.dart';
@@ -21,7 +22,7 @@ class OnboardingPage extends StatelessWidget {
           BlocListener<OnboardingBloc, OnboardingState>(
             listener: (context, state) {
               if(state.onboardingStatus == OnboardingStatus.skip) {
-                context.showSnackBar("ပြီးပါပြီ......");
+                context.push(Routes.login);
               }
             },
           ),
