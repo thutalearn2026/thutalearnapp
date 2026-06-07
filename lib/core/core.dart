@@ -4,3 +4,4 @@ export 'injector/injector.dart';
 export 'routes/routes.dart';
 export 'utils/utils.dart';
 export 'errors/failure.dart';
+export 'base_components/base_components.dart';

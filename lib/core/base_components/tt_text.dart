@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import '../core.dart';
 
 enum TtFontFamily {
-  waso,
-  pyidaungsu,
-  riffic,
-  lora,
+  helvetica_neue,
+  myanmar_mn,
 }
 
 class TtText extends StatelessWidget {
@@ -33,7 +31,7 @@ class TtText extends StatelessWidget {
     this.fontSize,
     this.fontWeight,
     this.height,
-    this.family = TtFontFamily.pyidaungsu,
+    this.family = TtFontFamily.helvetica_neue,
     this.decoration,
     this.maxLength = 100000,
     this.maxLines,
