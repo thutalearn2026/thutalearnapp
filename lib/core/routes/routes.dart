@@ -7,7 +7,8 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 class RouteClass {
   static GoRouter goRouter = GoRouter(
     routes: routeList,
-    initialLocation: Routes.onboarding,
+    // initialLocation: Routes.onboarding,
+    initialLocation: Routes.accountSetUp,
     navigatorKey: rootNavigatorKey,
   );
 
@@ -60,6 +61,12 @@ class RouteClass {
         return ForgotSetNewPasswordPage();
       },
     ),
+    GoRoute(
+      path: Routes.accountSetUp,
+      builder: (context, state) {
+        return AccountSetUpPage();
+      },
+    ),
   ];
 }
 
@@ -75,4 +82,5 @@ class Routes {
   static const forgotPassword = "/forgot-password";
   static const forgotCodeVerify = "/forgot-code-verify";
   static const forgotSetNewPassword = "/forgot-set-new-password";
+  static const accountSetUp = "/account-set-up";
 }

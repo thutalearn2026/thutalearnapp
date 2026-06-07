@@ -4,7 +4,7 @@ import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/authentication/authentication.dart';
 
 class ForgotPwCodeVerifyPage extends StatelessWidget {
-  const ForgotPwCodeVerifyPage({super.key});
+  const ForgotPwCodeVerifyPage({super.key} );
 
   @override
   Widget build(BuildContext context) {
