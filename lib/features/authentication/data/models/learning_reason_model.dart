@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class LearningReasonModel {
-  final IconData iconData;
-  final String title;
-  final String subtitle;
-  final bool isSelected;
+  IconData iconData;
+  String title;
+  String subtitle;
+  bool isSelected;
 
   LearningReasonModel({
     required this.iconData,

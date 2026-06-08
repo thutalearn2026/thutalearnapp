@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/authentication/authentication.dart';
 
@@ -21,24 +22,31 @@ class CurrentLevelSectionView extends StatelessWidget {
           ),
         ),
         16.gh,
-        RadioGroup<int>(
-          groupValue: 0,
-          onChanged: (value) {
-            HapticFeedback.mediumImpact();
+        BlocBuilder<AccountSetUpBloc, AccountSetUpState>(
+          builder: (context, state) {
+            var currentLevels = state.currentLevels ?? [];
+            return RadioGroup<String>(
+              groupValue: state.selectedCurrentLevel ?? "",
+              onChanged: (value) {
+                HapticFeedback.mediumImpact();
+                context.read<AccountSetUpBloc>().add(OnChooseCurrentLevel(value ?? ""));
+              },
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: currentLevels.length,
+                itemBuilder: (context, index) {
+                  return CurrentLevelView(
+                    index: index,
+                    currentLevelModel: currentLevels[index],
+                  );
+                },
+                separatorBuilder: (context, index) {
+                  return 16.gh;
+                },
+              ),
+            );
           },
-          child: ListView.separated(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount: 3,
-            itemBuilder: (context, index) {
-              return CurrentLevelView(
-                index: index,
-              );
-            },
-            separatorBuilder: (context, index) {
-              return 16.gh;
-            },
-          ),
         ),
       ],
     );
@@ -46,23 +54,28 @@ class CurrentLevelSectionView extends StatelessWidget {
 }
 
 class CurrentLevelView extends StatelessWidget {
+  final CurrentLevelModel? currentLevelModel;
   final int index;
 
-  const CurrentLevelView({super.key, required this.index});
+  const CurrentLevelView({
+    super.key,
+    required this.index,
+    required this.currentLevelModel,
+  });
 
   @override
   Widget build(BuildContext context) {
     return RadioListTile(
       visualDensity: VisualDensity(horizontal: -4),
-      value: index,
+      value: currentLevelModel?.title ?? "",
       title: Row(
         children: [
           Expanded(
-            child: TtText("Beginner"),
+            child: TtText(currentLevelModel?.title ?? ""),
           ),
           Row(
             children: List.generate(
-              2,
+              currentLevelModel?.rating ?? 0,
               (index) {
                 return Icon(
                   Icons.star,

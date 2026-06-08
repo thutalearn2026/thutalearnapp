@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/authentication/authentication.dart';
 
@@ -50,7 +51,9 @@ class RegSetPasswordPage extends StatelessWidget {
               Container(
                 width: double.infinity,
                 child: TtButton(
-                  onTap: () {},
+                  onTap: () {
+                    context.push(Routes.accountSetUp);
+                  },
                   child: TtText(
                     StringUtils.continueLabel,
                     color: Colors.white,

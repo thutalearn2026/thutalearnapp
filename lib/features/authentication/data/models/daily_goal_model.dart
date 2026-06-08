@@ -1,6 +1,6 @@
 class DailyGoalModel {
-  final String min;
-  final bool isSelected;
+  String min;
+  bool isSelected;
 
   DailyGoalModel({
     required this.min,

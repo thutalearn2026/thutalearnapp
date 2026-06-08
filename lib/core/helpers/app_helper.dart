@@ -18,8 +18,8 @@ class AppHelper {
       ),
       LearningReasonModel(
         iconData: Icons.airplanemode_active,
-        title: "Daily Life",
-        subtitle: "Conversations & errands",
+        title: "Moving to Thailand",
+        subtitle: "Settling & long-term living",
         isSelected: false,
       ),
       LearningReasonModel(
@@ -27,6 +27,23 @@ class AppHelper {
         title: "Studies",
         subtitle: "Academic & exams",
         isSelected: false,
+      ),
+    ];
+  }
+
+  List<CurrentLevelModel> get currentLevels {
+    return [
+      CurrentLevelModel(
+        rating: 1,
+        title: "Beginner",
+      ),
+      CurrentLevelModel(
+        rating: 2,
+        title: "Intermediate",
+      ),
+      CurrentLevelModel(
+        rating: 3,
+        title: "Advanced",
       ),
     ];
   }

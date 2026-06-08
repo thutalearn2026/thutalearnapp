@@ -7,8 +7,8 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 class RouteClass {
   static GoRouter goRouter = GoRouter(
     routes: routeList,
-    // initialLocation: Routes.onboarding,
-    initialLocation: Routes.accountSetUp,
+    initialLocation: Routes.onboarding,
+    // initialLocation: Routes.accountSetUp,
     navigatorKey: rootNavigatorKey,
   );
 
