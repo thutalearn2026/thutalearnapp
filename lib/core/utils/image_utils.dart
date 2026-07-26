@@ -16,6 +16,5 @@ class ImageUtils {
   /// authentication
   static const String google = "$IMAGE_BASE_URL/google.png";
   static const String facebook = "$IMAGE_BASE_URL/facebook.png";
-
-
+  static const String askAi = "$IMAGE_BASE_URL/ask_ai.png";
 }

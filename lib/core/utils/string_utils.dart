@@ -27,4 +27,13 @@ class StringUtils {
   static const String setAPassword = "Please set a password";
 
   static const String enterMailOfRegisteredAccount = "Enter the email you used to register your account";
+
+  static const String letsLearnForToday = "Let’s learn for Today";
+  static const String greetingAtWorkspace = "Greeting at the workplace ";
+  static const String resume = "Resume";
+
+  static const String askAiTitle = "Ask the AI Assistant";
+  static const String askAiDesc = "Translate, explain, practice in chat";
+
+  static const String reviewYouLearned = "Review what you’ve learned!";
 }

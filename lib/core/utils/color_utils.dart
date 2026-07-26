@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 class ColorUtils {
   static const Color primaryColor = Color.fromRGBO(31, 58, 95, 1.0);
   static const Color secondaryColor = Color.fromRGBO(18, 185, 166, 1.0);
+  static const Color highlightColor = Color.fromRGBO(68, 92, 122, 1.0);
   static const Color onBoardingGradientGreen = Color.fromRGBO(227, 254, 251, 1.0);
   static const Color textFieldBackgroundColor = Color.fromRGBO(239, 239, 239, 1.0);
   static const Color hintColor = Color.fromRGBO(186, 186, 186, 1.0);
   static const Color progressBackgroundColor = Color.fromRGBO(233, 235, 238, 1.0);
   static const Color surveyBackgroundColor = Color.fromRGBO(236, 241, 247, 1.0);
+  
+  static const Color scaffoldBackgroundColor = Color.fromRGBO(248, 248, 248, 1.0);
+  static const Color secondaryBackgroundColor = Color.fromRGBO(232, 249, 246, 1.0);
+  static const Color greyTextColor = Color.fromRGBO(100, 115, 139, 1.0);
 }

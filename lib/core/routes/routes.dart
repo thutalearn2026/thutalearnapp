@@ -67,6 +67,12 @@ class RouteClass {
         return AccountSetUpPage();
       },
     ),
+    GoRoute(
+      path: Routes.bottomNav,
+      builder: (context, state) {
+        return BottomNav();
+      }
+    ),
   ];
 }
 
@@ -83,4 +89,7 @@ class Routes {
   static const forgotCodeVerify = "/forgot-code-verify";
   static const forgotSetNewPassword = "/forgot-set-new-password";
   static const accountSetUp = "/account-set-up";
+
+  /// Home
+  static const bottomNav = "/bottom-nav";
 }

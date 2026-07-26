@@ -5,4 +5,8 @@ extension MediaQueryExtension on BuildContext {
   bool get isMobile {
     return Device.screenType == ScreenType.mobile;
   }
+
+  double get getDeviceHeight {
+    return Device.height;
+  }
 }

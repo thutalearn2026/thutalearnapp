@@ -108,7 +108,7 @@ class OnboardingContentsPageView extends StatelessWidget {
       builder: (context, state) {
         return Container(
           width: double.infinity,
-          height: 27.h,
+          height: context.getDeviceHeight <= 667 ? 30.h : 27.h,
           child: PageView(
             physics: NeverScrollableScrollPhysics(),
             controller: state.contentController,

@@ -62,7 +62,9 @@ class _LoginPageState extends State<LoginPage> {
               Container(
                 width: double.infinity,
                 child: TtButton(
-                  onTap: () {},
+                  onTap: () {
+                    context.push(Routes.bottomNav);
+                  },
                   child: TtText(
                     StringUtils.login,
                     color: Colors.white,
