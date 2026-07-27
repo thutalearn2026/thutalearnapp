@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mason/mason.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/home/home.dart';
@@ -119,37 +120,54 @@ class BottomNavSectionView extends StatelessWidget {
               ),
             ),
           ),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(200),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 8.0),
-              child: Container(
-                width: 65,
-                height: 65,
-                decoration: BoxDecoration(
-                  // color: Colors.white.withValues(alpha: 0.7),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    width: 1.5,
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color.fromRGBO(241, 241, 241, 0.9),
-                      Colors.white.withValues(alpha: 0.7),
-                      Color.fromRGBO(241, 241, 241, 0.5),
-                    ],
-                  ),
+          TtZoomTap(
+            onTap: () {
+              context.push(Routes.search);
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(200),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: 10,
+                  sigmaY: 8,
                 ),
-                child: Icon(
-                  Icons.search,
-                  color: ColorUtils.primaryColor,
+                child: Container(
+                  width: 65,
+                  height: 65,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      width: 1.5,
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color.fromRGBO(
+                          241,
+                          241,
+                          241,
+                          0.9,
+                        ),
+                        Colors.white.withValues(alpha: 0.7),
+                        const Color.fromRGBO(
+                          241,
+                          241,
+                          241,
+                          0.5,
+                        ),
+                      ],
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.search,
+                    color: ColorUtils.primaryColor,
+                  ),
                 ),
               ),
             ),
-          ),
+          )
         ],
       ),
     );

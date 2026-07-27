@@ -142,6 +142,23 @@ class RouteClass {
         return const SavedVocabularyPage();
       },
     ),
+
+    GoRoute(
+      path: Routes.search,
+      builder: (context, state) {
+        return const SearchPage();
+      },
+    ),
+    GoRoute(
+      path: Routes.searchResults,
+      builder: (context, state) {
+        final query = state.extra as String? ?? '';
+
+        return SearchResultsPage(
+          query: query,
+        );
+      },
+    ),
   ];
 }
 
@@ -174,4 +191,7 @@ class Routes {
   static const certificates = '/certificates';
   static const learningProgress = '/learning-progress';
   static const savedVocabulary = '/saved-vocabulary';
+
+  static const search = '/search';
+  static const searchResults = '/search-results';
 }
