@@ -5,6 +5,7 @@ import 'package:mason/mason.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/home/home.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
+import 'package:thuta_learn/features/profile/profile.dart';
 
 class BottomNav extends StatelessWidget {
   const BottomNav({super.key});
@@ -20,9 +21,7 @@ class BottomNav extends StatelessWidget {
               children: [
                 HomePage(),
                 LearnPage(),
-                Container(
-                  color: Colors.blue,
-                ),
+                ProfilePage(),
               ],
             ),
           ),

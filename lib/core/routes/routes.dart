@@ -112,6 +112,36 @@ class RouteClass {
         return const VocabularyFlashCardPage();
       },
     ),
+    GoRoute(
+      path: Routes.editProfile,
+      builder: (context, state) {
+        return const ProfileEditPage();
+      },
+    ),
+    GoRoute(
+      path: Routes.changePassword,
+      builder: (context, state) {
+        return const ProfileChangePasswordPage();
+      },
+    ),
+    GoRoute(
+      path: Routes.certificates,
+      builder: (context, state) {
+        return const CertificatesPage();
+      },
+    ),
+    GoRoute(
+      path: Routes.learningProgress,
+      builder: (context, state) {
+        return const LearningProgressPage();
+      },
+    ),
+    GoRoute(
+      path: Routes.savedVocabulary,
+      builder: (context, state) {
+        return const SavedVocabularyPage();
+      },
+    ),
   ];
 }
 
@@ -139,4 +169,9 @@ class Routes {
       '/pronunciation-drill';
   static const vocabularyFlashCards =
       '/vocabulary-flash-cards';
+  static const editProfile = '/edit-profile';
+  static const changePassword = '/change-password';
+  static const certificates = '/certificates';
+  static const learningProgress = '/learning-progress';
+  static const savedVocabulary = '/saved-vocabulary';
 }
