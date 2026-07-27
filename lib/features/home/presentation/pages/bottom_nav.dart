@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mason/mason.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/home/home.dart';
+import 'package:thuta_learn/features/learn/learn.dart';
 
 class BottomNav extends StatelessWidget {
   const BottomNav({super.key});
@@ -18,7 +19,7 @@ class BottomNav extends StatelessWidget {
             child: TabBarView(
               children: [
                 HomePage(),
-                Container(color: Colors.yellow),
+                LearnPage(),
                 Container(
                   color: Colors.blue,
                 ),

@@ -73,6 +73,45 @@ class RouteClass {
         return BottomNav();
       }
     ),
+    GoRoute(
+      path: Routes.moduleDetail,
+      builder: (context, state) {
+        final module = state.extra as LearnModuleItem;
+
+        return ModuleDetailPage(
+          module: module,
+        );
+      },
+    ),
+
+    GoRoute(
+      path: Routes.lessonDetail,
+      builder: (context, state) {
+        final lesson = state.extra as ModuleLessonItem;
+
+        return LessonDetailPage(
+          lesson: lesson,
+        );
+      },
+    ),
+    GoRoute(
+      path: Routes.quiz,
+      builder: (context, state) {
+        return const QuizPage();
+      },
+    ),
+    GoRoute(
+      path: Routes.pronunciationDrill,
+      builder: (context, state) {
+        return const PronunciationDrillPage();
+      },
+    ),
+    GoRoute(
+      path: Routes.vocabularyFlashCards,
+      builder: (context, state) {
+        return const VocabularyFlashCardPage();
+      },
+    ),
   ];
 }
 
@@ -92,4 +131,12 @@ class Routes {
 
   /// Home
   static const bottomNav = "/bottom-nav";
+  /// Learn
+  static const moduleDetail = '/module-detail';
+  static const lessonDetail = '/lesson-detail';
+  static const quiz = '/quiz';
+  static const pronunciationDrill =
+      '/pronunciation-drill';
+  static const vocabularyFlashCards =
+      '/vocabulary-flash-cards';
 }

@@ -78,7 +78,7 @@ class AccSetUpPageView extends StatelessWidget {
           controller: pageController,
           children: [
             LearningReasonSectionView(),
-            CurrentLevelSectionView(),
+            CurrentLevelsSectionView(),
             DailyGoalSectionView(),
           ],
         );

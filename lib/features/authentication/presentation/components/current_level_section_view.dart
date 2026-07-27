@@ -4,8 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/authentication/authentication.dart';
 
-class CurrentLevelSectionView extends StatelessWidget {
-  const CurrentLevelSectionView({super.key});
+class CurrentLevelsSectionView extends StatelessWidget {
+  const CurrentLevelsSectionView({super.key});
 
   @override
   Widget build(BuildContext context) {
