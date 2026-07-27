@@ -3,7 +3,7 @@ const String LOGO_BASE_URL = "assets/logos";
 
 class ImageUtils {
   /// logo
-  static const String logo = "$LOGO_BASE_URL/tt_logo.png";
+  static const String logo = "$LOGO_BASE_URL/logo.png";
 
   /// onboarding
   static const String onboarding1 = "$IMAGE_BASE_URL/onboarding_1.png";

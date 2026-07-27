@@ -7,8 +7,7 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 class RouteClass {
   static GoRouter goRouter = GoRouter(
     routes: routeList,
-    initialLocation: Routes.onboarding,
-    // initialLocation: Routes.accountSetUp,
+    initialLocation: Routes.splash,
     navigatorKey: rootNavigatorKey,
   );
 
@@ -159,6 +158,13 @@ class RouteClass {
         );
       },
     ),
+
+    GoRoute(
+      path: Routes.splash,
+      builder: (context, state) {
+        return const SplashPage();
+      },
+    ),
   ];
 }
 
@@ -194,4 +200,5 @@ class Routes {
 
   static const search = '/search';
   static const searchResults = '/search-results';
+  static const splash = '/splash';
 }
