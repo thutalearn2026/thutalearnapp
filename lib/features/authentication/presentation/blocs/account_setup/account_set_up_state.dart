@@ -3,47 +3,84 @@ part of 'account_set_up_bloc.dart';
 enum AccountSetUpStatus {
   initial,
   next,
-  skip,
-  prev,
+  previous,
   back,
+  completed,
+}
+
+enum AccountSetUpLoadStatus {
+  initial,
+  loading,
+  success,
+  failure,
+}
+
+enum AccountSetUpSubmitStatus {
+  initial,
+  loading,
+  success,
+  failure,
 }
 
 class AccountSetUpState {
-  AccountSetUpStatus accountSetUpStatus;
-  PageController? accountSetUpController;
-  int? currentIndex;
-  List<LearningReasonModel>? learningReasons;
-  List<CurrentLevelModel>? currentLevels;
-  List<DailyGoalModel>? dailyGoals;
-  LearningReasonModel? selectedLearningReason;
-  String? selectedCurrentLevel;
-  DailyGoalModel? selectedDailyGoal;
+  final AccountSetUpStatus accountSetUpStatus;
+  final AccountSetUpLoadStatus loadStatus;
+  final AccountSetUpSubmitStatus submitStatus;
 
-  AccountSetUpState({
+  final PageController accountSetUpController;
+  final int currentIndex;
+
+  final List<OnboardingOptionModel> learningReasons;
+  final List<OnboardingOptionModel> currentLevels;
+  final List<OnboardingOptionModel> dailyGoals;
+
+  final OnboardingOptionModel? selectedLearningReason;
+  final OnboardingOptionModel? selectedCurrentLevel;
+  final OnboardingOptionModel? selectedDailyGoal;
+
+  final String? message;
+
+  const AccountSetUpState({
     required this.accountSetUpStatus,
-    this.accountSetUpController,
-    this.currentIndex,
-    this.learningReasons,
-    this.currentLevels,
-    this.dailyGoals,
+    required this.loadStatus,
+    required this.submitStatus,
+    required this.accountSetUpController,
+    required this.currentIndex,
+    required this.learningReasons,
+    required this.currentLevels,
+    required this.dailyGoals,
     this.selectedLearningReason,
     this.selectedCurrentLevel,
     this.selectedDailyGoal,
+    this.message,
   });
 
+  bool get isLoadingOptions {
+    return loadStatus == AccountSetUpLoadStatus.loading;
+  }
+
+  bool get isSubmitting {
+    return submitStatus == AccountSetUpSubmitStatus.loading;
+  }
+
   AccountSetUpState copyWith({
-    required AccountSetUpStatus accountSetUpStatus,
+    AccountSetUpStatus? accountSetUpStatus,
+    AccountSetUpLoadStatus? loadStatus,
+    AccountSetUpSubmitStatus? submitStatus,
     PageController? accountSetUpController,
     int? currentIndex,
-    List<LearningReasonModel>? learningReasons,
-    List<CurrentLevelModel>? currentLevels,
-    List<DailyGoalModel>? dailyGoals,
-    LearningReasonModel? selectedLearningReason,
-    String? selectedCurrentLevel,
-    DailyGoalModel? selectedDailyGoal,
+    List<OnboardingOptionModel>? learningReasons,
+    List<OnboardingOptionModel>? currentLevels,
+    List<OnboardingOptionModel>? dailyGoals,
+    OnboardingOptionModel? selectedLearningReason,
+    OnboardingOptionModel? selectedCurrentLevel,
+    OnboardingOptionModel? selectedDailyGoal,
+    String? message,
   }) {
     return AccountSetUpState(
-      accountSetUpStatus: accountSetUpStatus,
+      accountSetUpStatus: accountSetUpStatus ?? this.accountSetUpStatus,
+      loadStatus: loadStatus ?? this.loadStatus,
+      submitStatus: submitStatus ?? this.submitStatus,
       accountSetUpController: accountSetUpController ?? this.accountSetUpController,
       currentIndex: currentIndex ?? this.currentIndex,
       learningReasons: learningReasons ?? this.learningReasons,
@@ -52,6 +89,7 @@ class AccountSetUpState {
       selectedLearningReason: selectedLearningReason ?? this.selectedLearningReason,
       selectedCurrentLevel: selectedCurrentLevel ?? this.selectedCurrentLevel,
       selectedDailyGoal: selectedDailyGoal ?? this.selectedDailyGoal,
+      message: message ?? this.message,
     );
   }
 }

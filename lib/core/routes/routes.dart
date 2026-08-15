@@ -33,13 +33,18 @@ class RouteClass {
     GoRoute(
       path: Routes.regCodeVerify,
       builder: (context, state) {
-        return RegCodeVerifyPage();
+        final args = state.extra as RegisterVerifyArgs;
+
+        return RegCodeVerifyPage(args: args);
       },
     ),
+
     GoRoute(
       path: Routes.regSetPassword,
       builder: (context, state) {
-        return RegSetPasswordPage();
+        final args = state.extra as RegisterCompleteArgs;
+
+        return RegSetPasswordPage(args: args);
       },
     ),
     GoRoute(
@@ -51,13 +56,22 @@ class RouteClass {
     GoRoute(
       path: Routes.forgotCodeVerify,
       builder: (context, state) {
-        return ForgotPwCodeVerifyPage();
+        final args = state.extra as ForgotPasswordVerifyArgs;
+
+        return ForgotPwCodeVerifyPage(
+          args: args,
+        );
       },
     ),
+
     GoRoute(
       path: Routes.forgotSetNewPassword,
       builder: (context, state) {
-        return ForgotSetNewPasswordPage();
+        final args = state.extra as ResetPasswordArgs;
+
+        return ForgotSetNewPasswordPage(
+          args: args,
+        );
       },
     ),
     GoRoute(
@@ -114,7 +128,11 @@ class RouteClass {
     GoRoute(
       path: Routes.editProfile,
       builder: (context, state) {
-        return const ProfileEditPage();
+        final profile = state.extra as ProfileModel;
+
+        return ProfileEditPage(
+          profile: profile,
+        );
       },
     ),
     GoRoute(

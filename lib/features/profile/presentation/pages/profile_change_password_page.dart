@@ -1,54 +1,78 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/profile/profile.dart';
 
-class ProfileChangePasswordPage extends StatefulWidget {
+class ProfileChangePasswordPage extends StatelessWidget {
   const ProfileChangePasswordPage({super.key});
 
   @override
-  State<ProfileChangePasswordPage> createState() =>
-      _ProfileChangePasswordPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => getIt<ChangePasswordBloc>(),
+      child: const _ProfileChangePasswordView(),
+    );
+  }
 }
 
-class _ProfileChangePasswordPageState
-    extends State<ProfileChangePasswordPage> {
-  final GlobalKey<FormState> _formKey =
-  GlobalKey<FormState>();
+class _ProfileChangePasswordView extends StatefulWidget {
+  const _ProfileChangePasswordView();
 
-  late final TextEditingController _oldPasswordController;
-  late final TextEditingController _newPasswordController;
+  @override
+  State<_ProfileChangePasswordView> createState() {
+    return _ProfileChangePasswordViewState();
+  }
+}
+
+class _ProfileChangePasswordViewState
+    extends State<_ProfileChangePasswordView> {
+  final _formKey = GlobalKey<FormState>();
+
+  late final TextEditingController
+  _currentPasswordController;
+
+  late final TextEditingController
+  _newPasswordController;
+
   late final TextEditingController
   _confirmPasswordController;
 
-  bool _isSubmitting = false;
-
   bool get _isFormFilled {
-    final oldPassword = _oldPasswordController.text;
-    final newPassword = _newPasswordController.text;
+    final currentPassword =
+        _currentPasswordController.text;
+
+    final newPassword =
+        _newPasswordController.text;
+
     final confirmPassword =
         _confirmPasswordController.text;
 
-    return oldPassword.isNotEmpty &&
+    return currentPassword.isNotEmpty &&
         newPassword.length >= 8 &&
         confirmPassword == newPassword &&
-        newPassword != oldPassword;
+        newPassword != currentPassword;
   }
 
   @override
   void initState() {
     super.initState();
 
-    _oldPasswordController = TextEditingController();
-    _newPasswordController = TextEditingController();
-    _confirmPasswordController = TextEditingController();
+    _currentPasswordController =
+        TextEditingController();
+
+    _newPasswordController =
+        TextEditingController();
+
+    _confirmPasswordController =
+        TextEditingController();
   }
 
   void _handleFieldChanged(String value) {
     setState(() {});
   }
 
-  String? _validateOldPassword(String? value) {
+  String? _validateCurrentPassword(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Please enter your current password';
     }
@@ -65,7 +89,7 @@ class _ProfileChangePasswordPageState
       return 'Password must contain at least 8 characters';
     }
 
-    if (value == _oldPasswordController.text) {
+    if (value == _currentPasswordController.text) {
       return 'New password must be different';
     }
 
@@ -84,58 +108,42 @@ class _ProfileChangePasswordPageState
     return null;
   }
 
-  Future<void> _submit() async {
-    FocusScope.of(context).unfocus();
+  void _submit() {
+    final bloc = context.read<ChangePasswordBloc>();
 
-    if (!_formKey.currentState!.validate()) {
+    if (bloc.state.isLoading) return;
+
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    bloc.add(
+      OnChangePassword(
+        currentPassword:
+        _currentPasswordController.text,
+        password:
+        _newPasswordController.text,
+        passwordConfirmation:
+        _confirmPasswordController.text,
+      ),
+    );
+  }
 
-    try {
-      final oldPassword = _oldPasswordController.text;
-      final newPassword = _newPasswordController.text;
-
-      // Do not log either password.
-      //
-      // Dispatch your ChangePassword BLoC event here:
-      //
-      // context.read<ChangePasswordBloc>().add(
-      //   ChangePasswordSubmitted(
-      //     oldPassword: oldPassword,
-      //     newPassword: newPassword,
-      //   ),
-      // );
-
-      // Remove this delay when connecting the API.
-      await Future<void>.delayed(
-        const Duration(milliseconds: 500),
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      context.showSnackBar(
-        'Password changed successfully',
-      );
-
-      context.pop();
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+  void _handleBack() {
+    if (context.read<ChangePasswordBloc>()
+        .state
+        .isLoading) {
+      return;
     }
+
+    context.pop();
   }
 
   @override
   void dispose() {
-    _oldPasswordController.dispose();
+    _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
 
@@ -144,113 +152,162 @@ class _ProfileChangePasswordPageState
 
   @override
   Widget build(BuildContext context) {
-    final buttonEnabled =
-        _isFormFilled && !_isSubmitting;
+    return BlocConsumer<
+        ChangePasswordBloc,
+        ChangePasswordState>(
+      listener: (context, state) {
+        if (state.status ==
+            ChangePasswordStatus.failure) {
+          context.showSnackBar(
+            state.message ??
+                'Unable to change your password.',
+            snackBarType: SnackBarType.error,
+          );
+        }
 
-    return Scaffold(
-      backgroundColor: ColorUtils.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: ColorUtils.scaffoldBackgroundColor,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: context.pop,
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: ColorUtils.primaryColor,
-          ),
-        ),
-        title: const TtText(
-          'Change Password',
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      body: GestureDetector(
-        onTap: FocusScope.of(context).unfocus,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            16,
-            36,
-            16,
-            32,
-          ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                ProfileChangePasswordField(
-                  controller: _oldPasswordController,
-                  hintText: 'Enter Old Password',
-                  textInputAction: TextInputAction.next,
-                  validator: _validateOldPassword,
-                  onChanged: _handleFieldChanged,
+        if (state.status ==
+            ChangePasswordStatus.success) {
+          // Return the API message to the Edit Profile page.
+          // Do not display a snackbar immediately before pop.
+          context.pop(
+            state.message ??
+                'Password changed successfully.',
+          );
+        }
+      },
+      builder: (context, state) {
+        final buttonEnabled =
+            _isFormFilled && !state.isLoading;
+
+        return PopScope(
+          canPop: !state.isLoading,
+          child: Scaffold(
+            backgroundColor:
+            ColorUtils.scaffoldBackgroundColor,
+            appBar: AppBar(
+              backgroundColor:
+              ColorUtils.scaffoldBackgroundColor,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              leading: IconButton(
+                onPressed: _handleBack,
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: ColorUtils.primaryColor,
                 ),
-                18.gh,
-                ProfileChangePasswordField(
-                  controller: _newPasswordController,
-                  hintText: 'New Password',
-                  textInputAction: TextInputAction.next,
-                  validator: _validateNewPassword,
-                  onChanged: _handleFieldChanged,
+              ),
+              title: const TtText(
+                'Change Password',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            body: GestureDetector(
+              onTap: FocusScope.of(context).unfocus,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  16,
+                  36,
+                  16,
+                  32,
                 ),
-                18.gh,
-                ProfileChangePasswordField(
-                  controller: _confirmPasswordController,
-                  hintText: 'Confirm Password',
-                  textInputAction: TextInputAction.done,
-                  validator: _validateConfirmPassword,
-                  onChanged: _handleFieldChanged,
-                  onSubmitted:
-                  buttonEnabled ? _submit : null,
-                ),
-                22.gh,
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed:
-                    buttonEnabled ? _submit : null,
-                    style: ElevatedButton.styleFrom(
-                      elevation: 2,
-                      shadowColor:
-                      Colors.black.withValues(alpha: 0.2),
-                      backgroundColor:
-                      ColorUtils.primaryColor,
-                      disabledBackgroundColor:
-                      const Color(0xFFAAB7C8),
-                      foregroundColor: Colors.white,
-                      disabledForegroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 17,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      ProfileChangePasswordField(
+                        controller:
+                        _currentPasswordController,
+                        hintText:
+                        'Enter Current Password',
+                        textInputAction:
+                        TextInputAction.next,
+                        validator:
+                        _validateCurrentPassword,
+                        onChanged:
+                        _handleFieldChanged,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(16),
+                      18.gh,
+                      ProfileChangePasswordField(
+                        controller:
+                        _newPasswordController,
+                        hintText: 'New Password',
+                        textInputAction:
+                        TextInputAction.next,
+                        validator:
+                        _validateNewPassword,
+                        onChanged:
+                        _handleFieldChanged,
                       ),
-                    ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: Colors.white,
+                      18.gh,
+                      ProfileChangePasswordField(
+                        controller:
+                        _confirmPasswordController,
+                        hintText: 'Confirm Password',
+                        textInputAction:
+                        TextInputAction.done,
+                        validator:
+                        _validateConfirmPassword,
+                        onChanged:
+                        _handleFieldChanged,
+                        onSubmitted:
+                        buttonEnabled ? _submit : null,
                       ),
-                    )
-                        : const TtText(
-                      'Continue',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                      22.gh,
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed:
+                          buttonEnabled ? _submit : null,
+                          style:
+                          ElevatedButton.styleFrom(
+                            elevation: 2,
+                            shadowColor: Colors.black
+                                .withValues(alpha: 0.2),
+                            backgroundColor:
+                            ColorUtils.primaryColor,
+                            disabledBackgroundColor:
+                            const Color(0xFFAAB7C8),
+                            foregroundColor: Colors.white,
+                            disabledForegroundColor:
+                            Colors.white,
+                            padding:
+                            const EdgeInsets.symmetric(
+                              vertical: 17,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                              BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: state.isLoading
+                              ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child:
+                            CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                              : const TtText(
+                            'Continue',
+                            fontSize: 16,
+                            fontWeight:
+                            FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

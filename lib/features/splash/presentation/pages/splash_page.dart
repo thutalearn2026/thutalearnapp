@@ -5,6 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thuta_learn/core/core.dart';
 
+import '../../../authentication/data/data_sources/box/auth_session_box.dart';
+import '../../../onboarding/data/data_sources/box/onboarding_box.dart';
+
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -36,28 +39,18 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   String _resolveNextRoute() {
-    // Replace this logic when authentication and local-storage
-    // integration are ready.
-    //
-    // Example:
-    //
-    // final hasCompletedOnboarding =
-    //     OnboardingBox().hasCompletedOnboarding;
-    //
-    // final hasAccessToken =
-    //     TokenBox().hasValidToken;
-    //
-    // if (!hasCompletedOnboarding) {
-    //   return Routes.onboarding;
-    // }
-    //
-    // if (hasAccessToken) {
-    //   return Routes.bottomNav;
-    // }
-    //
-    // return Routes.login;
+    final hasCompletedOnboarding =
+        OnboardingBox.hasCompletedOnboarding;
 
-    return Routes.onboarding;
+    if (!hasCompletedOnboarding) {
+      return Routes.onboarding;
+    }
+
+    if (AuthSessionBox.isLoggedIn) {
+      return Routes.bottomNav;
+    }
+
+    return Routes.login;
   }
 
   @override

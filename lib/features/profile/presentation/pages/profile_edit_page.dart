@@ -1,56 +1,194 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/profile/profile.dart';
 
-class ProfileEditPage extends StatefulWidget {
-  const ProfileEditPage({super.key});
+class ProfileEditPage extends StatelessWidget {
+  final ProfileModel profile;
+
+  const ProfileEditPage({
+    super.key,
+    required this.profile,
+  });
 
   @override
-  State<ProfileEditPage> createState() =>
-      _ProfileEditPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => getIt<EditProfileBloc>(),
+      child: _ProfileEditView(
+        profile: profile,
+      ),
+    );
+  }
 }
 
-class _ProfileEditPageState extends State<ProfileEditPage> {
+class _ProfileEditView extends StatefulWidget {
+  final ProfileModel profile;
+
+  const _ProfileEditView({
+    required this.profile,
+  });
+
+  @override
+  State<_ProfileEditView> createState() =>
+      _ProfileEditViewState();
+}
+
+class _ProfileEditViewState extends State<_ProfileEditView> {
+  final ImagePicker _imagePicker = ImagePicker();
+
   late final TextEditingController _usernameController;
   late final TextEditingController _phoneController;
+
+  XFile? _selectedPhoto;
 
   @override
   void initState() {
     super.initState();
 
     _usernameController = TextEditingController(
-      text: 'Sora',
+      text: widget.profile.name,
     );
 
+    // Phone is currently not returned or accepted by the API.
     _phoneController = TextEditingController();
   }
 
   Future<void> _changeProfilePhoto() async {
-    // Open the image picker here later.
-    //
-    // Recommended flow:
-    // 1. Let the user choose Camera or Gallery.
-    // 2. Request the required permission.
-    // 3. Show the selected local image.
-    // 4. Upload it when the API is available.
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library_outlined,
+                    color: ColorUtils.primaryColor,
+                  ),
+                  title: const TtText(
+                    'Choose from gallery',
+                    fontSize: 14,
+                  ),
+                  onTap: () {
+                    Navigator.of(bottomSheetContext).pop(
+                      ImageSource.gallery,
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_camera_outlined,
+                    color: ColorUtils.primaryColor,
+                  ),
+                  title: const TtText(
+                    'Take a photo',
+                    fontSize: 14,
+                  ),
+                  onTap: () {
+                    Navigator.of(bottomSheetContext).pop(
+                      ImageSource.camera,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (source == null) return;
+
+    final selectedPhoto = await _imagePicker.pickImage(
+      source: source,
+      imageQuality: 85,
+      maxWidth: 1600,
+      maxHeight: 1600,
+    );
+
+    if (selectedPhoto == null) return;
+
+    final fileSize = await selectedPhoto.length();
+    const maximumSize = 2 * 1024 * 1024;
+
+    if (!mounted) return;
+
+    if (fileSize > maximumSize) {
+      context.showSnackBar(
+        'Profile photo must not be larger than 2 MB.',
+        snackBarType: SnackBarType.error,
+      );
+      return;
+    }
+
+    setState(() {
+      _selectedPhoto = selectedPhoto;
+    });
   }
 
-  void _handleChangePassword() {
-    context.push(Routes.changePassword);
+  Future<void> _handleChangePassword() async {
+    final message = await context.push<String>(
+      Routes.changePassword,
+    );
+
+    if (!mounted || message == null) return;
+
+    // Wait until the Change Password route transition
+    // has completely finished.
+    await Future<void>.delayed(
+      const Duration(milliseconds: 350),
+    );
+
+    if (!mounted) return;
+
+    context.showSnackBar(message);
   }
 
   void _saveProfileChanges() {
-    final username = _usernameController.text.trim();
-    final phoneNumber = _phoneController.text.trim();
+    final bloc = context.read<EditProfileBloc>();
 
-    // Send username and phoneNumber to the BLoC/API later.
-    debugPrint('Username: $username');
-    debugPrint('Phone: $phoneNumber');
+    if (bloc.state.isLoading) return;
+
+    final name = _usernameController.text.trim();
+
+    if (name.isEmpty) {
+      context.showSnackBar(
+        'Please enter your name.',
+        snackBarType: SnackBarType.error,
+      );
+      return;
+    }
+
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    bloc.add(
+      OnUpdateProfile(
+        name: name,
+        email: widget.profile.email,
+        photoPath: _selectedPhoto?.path,
+      ),
+    );
   }
 
   void _handleBack() {
-    _saveProfileChanges();
+    if (context.read<EditProfileBloc>().state.isLoading) {
+      return;
+    }
+
     context.pop();
   }
 
@@ -64,62 +202,105 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
-          _saveProfileChanges();
+    return BlocConsumer<EditProfileBloc, EditProfileState>(
+      listener: (context, state) {
+        if (state.status == EditProfileStatus.failure) {
+          context.showSnackBar(
+            state.message ?? 'Unable to update your profile.',
+            snackBarType: SnackBarType.error,
+          );
+        }
+
+        if (state.status == EditProfileStatus.success &&
+            state.updatedProfile != null) {
+          // Do not show a snackbar here because this route
+          // is about to be popped.
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+          context.pop(state.updatedProfile);
         }
       },
-      child: Scaffold(
-        backgroundColor: ColorUtils.scaffoldBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: ColorUtils.scaffoldBackgroundColor,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            onPressed: _handleBack,
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: ColorUtils.primaryColor,
-            ),
-          ),
-          title: const TtText(
-            'Your Profile',
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        body: GestureDetector(
-          onTap: FocusScope.of(context).unfocus,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              16,
-              32,
-              16,
-              32,
-            ),
-            child: Column(
-              children: [
-                ProfileEditAvatar(
-                  onChangePhoto: _changeProfilePhoto,
+      builder: (context, state) {
+        return PopScope(
+          canPop: !state.isLoading,
+          child: Scaffold(
+            backgroundColor:
+            ColorUtils.scaffoldBackgroundColor,
+            appBar: AppBar(
+              backgroundColor:
+              ColorUtils.scaffoldBackgroundColor,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              leading: IconButton(
+                onPressed: _handleBack,
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: ColorUtils.primaryColor,
                 ),
-                36.gh,
-                ProfileEditInformationCard(
-                  usernameController:
-                  _usernameController,
-                  phoneController: _phoneController,
-                  email: 'ekzlynn@gmail.com',
-                ),
-                16.gh,
-                _ChangePasswordCard(
-                  onTap: _handleChangePassword,
+              ),
+              title: const TtText(
+                'Your Profile',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: state.isLoading
+                      ? null
+                      : _saveProfileChanges,
+                  child: state.isLoading
+                      ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: ColorUtils.secondaryColor,
+                    ),
+                  )
+                      : const TtText(
+                    'Save',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: ColorUtils.secondaryColor,
+                  ),
                 ),
               ],
             ),
+            body: GestureDetector(
+              onTap: FocusScope.of(context).unfocus,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  16,
+                  32,
+                  16,
+                  32,
+                ),
+                child: Column(
+                  children: [
+                    ProfileEditAvatar(
+                      networkPhotoUrl: widget.profile.photo,
+                      selectedPhoto: _selectedPhoto,
+                      onChangePhoto: _changeProfilePhoto,
+                    ),
+                    36.gh,
+                    ProfileEditInformationCard(
+                      usernameController:
+                      _usernameController,
+                      phoneController: _phoneController,
+                      email: widget.profile.email,
+                    ),
+                    16.gh,
+                    _ChangePasswordCard(
+                      onTap: _handleChangePassword,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -9,83 +9,144 @@ class CurrentLevelsSectionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        24.gh,
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: TtText(
-            "What is your current level?",
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+    return BlocBuilder<AccountSetUpBloc, AccountSetUpState>(
+      builder: (context, state) {
+        final currentLevels = state.currentLevels;
+
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            24,
+            16,
+            24,
           ),
-        ),
-        16.gh,
-        BlocBuilder<AccountSetUpBloc, AccountSetUpState>(
-          builder: (context, state) {
-            var currentLevels = state.currentLevels ?? [];
-            return RadioGroup<String>(
-              groupValue: state.selectedCurrentLevel ?? "",
+          children: [
+            const TtText(
+              'What is your current level?',
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+            16.gh,
+            RadioGroup<String>(
+              groupValue: state.selectedCurrentLevel?.key,
               onChanged: (value) {
+                if (value == null) return;
+
+                final selectedLevel =
+                currentLevels.firstWhere(
+                      (level) => level.key == value,
+                );
+
                 HapticFeedback.mediumImpact();
-                context.read<AccountSetUpBloc>().add(OnChooseCurrentLevel(value ?? ""));
+
+                context.read<AccountSetUpBloc>().add(
+                  OnChooseCurrentLevel(
+                    selectedLevel,
+                  ),
+                );
               },
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: currentLevels.length,
-                itemBuilder: (context, index) {
-                  return CurrentLevelView(
-                    index: index,
-                    currentLevelModel: currentLevels[index],
-                  );
-                },
-                separatorBuilder: (context, index) {
-                  return 16.gh;
-                },
+              child: Column(
+                children: List.generate(
+                  currentLevels.length,
+                      (index) {
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        bottom:
+                        index == currentLevels.length - 1
+                            ? 0
+                            : 16,
+                      ),
+                      child: CurrentLevelView(
+                        currentLevel: currentLevels[index],
+                      ),
+                    );
+                  },
+                ),
               ),
-            );
-          },
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
 class CurrentLevelView extends StatelessWidget {
-  final CurrentLevelModel? currentLevelModel;
-  final int index;
+  final OnboardingOptionModel currentLevel;
 
   const CurrentLevelView({
     super.key,
-    required this.index,
-    required this.currentLevelModel,
+    required this.currentLevel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return RadioListTile(
-      visualDensity: VisualDensity(horizontal: -4),
-      value: currentLevelModel?.title ?? "",
-      title: Row(
-        children: [
-          Expanded(
-            child: TtText(currentLevelModel?.title ?? ""),
+    return BlocSelector<
+        AccountSetUpBloc,
+        AccountSetUpState,
+        String?>(
+      selector: (state) {
+        return state.selectedCurrentLevel?.key;
+      },
+      builder: (context, selectedKey) {
+        final isSelected = selectedKey == currentLevel.key;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: isSelected
+                ? Border.all(
+              color: ColorUtils.secondaryColor,
+              width: 1.5,
+            )
+                : null,
           ),
-          Row(
-            children: List.generate(
-              currentLevelModel?.rating ?? 0,
-              (index) {
-                return Icon(
-                  Icons.star,
-                  color: ColorUtils.secondaryColor,
-                );
-              },
+          child: Material(
+            color: isSelected
+                ? const Color(0xFFECF6F5)
+                : ColorUtils.surveyBackgroundColor,
+            borderRadius: BorderRadius.circular(16),
+            clipBehavior: Clip.antiAlias,
+            child: RadioListTile<String>(
+              value: currentLevel.key,
+              visualDensity: const VisualDensity(
+                horizontal: -4,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              activeColor: ColorUtils.secondaryColor,
+              title: Row(
+                children: [
+                  Expanded(
+                    child: TtText(
+                      currentLevel.label,
+                      fontSize: 14,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(
+                      currentLevel.value ?? 0,
+                          (_) {
+                        return const Icon(
+                          Icons.star_rounded,
+                          size: 20,
+                          color: ColorUtils.secondaryColor,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

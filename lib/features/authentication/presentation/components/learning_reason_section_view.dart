@@ -8,143 +8,203 @@ class LearningReasonSectionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        24.gh,
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: TtText(
-            "Why are you learning Thai?",
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+    return BlocBuilder<AccountSetUpBloc, AccountSetUpState>(
+      builder: (context, state) {
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            24,
+            16,
+            24,
           ),
-        ),
-        16.gh,
-        BlocBuilder<AccountSetUpBloc, AccountSetUpState>(
-          builder: (context, state) {
-            var learningReasons = state.learningReasons ?? [];
-            return ListView.separated(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              itemCount: learningReasons.length,
-              itemBuilder: (context, index) {
-                return LearningReasonView(
-                  learningReasonModel: learningReasons[index],
-                  onTap: (LearningReasonModel? learningReason) {
-                    context.read<AccountSetUpBloc>().add(
-                      OnChooseLearningReason(learningReason),
-                    );
-                  },
+          children: [
+            const TtText(
+              'Why are you learning Thai?',
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+            16.gh,
+            ...List.generate(
+              state.learningReasons.length,
+                  (index) {
+                final learningReason =
+                state.learningReasons[index];
+
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index ==
+                        state.learningReasons.length - 1
+                        ? 0
+                        : 16,
+                  ),
+                  child: LearningReasonView(
+                    learningReason: learningReason,
+                  ),
                 );
               },
-              separatorBuilder: (context, index) {
-                return 16.gh;
-              },
-            );
-          },
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
 class LearningReasonView extends StatelessWidget {
-  final LearningReasonModel? learningReasonModel;
-  final Function(LearningReasonModel?) onTap;
+  final OnboardingOptionModel learningReason;
 
   const LearningReasonView({
     super.key,
-    required this.learningReasonModel,
-    required this.onTap,
+    required this.learningReason,
   });
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountSetUpBloc, AccountSetUpState>(
-      builder: (context, state) {
-        var selectedLearningReason = state.selectedLearningReason;
-        var isSelectedItem = learningReasonModel?.title == selectedLearningReason?.title;
+    return BlocSelector<
+        AccountSetUpBloc,
+        AccountSetUpState,
+        String?>(
+      selector: (state) {
+        return state.selectedLearningReason?.key;
+      },
+      builder: (context, selectedKey) {
+        final isSelected = selectedKey == learningReason.key;
 
         return TtZoomTap(
           onTap: () {
-            onTap(learningReasonModel);
+            context.read<AccountSetUpBloc>().add(
+              OnChooseLearningReason(
+                learningReason,
+              ),
+            );
           },
           child: AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            padding: EdgeInsets.symmetric(
+            duration: const Duration(milliseconds: 300),
+            padding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 12,
             ),
             decoration: BoxDecoration(
-              color: isSelectedItem
-                  ? Color.fromRGBO(236, 246, 245, 1.0)
+              color: isSelected
+                  ? const Color.fromRGBO(236, 246, 245, 1)
                   : ColorUtils.surveyBackgroundColor,
               borderRadius: BorderRadius.circular(16),
-              border: isSelectedItem
-                  ? Border.all(color: ColorUtils.secondaryColor, width: 1.5)
+              border: isSelected
+                  ? Border.all(
+                color: ColorUtils.secondaryColor,
+                width: 1.5,
+              )
                   : null,
             ),
             child: Row(
-              spacing: 12,
               children: [
                 AnimatedContainer(
-                  duration: Duration(milliseconds: 300),
+                  duration: const Duration(milliseconds: 300),
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isSelectedItem
-                        ? Color.fromRGBO(214, 240, 237, 1.0)
-                        : Color.fromRGBO(217, 223, 231, 1.0),
+                    color: isSelected
+                        ? const Color.fromRGBO(
+                      214,
+                      240,
+                      237,
+                      1,
+                    )
+                        : const Color.fromRGBO(
+                      217,
+                      223,
+                      231,
+                      1,
+                    ),
                   ),
                   child: Icon(
-                    learningReasonModel?.iconData,
+                    _getOnboardingIcon(
+                      learningReason.icon,
+                    ),
                     color: ColorUtils.primaryColor,
                     size: 20,
                   ),
                 ),
+                12.gw,
                 Expanded(
                   child: Column(
-                    spacing: 4,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
                     children: [
                       TtText(
-                        learningReasonModel?.title ?? "",
+                        learningReason.label,
                         fontWeight: FontWeight.w500,
                         fontSize: 16,
                       ),
-                      TtText(
-                        learningReasonModel?.subtitle ?? "",
-                        color: Color.fromRGBO(100, 115, 139, 1.0),
-                        fontSize: 13,
-                      ),
+                      if (learningReason.description != null &&
+                          learningReason
+                              .description!.isNotEmpty) ...[
+                        4.gh,
+                        TtText(
+                          learningReason.description!,
+                          color: const Color.fromRGBO(
+                            100,
+                            115,
+                            139,
+                            1,
+                          ),
+                          fontSize: 14,
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                isSelectedItem
-                    ? TtFadeIn(
-                        isAnimatedScale: true,
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: ColorUtils.secondaryColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.done,
-                            color: Colors.white,
-                          ),
-                        ),
-                      )
-                    : SizedBox.shrink(),
+                if (isSelected) ...[
+                  12.gw,
+                  TtFadeIn(
+                    isAnimatedScale: true,
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: const BoxDecoration(
+                        color: ColorUtils.secondaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.done,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  IconData _getOnboardingIcon(String? icon) {
+    switch (icon) {
+      case 'briefcase':
+        return Icons.work_outline_rounded;
+
+      case 'travel':
+      case 'plane':
+      case 'home':
+        return Icons.flight_takeoff_rounded;
+
+      case 'education':
+      case 'school':
+      case 'academic-cap':
+        return Icons.school_outlined;
+
+      case 'conversation':
+      case 'chat':
+        return Icons.chat_bubble_outline_rounded;
+
+      case 'family':
+        return Icons.family_restroom_rounded;
+
+      default:
+        return Icons.menu_book_outlined;
+    }
   }
 }

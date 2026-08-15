@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:thuta_learn/core/core.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:thuta_learn/features/profile/data/models/profile_model.dart';
+
+import '../../data/models/profile_model.dart';
 
 class ProfileHeaderSectionView extends StatelessWidget {
+  final ProfileModel profile;
   final VoidCallback onEdit;
 
   const ProfileHeaderSectionView({
     super.key,
+    required this.profile,
     required this.onEdit,
   });
 
@@ -39,10 +45,15 @@ class ProfileHeaderSectionView extends StatelessWidget {
           18.gh,
           Row(
             children: [
-              const _ProfileAvatar(),
+              _ProfileAvatar(
+                photoUrl: profile.photo,
+              ),
               14.gw,
-              const Expanded(
-                child: _ProfileInformationView(),
+              Expanded(
+                child: _ProfileInformationView(
+                  name: profile.name,
+                  email: profile.email,
+                ),
               ),
               TtZoomTap(
                 onTap: onEdit,
@@ -64,32 +75,78 @@ class ProfileHeaderSectionView extends StatelessWidget {
 }
 
 class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar();
+  final String? photoUrl;
+
+  const _ProfileAvatar({
+    this.photoUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final hasPhoto = photoUrl != null && photoUrl!.trim().isNotEmpty;
+
     return Container(
       width: 82,
       height: 82,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFFFF829E),
+        color: hasPhoto ? Colors.white : Colors.pink.shade300,
         shape: BoxShape.circle,
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.35),
           width: 2,
         ),
       ),
-      child: const Icon(
-        Icons.person_rounded,
-        size: 54,
-        color: Colors.white,
-      ),
+      child: hasPhoto
+          ? CachedNetworkImage(
+              imageUrl: photoUrl!,
+              fit: BoxFit.cover,
+              imageBuilder: (context, imageProvider) {
+                return Container(
+                  width: 82,
+                  height: 82,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                      image: imageProvider,
+                      fit: BoxFit.cover
+                    ),
+                  ),
+                );
+              },
+              placeholder: (_, __) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                );
+              },
+              errorWidget: (_, __, ___) {
+                return const Icon(
+                  Icons.person_rounded,
+                  size: 54,
+                  color: Colors.white,
+                );
+              },
+            )
+          : const Icon(
+              Icons.person_rounded,
+              size: 54,
+              color: Colors.white,
+            ),
     );
   }
 }
 
 class _ProfileInformationView extends StatelessWidget {
-  const _ProfileInformationView();
+  final String name;
+  final String email;
+
+  const _ProfileInformationView({
+    required this.name,
+    required this.email,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -124,22 +181,33 @@ class _ProfileInformationView extends StatelessWidget {
           ),
         ),
         8.gh,
-        const TtText(
-          'Sora Lynn',
+        TtText(
+          name,
           fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.white,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         7.gh,
-        const Row(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TtText(
-              'Signed in with',
-              fontSize: 14,
+            const Icon(
+              Icons.email_outlined,
+              size: 17,
               color: Colors.white,
             ),
-            SizedBox(width: 8),
-            _GoogleAccountIcon(),
+            6.gw,
+            Expanded(
+              child: TtText(
+                email,
+                fontSize: 14,
+                color: Colors.white,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
       ],
