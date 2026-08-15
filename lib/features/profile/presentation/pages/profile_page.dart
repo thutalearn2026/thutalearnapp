@@ -191,6 +191,7 @@ class _ProfileViewState extends State<_ProfileView> {
         if (state.status == ProfileStatus.failure) {
           context.showSnackBar(
             state.message ?? 'Unable to load your profile.',
+            margin: EdgeInsets.only(bottom: 100, left: 16, right: 16,),
             snackBarType: SnackBarType.error,
           );
         }

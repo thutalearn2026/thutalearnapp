@@ -37,9 +37,12 @@ import '../../features/home/home.dart' as _i905;
 import '../../features/learn/data/data_sources/remote/i_learn_client.dart'
     as _i664;
 import '../../features/learn/data/repo/i_learn_repo.dart' as _i92;
-import '../../features/learn/domain/domain.dart' as _i252;
 import '../../features/learn/domain/usecases/learn_usecase.dart' as _i891;
 import '../../features/learn/learn.dart' as _i592;
+import '../../features/learn/presentation/blocs/course_detail/course_detail_bloc.dart'
+    as _i678;
+import '../../features/learn/presentation/blocs/courses/courses_bloc.dart'
+    as _i335;
 import '../../features/onboarding/data/data_sources/remote/i_onboarding_client.dart'
     as _i865;
 import '../../features/onboarding/data/repo/i_onboarding_repo.dart' as _i827;
@@ -130,9 +133,6 @@ _i174.GetIt $initGetIt(
   gh.factory<_i178.SplashUseCase>(
     () => _i178.SplashUseCase(splashRepo: gh<_i502.SplashRepo>()),
   );
-  gh.factory<_i252.LearnRepo>(
-    () => _i92.ILearnRepo(client: gh<_i252.LearnClient>()),
-  );
   gh.factory<_i634.OnboardingRepo>(
     () => _i827.IOnboardingRepo(client: gh<_i634.OnboardingClient>()),
   );
@@ -145,6 +145,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i845.AuthenticationRepo>(
     () => _i998.IAuthenticationRepo(client: gh<_i845.AuthenticationClient>()),
   );
+  gh.factory<_i592.LearnRepo>(
+    () => _i92.ILearnRepo(client: gh<_i592.LearnClient>()),
+  );
   gh.factory<_i573.AuthenticationUseCase>(
     () => _i573.AuthenticationUseCase(
       authenticationRepo: gh<_i845.AuthenticationRepo>(),
@@ -153,14 +156,20 @@ _i174.GetIt $initGetIt(
   gh.factory<_i207.HomeUseCase>(
     () => _i207.HomeUseCase(homeRepo: gh<_i487.HomeRepo>()),
   );
+  gh.factory<_i891.LearnUseCase>(
+    () => _i891.LearnUseCase(learnRepo: gh<_i592.LearnRepo>()),
+  );
   gh.factory<_i996.ProfileUseCase>(
     () => _i996.ProfileUseCase(profileRepo: gh<_i315.ProfileRepo>()),
   );
   gh.factory<_i706.OnboardingUseCase>(
     () => _i706.OnboardingUseCase(onboardingRepo: gh<_i634.OnboardingRepo>()),
   );
-  gh.factory<_i891.LearnUseCase>(
-    () => _i891.LearnUseCase(learnRepo: gh<_i252.LearnRepo>()),
+  gh.factory<_i678.CourseDetailBloc>(
+    () => _i678.CourseDetailBloc(learnUseCase: gh<_i592.LearnUseCase>()),
+  );
+  gh.factory<_i335.CoursesBloc>(
+    () => _i335.CoursesBloc(learnUseCase: gh<_i592.LearnUseCase>()),
   );
   gh.factory<_i430.AccountSetUpBloc>(
     () => _i430.AccountSetUpBloc(

@@ -5,6 +5,8 @@ enum LearnModuleStatus {
 }
 
 class LearnModuleItem {
+  final String? id;
+  final String? slug;
   final int moduleNumber;
   final String title;
   final String description;
@@ -13,6 +15,8 @@ class LearnModuleItem {
   final bool quizPassed;
 
   const LearnModuleItem({
+    this.id,
+    this.slug,
     required this.moduleNumber,
     required this.title,
     required this.description,

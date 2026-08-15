@@ -9,6 +9,7 @@ import 'package:thuta_learn/features/profile/data/models/profile_model.dart';
 import 'package:thuta_learn/features/authentication/data/models/onboarding_option_model.dart';
 import 'package:thuta_learn/features/authentication/data/models/onboarding_preference_model.dart';
 import 'package:thuta_learn/features/profile/data/models/change_password_model.dart';
+import 'package:thuta_learn/features/learn/data/models/course_model.dart';
 
 part 'rest_client.g.dart';
 
@@ -76,5 +77,20 @@ abstract class RestClient {
   @PUT('change-password')
   Future<ChangePasswordResponse> changePassword(
     @Body() ChangePasswordRequest request,
+  );
+
+  @GET('courses')
+  Future<CoursesResponse> getCourses(
+    @Query('page') int page,
+  );
+
+  @GET('courses/{course}')
+  Future<CourseDetailResponse> getCourseDetail(
+    @Path('course') String courseId,
+  );
+
+  @GET('courses/{course}/modules')
+  Future<CourseModulesResponse> getCourseModules(
+    @Path('course') String courseId,
   );
 }

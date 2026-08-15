@@ -87,6 +87,16 @@ class RouteClass {
       }
     ),
     GoRoute(
+      path: Routes.courseDetail,
+      builder: (context, state) {
+        final courseId = state.extra as String;
+
+        return CourseDetailPage(
+          courseId: courseId,
+        );
+      },
+    ),
+    GoRoute(
       path: Routes.moduleDetail,
       builder: (context, state) {
         final module = state.extra as LearnModuleItem;
@@ -203,6 +213,7 @@ class Routes {
   /// Home
   static const bottomNav = "/bottom-nav";
   /// Learn
+  static const courseDetail = '/course-detail';
   static const moduleDetail = '/module-detail';
   static const lessonDetail = '/lesson-detail';
   static const quiz = '/quiz';

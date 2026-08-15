@@ -1,3 +1,6 @@
+export 'course_model.dart';
+export 'learn_course_item.dart';
+export 'learn_course_data.dart';
 export 'learn_module_item.dart';
 export 'module_lesson_item.dart';
 export 'vocabulary_item.dart';

@@ -17,3 +17,4 @@ export 'pronunciation_feedback_view.dart';
 export 'flash_card_progress_header.dart';
 export 'vocabulary_flash_card_deck.dart';
 export 'vocabulary_flash_card_view.dart';
+export 'learn_course_card.dart';

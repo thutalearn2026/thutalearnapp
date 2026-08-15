@@ -5,11 +5,13 @@ extension TtSnackBar on BuildContext {
   void showSnackBar(
     String message, {
     SnackBarType snackBarType = SnackBarType.success,
+    EdgeInsetsGeometry? margin,
   }) {
     HapticFeedback.vibrate();
     ScaffoldMessenger.of(this).hideCurrentSnackBar();
     ScaffoldMessenger.of(this).showSnackBar(
       SnackBar(
+        margin: margin,
         behavior: SnackBarBehavior.floating,
         duration: Duration(milliseconds: 2000),
         backgroundColor: _getBackgroundColor(snackBarType),
