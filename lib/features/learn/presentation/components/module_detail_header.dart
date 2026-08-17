@@ -4,6 +4,7 @@ import 'package:thuta_learn/features/learn/learn.dart';
 
 class ModuleDetailHeader extends StatelessWidget {
   final LearnModuleItem module;
+  final int videoCount;
   final VoidCallback onResume;
   final String secondaryActionLabel;
   final IconData secondaryActionIcon;
@@ -12,6 +13,7 @@ class ModuleDetailHeader extends StatelessWidget {
   const ModuleDetailHeader({
     super.key,
     required this.module,
+    required this.videoCount,
     required this.onResume,
     required this.secondaryActionLabel,
     required this.secondaryActionIcon,
@@ -23,11 +25,18 @@ class ModuleDetailHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: ColorUtils.primaryColor,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(
+        16,
+        8,
+        16,
+        24,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ModuleBadge(moduleNumber: module.moduleNumber),
+          _ModuleBadge(
+            moduleNumber: module.moduleNumber,
+          ),
           20.gh,
           TtText(
             module.title,
@@ -36,7 +45,12 @@ class ModuleDetailHeader extends StatelessWidget {
             color: Colors.white,
           ),
           16.gh,
-          _ModuleProgressView(progress: module.progress),
+
+          // Keep this UI unchanged until the API
+          // provides learner progress.
+          _ModuleProgressView(
+            progress: module.progress,
+          ),
           18.gh,
           TtText(
             module.description,
@@ -45,7 +59,9 @@ class ModuleDetailHeader extends StatelessWidget {
             color: Colors.white,
           ),
           18.gh,
-          const _ModuleMetadataView(),
+          _ModuleMetadataView(
+            videoCount: videoCount,
+          ),
           22.gh,
           Row(
             children: [
@@ -54,7 +70,8 @@ class ModuleDetailHeader extends StatelessWidget {
                   backgroundColor: Colors.white,
                   onTap: onResume,
                   child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment:
+                    MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.play_circle_fill_rounded,
@@ -74,10 +91,12 @@ class ModuleDetailHeader extends StatelessWidget {
               12.gw,
               Expanded(
                 child: TtButton(
-                  backgroundColor: ColorUtils.highlightColor,
+                  backgroundColor:
+                  ColorUtils.highlightColor,
                   onTap: onSecondaryAction,
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment:
+                    MainAxisAlignment.center,
                     children: [
                       Icon(
                         secondaryActionIcon,
@@ -93,7 +112,7 @@ class ModuleDetailHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ],
@@ -105,7 +124,9 @@ class ModuleDetailHeader extends StatelessWidget {
 class _ModuleBadge extends StatelessWidget {
   final int moduleNumber;
 
-  const _ModuleBadge({required this.moduleNumber});
+  const _ModuleBadge({
+    required this.moduleNumber,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +152,9 @@ class _ModuleBadge extends StatelessWidget {
 class _ModuleProgressView extends StatelessWidget {
   final double progress;
 
-  const _ModuleProgressView({required this.progress});
+  const _ModuleProgressView({
+    required this.progress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -143,8 +166,10 @@ class _ModuleProgressView extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 7,
-              backgroundColor: const Color(0xFFDCE3EC),
-              valueColor: const AlwaysStoppedAnimation<Color>(
+              backgroundColor:
+              const Color(0xFFDCE3EC),
+              valueColor:
+              const AlwaysStoppedAnimation<Color>(
                 ColorUtils.secondaryColor,
               ),
             ),
@@ -162,24 +187,33 @@ class _ModuleProgressView extends StatelessWidget {
 }
 
 class _ModuleMetadataView extends StatelessWidget {
-  const _ModuleMetadataView();
+  final int videoCount;
+
+  const _ModuleMetadataView({
+    required this.videoCount,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const Wrap(
+    return Wrap(
       spacing: 16,
       runSpacing: 12,
-      crossAxisAlignment: WrapCrossAlignment.center,
+      crossAxisAlignment:
+      WrapCrossAlignment.center,
       children: [
-        _MetadataItem(
+        // Teacher is not returned by Module Detail API.
+        // Keep the existing UI value temporarily.
+        const _MetadataItem(
           icon: Icons.person_rounded,
           label: 'by Tr. Sora',
         ),
         _MetadataItem(
           icon: Icons.smart_display_rounded,
-          label: '8 videos',
+          label: '$videoCount video'
+              '${videoCount == 1 ? '' : 's'}',
         ),
-        _MetadataItem(
+        // Duration is not returned by the API yet.
+        const _MetadataItem(
           icon: Icons.schedule_rounded,
           label: '45–55 minutes',
         ),
@@ -207,7 +241,7 @@ class _MetadataItem extends StatelessWidget {
           size: 22,
           color: Colors.white,
         ),
-        SizedBox(width: 6),
+        6.gw,
         TtText(
           label,
           fontSize: 14,

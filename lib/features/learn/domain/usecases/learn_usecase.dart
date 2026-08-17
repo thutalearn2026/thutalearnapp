@@ -19,8 +19,7 @@ class LearnUseCase {
     );
   }
 
-  Future<Either<Failure, CourseDetailResponse>>
-  getCourseDetail({
+  Future<Either<Failure, CourseDetailResponse>> getCourseDetail({
     required String courseId,
   }) {
     return learnRepo.getCourseDetail(
@@ -28,12 +27,75 @@ class LearnUseCase {
     );
   }
 
-  Future<Either<Failure, CourseModulesResponse>>
-  getCourseModules({
+  Future<Either<Failure, CourseModulesResponse>> getCourseModules({
     required String courseId,
   }) {
     return learnRepo.getCourseModules(
       courseId: courseId,
+    );
+  }
+
+  Future<Either<Failure, ModuleDetailResponse>> getModuleDetail({
+    required String courseId,
+    required String moduleId,
+  }) {
+    return learnRepo.getModuleDetail(
+      courseId: courseId,
+      moduleId: moduleId,
+    );
+  }
+
+  Future<Either<Failure, ChapterListResponse>> getModuleChapters({
+    required String moduleId,
+  }) {
+    return learnRepo.getModuleChapters(
+      moduleId: moduleId,
+    );
+  }
+
+  Future<Either<Failure, ChapterDetailResponse>> getChapterDetail({
+    required String moduleId,
+    required String chapterId,
+  }) {
+    return learnRepo.getChapterDetail(
+      moduleId: moduleId,
+      chapterId: chapterId,
+    );
+  }
+
+  Future<Either<Failure, ChapterVideosResponse>> getChapterVideos({
+    required String chapterId,
+  }) {
+    return learnRepo.getChapterVideos(
+      chapterId: chapterId,
+    );
+  }
+
+  Future<Either<Failure, ChapterVideoDetailResponse>> getChapterVideoDetail({
+    required String chapterId,
+    required String videoId,
+  }) {
+    return learnRepo.getChapterVideoDetail(
+      chapterId: chapterId,
+      videoId: videoId,
+    );
+  }
+
+  Future<Either<Failure, ChapterResourcesResponse>> getChapterResources({
+    required String chapterId,
+  }) {
+    return learnRepo.getChapterResources(
+      chapterId: chapterId,
+    );
+  }
+
+  Future<Either<Failure, ChapterResourceDetailResponse>> getChapterResourceDetail({
+    required String chapterId,
+    required String resourceId,
+  }) {
+    return learnRepo.getChapterResourceDetail(
+      chapterId: chapterId,
+      resourceId: resourceId,
     );
   }
 }

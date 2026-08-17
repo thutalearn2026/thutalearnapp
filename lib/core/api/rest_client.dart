@@ -11,6 +11,8 @@ import 'package:thuta_learn/features/authentication/data/models/onboarding_prefe
 import 'package:thuta_learn/features/profile/data/models/change_password_model.dart';
 import 'package:thuta_learn/features/learn/data/models/course_model.dart';
 
+import '../../features/features.dart';
+
 part 'rest_client.g.dart';
 
 @RestApi()
@@ -93,4 +95,44 @@ abstract class RestClient {
   Future<CourseModulesResponse> getCourseModules(
     @Path('course') String courseId,
   );
+
+  @GET('courses/{course}/modules/{module}')
+  Future<ModuleDetailResponse> getModuleDetail(
+    @Path('course') String courseId,
+    @Path('module') String moduleId,
+  );
+
+  @GET('modules/{module}/chapters')
+  Future<ChapterListResponse> getModuleChapters(
+    @Path('module') String moduleId,
+  );
+
+  @GET('modules/{module}/chapters/{chapter}')
+  Future<ChapterDetailResponse> getChapterDetail(
+    @Path('module') String moduleId,
+    @Path('chapter') String chapterId,
+  );
+
+  @GET('chapters/{chapter}/videos')
+  Future<ChapterVideosResponse> getChapterVideos(
+    @Path('chapter') String chapterId,
+  );
+
+  @GET('chapters/{chapter}/videos/{video}')
+  Future<ChapterVideoDetailResponse> getChapterVideoDetail(
+    @Path('chapter') String chapterId,
+    @Path('video') String videoId,
+  );
+
+  @GET('chapters/{chapter}/resources')
+  Future<ChapterResourcesResponse> getChapterResources(
+    @Path('chapter') String chapterId,
+  );
+
+  @GET('chapters/{chapter}/resources/{resource}')
+  Future<ChapterResourceDetailResponse>
+  getChapterResourceDetail(
+      @Path('chapter') String chapterId,
+      @Path('resource') String resourceId,
+      );
 }

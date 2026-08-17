@@ -186,20 +186,10 @@ class _CourseDetailView extends StatelessWidget {
                     onTap: () {
                       context.push(
                         Routes.moduleDetail,
-                        extra: LearnModuleItem(
-                          id: module.id,
-                          slug: module.slug,
+                        extra: ModuleDetailArgs(
+                          courseId: courseId,
+                          moduleId: module.id,
                           moduleNumber: index + 1,
-                          title: module.title,
-                          description:
-                          '${module.chaptersCount} '
-                              'chapter'
-                              '${module.chaptersCount == 1 ? '' : 's'} '
-                              'available in this module.',
-                          // Temporary route compatibility.
-                          // This is not displayed as API progress.
-                          status:
-                          LearnModuleStatus.inProgress,
                         ),
                       );
                     },

@@ -5,3 +5,4 @@ export 'lesson_detail_page.dart';
 export 'quiz_page.dart';
 export 'pronunciation_drill_page.dart';
 export 'vocabulary_flash_card_page.dart';
+export 'resource_detail_page.dart';

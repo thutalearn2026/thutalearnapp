@@ -1,32 +1,187 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
 
-class LessonDetailPage extends StatefulWidget {
-  final ModuleLessonItem lesson;
+class LessonDetailPage extends StatelessWidget {
+  final LessonDetailArgs args;
 
   const LessonDetailPage({
     super.key,
-    required this.lesson,
+    required this.args,
   });
 
   @override
-  State<LessonDetailPage> createState() =>
-      _LessonDetailPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) {
+        return getIt<LessonDetailBloc>()
+          ..add(
+            OnGetLessonDetail(
+              chapterId: args.chapterId,
+              videoId: args.videoId,
+            ),
+          );
+      },
+      child: _LessonDetailView(
+        args: args,
+      ),
+    );
+  }
 }
 
-class _LessonDetailPageState extends State<LessonDetailPage> {
+class _LessonDetailView extends StatefulWidget {
+  final LessonDetailArgs args;
+
+  const _LessonDetailView({
+    required this.args,
+  });
+
+  @override
+  State<_LessonDetailView> createState() {
+    return _LessonDetailViewState();
+  }
+}
+
+class _LessonDetailViewState
+    extends State<_LessonDetailView> {
   bool _isFavorite = false;
+
+  void _retry() {
+    context.read<LessonDetailBloc>().add(
+      OnGetLessonDetail(
+        chapterId: widget.args.chapterId,
+        videoId: widget.args.videoId,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final lesson = widget.lesson;
+    return BlocBuilder<
+        LessonDetailBloc,
+        LessonDetailState
+    >(
+      builder: (context, state) {
+        if (state.isLoading && state.video == null) {
+          return const _LessonDetailLoadingPage();
+        }
 
+        if (state.status ==
+            LessonDetailStatus.failure &&
+            state.video == null) {
+          return _LessonDetailErrorPage(
+            message:
+            state.message ??
+                'Unable to load this lesson.',
+            onRetry: _retry,
+          );
+        }
+
+        final video = state.video;
+
+        if (video == null) {
+          return const SizedBox.shrink();
+        }
+
+        final title = video.title.trim().isEmpty
+            ? 'Untitled Lesson'
+            : video.title.trim();
+
+        return Scaffold(
+          backgroundColor:
+          ColorUtils.scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor:
+            ColorUtils.scaffoldBackgroundColor,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              onPressed: context.pop,
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: ColorUtils.primaryColor,
+              ),
+            ),
+            actions: [
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _isFavorite = !_isFavorite;
+                  });
+                },
+                icon: Icon(
+                  _isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  color: _isFavorite
+                      ? ColorUtils.secondaryColor
+                      : ColorUtils.primaryColor,
+                  size: 30,
+                ),
+              ),
+              8.gw,
+            ],
+          ),
+          body: TtFadeIn(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                32,
+              ),
+              children: [
+                TtText(
+                  title,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: ColorUtils.primaryColor,
+                ),
+                8.gh,
+                TtText(
+                  video.videoSource == null
+                      ? 'Video lesson'
+                      : '${video.videoSource!.toUpperCase()} video lesson',
+                  fontSize: 14,
+                  color: ColorUtils.greyTextColor,
+                ),
+                20.gh,
+                LessonVideoSectionView(
+                  video: video,
+                ),
+
+                // The endpoint currently does not return
+                // transcript, vocabulary or special notes.
+                // These sections can remain as existing
+                // placeholder UI until their APIs are ready.
+                20.gh,
+                const LessonTranscriptSectionView(),
+                24.gh,
+                const LessonVocabularySectionView(),
+                28.gh,
+                const LessonSpecialNotesView(),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LessonDetailLoadingPage extends StatelessWidget {
+  const _LessonDetailLoadingPage();
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorUtils.scaffoldBackgroundColor,
+      backgroundColor:
+      ColorUtils.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: ColorUtils.scaffoldBackgroundColor,
+        backgroundColor:
+        ColorUtils.scaffoldBackgroundColor,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -36,61 +191,92 @@ class _LessonDetailPageState extends State<LessonDetailPage> {
             color: ColorUtils.primaryColor,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _isFavorite = !_isFavorite;
-              });
-            },
-            icon: Icon(
-              _isFavorite
-                  ? Icons.favorite_rounded
-                  : Icons.favorite_border_rounded,
-              color: _isFavorite
-                  ? ColorUtils.secondaryColor
-                  : ColorUtils.primaryColor,
-              size: 30,
-            ),
-          ),
-          8.gw,
-        ],
       ),
-      body: TtFadeIn(
+      body: TtShimmer(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+          padding: const EdgeInsets.all(16),
           children: [
-            TtText(
-              lesson.title,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: ColorUtils.primaryColor,
+            Container(
+              width: 220,
+              height: 24,
+              color: Colors.white,
             ),
-            if (lesson.myanmarTitle.isNotEmpty) ...[
-              10.gh,
+            20.gh,
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius:
+                  BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LessonDetailErrorPage extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _LessonDetailErrorPage({
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor:
+      ColorUtils.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor:
+        ColorUtils.scaffoldBackgroundColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: context.pop,
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: ColorUtils.primaryColor,
+          ),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.video_library_outlined,
+                size: 54,
+                color: ColorUtils.greyTextColor,
+              ),
+              14.gh,
               TtText(
-                lesson.myanmarTitle,
+                message,
                 fontSize: 14,
-                family: TtFontFamily.myanmar_mn,
-                color: ColorUtils.primaryColor,
+                height: 1.4,
+                color: ColorUtils.greyTextColor,
+                textAlign: TextAlign.center,
+              ),
+              18.gh,
+              TtButton(
+                onTap: onRetry,
+                child: const TtText(
+                  'Try Again',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
               ),
             ],
-            20.gh,
-            LessonVideoSectionView(
-              lessonNumber: lesson.lessonNumber,
-              currentDuration: '0:32',
-              totalDuration: lesson.duration,
-              onPlay: () {
-                // Initialize or play the video later.
-              },
-            ),
-            20.gh,
-            const LessonTranscriptSectionView(),
-            24.gh,
-            const LessonVocabularySectionView(),
-            28.gh,
-            const LessonSpecialNotesView(),
-          ],
+          ),
         ),
       ),
     );

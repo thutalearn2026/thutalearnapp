@@ -1,28 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
 
-class ModuleDetailPage extends StatefulWidget {
-  final LearnModuleItem module;
+class ModuleDetailPage extends StatelessWidget {
+  final ModuleDetailArgs args;
 
   const ModuleDetailPage({
     super.key,
-    required this.module,
+    required this.args,
   });
 
   @override
-  State<ModuleDetailPage> createState() =>
-      _ModuleDetailPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) {
+        return getIt<ModuleDetailBloc>()..add(
+          OnGetModuleDetail(
+            courseId: args.courseId,
+            moduleId: args.moduleId,
+          ),
+        );
+      },
+      child: _ModuleDetailView(
+        args: args,
+      ),
+    );
+  }
 }
 
-class _ModuleDetailPageState extends State<ModuleDetailPage>
+class _ModuleDetailView extends StatefulWidget {
+  final ModuleDetailArgs args;
+
+  const _ModuleDetailView({
+    required this.args,
+  });
+
+  @override
+  State<_ModuleDetailView> createState() {
+    return _ModuleDetailViewState();
+  }
+}
+
+class _ModuleDetailViewState extends State<_ModuleDetailView>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
   int _selectedTabIndex = 0;
 
-  bool get _isLessonsTab => _selectedTabIndex == 0;
+  bool get _isLessonsTab {
+    return _selectedTabIndex == 0;
+  }
 
   @override
   void initState() {
@@ -33,24 +62,130 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
       vsync: this,
     );
 
-    _tabController.addListener(_handleTabChanged);
+    _tabController.addListener(
+      _handleTabChanged,
+    );
   }
 
   void _handleTabChanged() {
-    if (_selectedTabIndex != _tabController.index) {
-      setState(() {
-        _selectedTabIndex = _tabController.index;
-      });
+    if (_selectedTabIndex == _tabController.index) {
+      return;
+    }
+
+    final selectedIndex = _tabController.index;
+
+    setState(() {
+      _selectedTabIndex = selectedIndex;
+    });
+
+    if (selectedIndex == 2) {
+      final state = context.read<ModuleDetailBloc>().state;
+
+      if (state.chapters.isNotEmpty) {
+        _loadChapterResources(
+          state.chapters.first,
+        );
+      }
     }
   }
 
   void _handleSecondaryAction() {
     if (_isLessonsTab) {
-      // Open the overview video.
+      // Overview video integration later.
       return;
     }
 
     context.push(Routes.quiz);
+  }
+
+  void _loadChapterVideos(
+    ChapterModel chapter,
+  ) {
+    if (chapter.videosCount == 0) {
+      return;
+    }
+
+    context.read<ModuleDetailBloc>().add(
+      OnGetChapterVideos(
+        chapterId: chapter.id,
+      ),
+    );
+  }
+
+  void _loadChapterResources(
+    ChapterModel chapter,
+  ) {
+    context.read<ModuleDetailBloc>().add(
+      OnGetChapterResources(
+        chapterId: chapter.id,
+      ),
+    );
+  }
+
+  ({
+    ChapterModel chapter,
+    ChapterVideoModel video,
+  })?
+  _firstAvailableVideo(
+    ModuleDetailState state,
+  ) {
+    for (final chapter in state.chapters) {
+      final videos = state.videosByChapter[chapter.id];
+
+      if (videos != null && videos.isNotEmpty) {
+        return (
+          chapter: chapter,
+          video: videos.first,
+        );
+      }
+    }
+
+    return null;
+  }
+
+  void _openVideo(
+    ChapterModel chapter,
+    ChapterVideoModel video,
+  ) {
+    context.push(
+      Routes.lessonDetail,
+      extra: LessonDetailArgs(
+        chapterId: chapter.id,
+        videoId: video.id,
+      ),
+    );
+  }
+
+  void _handleResume(
+    ModuleDetailState state,
+  ) {
+    final firstLesson = _firstAvailableVideo(state);
+
+    if (firstLesson != null) {
+      _openVideo(
+        firstLesson.chapter,
+        firstLesson.video,
+      );
+      return;
+    }
+
+    ChapterModel? firstChapterWithVideos;
+
+    for (final chapter in state.chapters) {
+      if (chapter.videosCount > 0) {
+        firstChapterWithVideos = chapter;
+        break;
+      }
+    }
+
+    if (firstChapterWithVideos != null) {
+      _loadChapterVideos(firstChapterWithVideos);
+
+      context.showSnackBar(
+        'Loading the first video...',
+        snackBarType: SnackBarType.info,
+      );
+    }
   }
 
   @override
@@ -61,6 +196,216 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
 
     super.dispose();
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ModuleDetailBloc, ModuleDetailState>(
+      builder: (context, state) {
+        if (state.isLoading && state.module == null) {
+          return const _ModuleLoadingPage();
+        }
+
+        if (state.status == ModuleDetailStatus.failure && state.module == null) {
+          return _ModuleErrorPage(
+            message: state.message ?? 'Unable to load this module.',
+            onRetry: () {
+              context.read<ModuleDetailBloc>().add(
+                OnGetModuleDetail(
+                  courseId: widget.args.courseId,
+                  moduleId: widget.args.moduleId,
+                ),
+              );
+            },
+          );
+        }
+
+        final module = state.module;
+
+        if (module == null) {
+          return const SizedBox.shrink();
+        }
+
+        final headerModule = LearnModuleItem(
+          id: module.id,
+          slug: module.slug,
+          moduleNumber: widget.args.moduleNumber,
+          title: module.title,
+          description:
+              '${module.chaptersCount} chapter'
+              '${module.chaptersCount == 1 ? '' : 's'} '
+              'available in this module.',
+          status: LearnModuleStatus.inProgress,
+          progress: 0,
+        );
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            backgroundColor: ColorUtils.primaryColor,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              onPressed: context.pop,
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          body: TtFadeIn(
+            child: NestedScrollView(
+              headerSliverBuilder:
+                  (
+                    context,
+                    innerBoxIsScrolled,
+                  ) {
+                    return [
+                      SliverToBoxAdapter(
+                        child: ModuleDetailHeader(
+                          module: headerModule,
+                          videoCount: state.totalVideoCount,
+                          onResume: () {
+                            _handleResume(state);
+                          },
+                          secondaryActionLabel: _isLessonsTab ? 'Overview' : 'Take Quiz',
+                          secondaryActionIcon: _isLessonsTab
+                              ? Icons.play_arrow_rounded
+                              : Icons.lightbulb_outline_rounded,
+                          onSecondaryAction: _handleSecondaryAction,
+                        ),
+                      ),
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: ModuleTabBarDelegate(
+                          tabBar: TabBar(
+                            controller: _tabController,
+                            labelColor: ColorUtils.primaryColor,
+                            unselectedLabelColor: ColorUtils.primaryColor,
+                            labelStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            unselectedLabelStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            indicatorColor: ColorUtils.secondaryColor,
+                            indicatorWeight: 3,
+                            dividerColor: const Color(
+                              0xFFE6E9ED,
+                            ),
+                            tabs: const [
+                              Tab(text: 'Lessons'),
+                              Tab(text: 'Practice'),
+                              Tab(text: 'Resources'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ];
+                  },
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  ModuleLessonsTabView(
+                    chapters: state.chapters,
+                    videosByChapter: state.videosByChapter,
+                    loadingChapterIds: state.loadingChapterIds,
+                    chapterVideoErrors: state.chapterVideoErrors,
+                    onChapterExpanded: _loadChapterVideos,
+                    onRetryChapter: _loadChapterVideos,
+                    onVideoTap: _openVideo,
+                    onVideoDownload: (video) {
+                      // Actual download implementation will be
+                      // added later.
+                      context.showSnackBar(
+                        'Video download will be available soon.',
+                        snackBarType: SnackBarType.info,
+                      );
+                    },
+                  ),
+                  const ModulePracticeTabView(),
+                  ModuleResourcesTabView(
+                    chapters: state.chapters,
+                    resourcesByChapter:
+                    state.resourcesByChapter,
+                    loadingChapterIds:
+                    state.loadingResourceChapterIds,
+                    chapterErrors:
+                    state.chapterResourceErrors,
+                    onChapterExpanded: _loadChapterResources,
+                    onRetryChapter: _loadChapterResources,
+                    onResourceTap: _openResource,
+                    onDownload: (resource) {
+                      context.showSnackBar(
+                        '${resource.title} download will be available soon.',
+                        snackBarType: SnackBarType.info,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openResource(
+    ChapterModel chapter,
+    ChapterResourceModel resource,
+  ) {
+    context.push(
+      Routes.resourceDetail,
+      extra: ResourceDetailArgs(
+        chapterId: chapter.id,
+        resourceId: resource.id,
+      ),
+    );
+  }
+}
+
+class ModuleTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
+
+  ModuleTabBarDelegate({
+    required this.tabBar,
+  });
+
+  @override
+  double get minExtent {
+    return tabBar.preferredSize.height;
+  }
+
+  @override
+  double get maxExtent {
+    return tabBar.preferredSize.height;
+  }
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Material(
+      color: Colors.white,
+      elevation: overlapsContent ? 2 : 0,
+      child: tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(
+    ModuleTabBarDelegate oldDelegate,
+  ) {
+    return oldDelegate.tabBar != tabBar;
+  }
+}
+
+class _ModuleLoadingPage extends StatelessWidget {
+  const _ModuleLoadingPage();
 
   @override
   Widget build(BuildContext context) {
@@ -78,92 +423,118 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
           ),
         ),
       ),
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverToBoxAdapter(
-              child: ModuleDetailHeader(
-                module: widget.module,
-                onResume: () {
-                  // Resume the current lesson.
-                },
-                secondaryActionLabel:
-                _isLessonsTab ? 'Overview' : 'Take Quiz',
-                secondaryActionIcon: _isLessonsTab
-                    ? Icons.play_arrow_rounded
-                    : Icons.lightbulb_outline_rounded,
-                onSecondaryAction: _handleSecondaryAction,
+      body: TtFadeIn(
+        child: TtShimmer(
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                height: 360,
+                color: Colors.white,
               ),
-            ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: ModuleTabBarDelegate(
-                tabBar: TabBar(
-                  controller: _tabController,
-                  labelColor: ColorUtils.primaryColor,
-                  unselectedLabelColor:
-                  ColorUtils.primaryColor,
-                  labelStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  unselectedLabelStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  indicatorColor: ColorUtils.secondaryColor,
-                  indicatorWeight: 3,
-                  dividerColor: const Color(0xFFE6E9ED),
-                  tabs: const [
-                    Tab(text: 'Lessons'),
-                    Tab(text: 'Practice'),
-                    Tab(text: 'Resources'),
-                  ],
+              const SizedBox(height: 2),
+              Container(
+                width: double.infinity,
+                height: 50,
+                color: Colors.white,
+              ),
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: 3,
+                  separatorBuilder: (_, __) {
+                    return 14.gh;
+                  },
+                  itemBuilder: (_, __) {
+                    return Container(
+                      height: 90,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
-          ];
-        },
-        body: TabBarView(
-          controller: _tabController,
-          children: const [
-            ModuleLessonsTabView(),
-            ModulePracticeTabView(),
-            ModuleResourcesTabView(),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class ModuleTabBarDelegate
-    extends SliverPersistentHeaderDelegate {
-  final TabBar tabBar;
+class _ModuleErrorPage extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
 
-  ModuleTabBarDelegate({required this.tabBar});
-
-  @override
-  double get minExtent => tabBar.preferredSize.height;
-
-  @override
-  double get maxExtent => tabBar.preferredSize.height;
+  const _ModuleErrorPage({
+    required this.message,
+    required this.onRetry,
+  });
 
   @override
-  Widget build(
-      BuildContext context,
-      double shrinkOffset,
-      bool overlapsContent,
-      ) {
-    return Material(
-      color: Colors.white,
-      elevation: overlapsContent ? 2 : 0,
-      child: tabBar,
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: ColorUtils.primaryColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: context.pop,
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.cloud_off_outlined,
+                size: 56,
+                color: ColorUtils.greyTextColor,
+              ),
+              16.gh,
+              const TtText(
+                'Could not load this module',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                textAlign: TextAlign.center,
+              ),
+              8.gh,
+              TtText(
+                message,
+                fontSize: 14,
+                height: 1.4,
+                color: ColorUtils.greyTextColor,
+                textAlign: TextAlign.center,
+              ),
+              20.gh,
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorUtils.primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                ),
+                label: const TtText(
+                  'Try Again',
+                  fontSize: 14,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
-  }
-
-  @override
-  bool shouldRebuild(ModuleTabBarDelegate oldDelegate) {
-    return oldDelegate.tabBar != tabBar;
   }
 }

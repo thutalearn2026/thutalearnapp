@@ -99,10 +99,10 @@ class RouteClass {
     GoRoute(
       path: Routes.moduleDetail,
       builder: (context, state) {
-        final module = state.extra as LearnModuleItem;
+        final args = state.extra as ModuleDetailArgs;
 
         return ModuleDetailPage(
-          module: module,
+          args: args,
         );
       },
     ),
@@ -110,10 +110,10 @@ class RouteClass {
     GoRoute(
       path: Routes.lessonDetail,
       builder: (context, state) {
-        final lesson = state.extra as ModuleLessonItem;
+        final args = state.extra as LessonDetailArgs;
 
         return LessonDetailPage(
-          lesson: lesson,
+          args: args,
         );
       },
     ),
@@ -193,6 +193,17 @@ class RouteClass {
         return const SplashPage();
       },
     ),
+
+    GoRoute(
+      path: Routes.resourceDetail,
+      builder: (context, state) {
+        final args = state.extra as ResourceDetailArgs;
+
+        return ResourceDetailPage(
+          args: args,
+        );
+      },
+    ),
   ];
 }
 
@@ -230,4 +241,6 @@ class Routes {
   static const search = '/search';
   static const searchResults = '/search-results';
   static const splash = '/splash';
+
+  static const resourceDetail = '/resource-detail';
 }

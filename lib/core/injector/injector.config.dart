@@ -43,6 +43,12 @@ import '../../features/learn/presentation/blocs/course_detail/course_detail_bloc
     as _i678;
 import '../../features/learn/presentation/blocs/courses/courses_bloc.dart'
     as _i335;
+import '../../features/learn/presentation/blocs/lesson_detail/lesson_detail_bloc.dart'
+    as _i66;
+import '../../features/learn/presentation/blocs/module_detail/module_detail_bloc.dart'
+    as _i529;
+import '../../features/learn/presentation/blocs/resource_detail/resource_detail_bloc.dart'
+    as _i897;
 import '../../features/onboarding/data/data_sources/remote/i_onboarding_client.dart'
     as _i865;
 import '../../features/onboarding/data/repo/i_onboarding_repo.dart' as _i827;
@@ -170,6 +176,15 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i335.CoursesBloc>(
     () => _i335.CoursesBloc(learnUseCase: gh<_i592.LearnUseCase>()),
+  );
+  gh.factory<_i66.LessonDetailBloc>(
+    () => _i66.LessonDetailBloc(learnUseCase: gh<_i592.LearnUseCase>()),
+  );
+  gh.factory<_i529.ModuleDetailBloc>(
+    () => _i529.ModuleDetailBloc(learnUseCase: gh<_i592.LearnUseCase>()),
+  );
+  gh.factory<_i897.ResourceDetailBloc>(
+    () => _i897.ResourceDetailBloc(learnUseCase: gh<_i592.LearnUseCase>()),
   );
   gh.factory<_i430.AccountSetUpBloc>(
     () => _i430.AccountSetUpBloc(
