@@ -98,4 +98,32 @@ class LearnUseCase {
       resourceId: resourceId,
     );
   }
+
+  Future<Either<Failure, ChapterQuizzesResponse>> getChapterQuizzes({
+    required String chapterId,
+  }) {
+    return learnRepo.getChapterQuizzes(
+      chapterId: chapterId,
+    );
+  }
+
+  Future<Either<Failure, QuizDetailResponse>> getQuizDetail({
+    required String chapterId,
+    required String quizId,
+  }) {
+    return learnRepo.getQuizDetail(
+      chapterId: chapterId,
+      quizId: quizId,
+    );
+  }
+
+  Future<Either<Failure, QuizAttemptResponse>> submitQuizAttempt({
+    required String quizId,
+    required QuizAttemptRequest request,
+  }) {
+    return learnRepo.submitQuizAttempt(
+      quizId: quizId,
+      request: request,
+    );
+  }
 }

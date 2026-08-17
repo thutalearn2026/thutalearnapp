@@ -47,4 +47,17 @@ abstract class LearnRepo {
     required String resourceId,
   });
 
+  Future<Either<Failure, ChapterQuizzesResponse>> getChapterQuizzes({
+    required String chapterId,
+  });
+
+  Future<Either<Failure, QuizDetailResponse>> getQuizDetail({
+    required String chapterId,
+    required String quizId,
+  });
+
+  Future<Either<Failure, QuizAttemptResponse>> submitQuizAttempt({
+    required String quizId,
+    required QuizAttemptRequest request,
+  });
 }

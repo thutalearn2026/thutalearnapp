@@ -1,69 +1,149 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:injectable/injectable.dart';
+import 'package:meta/meta.dart';
+import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
 
 part 'quiz_event.dart';
 part 'quiz_state.dart';
 
+@Injectable()
 class QuizBloc extends Bloc<QuizEvent, QuizState> {
+  final LearnUseCase learnUseCase;
+
   QuizBloc({
-    required List<QuizQuestion> questions,
-  }) : super(
-    QuizState(
-      questions: questions,
-      currentQuestionIndex: 0,
-      score: 0,
-      status: QuizStatus.inProgress,
-    ),
-  ) {
+    required this.learnUseCase,
+  }) : super(const QuizState()) {
+    on<OnGetQuizDetail>(_onGetQuizDetail);
     on<QuizAnswerSelected>(_onAnswerSelected);
     on<QuizContinuePressed>(_onContinuePressed);
+    on<QuizSubmitPressed>(_onSubmitPressed);
     on<QuizAudioPressed>(_onAudioPressed);
     on<QuizRestartPressed>(_onRestartPressed);
   }
 
-  Future<void> _onAnswerSelected(
-      QuizAnswerSelected event,
+  Future<void> _onGetQuizDetail(
+      OnGetQuizDetail event,
       Emitter<QuizState> emit,
       ) async {
-    if (state.hasAnswered) {
+    if (state.isLoading) {
       return;
     }
 
-    final isCorrect =
-        state.currentQuestion.correctOptionIndex ==
-            event.optionIndex;
+    emit(
+      state.copyWith(
+        status: QuizStatus.loading,
+        clearMessage: true,
+      ),
+    );
+
+    final result = await learnUseCase.getQuizDetail(
+      chapterId: event.chapterId,
+      quizId: event.quizId,
+    );
+
+    result.fold(
+          (failure) {
+        emit(
+          state.copyWith(
+            status: QuizStatus.failure,
+            message: _failureMessage(failure),
+          ),
+        );
+      },
+          (response) {
+        final questions = response.data.questions
+            .map(
+              (question) {
+            final options = [...question.options]
+              ..sort(
+                    (first, second) {
+                  return first.sortOrder.compareTo(
+                    second.sortOrder,
+                  );
+                },
+              );
+
+            return QuizQuestionModel(
+              id: question.id,
+              question: question.question,
+              audioFile: question.audioFile,
+              sortOrder: question.sortOrder,
+              options: options,
+            );
+          },
+        )
+            .toList()
+          ..sort(
+                (first, second) {
+              return first.sortOrder.compareTo(
+                second.sortOrder,
+              );
+            },
+          );
+
+        if (questions.isEmpty) {
+          emit(
+            state.copyWith(
+              status: QuizStatus.failure,
+              message:
+              'This quiz does not contain any questions.',
+            ),
+          );
+
+          return;
+        }
+
+        final quiz = QuizDetailModel(
+          id: response.data.id,
+          title: response.data.title,
+          type: response.data.type,
+          questions: questions,
+        );
+
+        emit(
+          QuizState(
+            status: QuizStatus.inProgress,
+            quiz: quiz,
+          ),
+        );
+      },
+    );
+  }
+
+  void _onAnswerSelected(
+      QuizAnswerSelected event,
+      Emitter<QuizState> emit,
+      ) {
+    if (state.isSubmitting ||
+        state.status != QuizStatus.inProgress) {
+      return;
+    }
+
+    final updatedAnswers = {
+      ...state.selectedAnswers,
+      event.questionId: event.optionId,
+    };
 
     emit(
       state.copyWith(
-        selectedOptionIndex: event.optionIndex,
-        score: isCorrect ? state.score + 1 : state.score,
+        selectedAnswers: updatedAnswers,
         isAudioPlaying: false,
       ),
     );
   }
 
-  Future<void> _onContinuePressed(
+  void _onContinuePressed(
       QuizContinuePressed event,
       Emitter<QuizState> emit,
-      ) async {
-    if (!state.hasAnswered) {
-      return;
-    }
+      ) {
+    final question = state.currentQuestion;
 
-    final isLastQuestion =
-        state.currentQuestionIndex ==
-            state.questions.length - 1;
-
-    if (isLastQuestion) {
-      emit(
-        state.copyWith(
-          status: QuizStatus.completed,
-          isAudioPlaying: false,
-        ),
-      );
-
+    if (question == null ||
+        state.selectedAnswers[question.id] == null ||
+        state.isLastQuestion) {
       return;
     }
 
@@ -71,17 +151,78 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
       state.copyWith(
         currentQuestionIndex:
         state.currentQuestionIndex + 1,
-        clearSelectedOption: true,
         isAudioPlaying: false,
       ),
     );
   }
 
-  Future<void> _onAudioPressed(
-      QuizAudioPressed event,
+  Future<void> _onSubmitPressed(
+      QuizSubmitPressed event,
       Emitter<QuizState> emit,
       ) async {
-    if (state.hasAnswered) {
+    final quiz = state.quiz;
+    final question = state.currentQuestion;
+
+    if (quiz == null ||
+        question == null ||
+        state.selectedAnswers[question.id] == null ||
+        state.isSubmitting) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        status: QuizStatus.submitting,
+        clearMessage: true,
+        isAudioPlaying: false,
+      ),
+    );
+
+    final answers = state.selectedAnswers.entries
+        .map(
+          (entry) {
+        return QuizAttemptAnswerRequest(
+          questionId: entry.key,
+          optionId: entry.value,
+        );
+      },
+    )
+        .toList();
+
+    final result =
+    await learnUseCase.submitQuizAttempt(
+      quizId: quiz.id,
+      request: QuizAttemptRequest(
+        answers: answers,
+      ),
+    );
+
+    result.fold(
+          (failure) {
+        emit(
+          state.copyWith(
+            status: QuizStatus.inProgress,
+            message: _failureMessage(failure),
+          ),
+        );
+      },
+          (response) {
+        emit(
+          state.copyWith(
+            status: QuizStatus.completed,
+            attempt: response.data,
+            clearMessage: true,
+          ),
+        );
+      },
+    );
+  }
+
+  void _onAudioPressed(
+      QuizAudioPressed event,
+      Emitter<QuizState> emit,
+      ) {
+    if (state.currentQuestion?.audioFile == null) {
       return;
     }
 
@@ -91,20 +232,39 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
       ),
     );
 
-    // Connect your audio player here later.
+    // Connect the actual audio player package here.
   }
 
-  Future<void> _onRestartPressed(
+  void _onRestartPressed(
       QuizRestartPressed event,
       Emitter<QuizState> emit,
-      ) async {
+      ) {
+    final quiz = state.quiz;
+
+    if (quiz == null) {
+      return;
+    }
+
     emit(
       QuizState(
-        questions: state.questions,
-        currentQuestionIndex: 0,
-        score: 0,
         status: QuizStatus.inProgress,
+        quiz: quiz,
       ),
     );
+  }
+
+  String _failureMessage(Failure failure) {
+    if (failure is ConnectionFailure) {
+      return 'Please check your internet connection and try again.';
+    }
+
+    final message = failure.e?.toString();
+
+    if (message == null ||
+        message.trim().isEmpty) {
+      return 'Something went wrong. Please try again.';
+    }
+
+    return message;
   }
 }

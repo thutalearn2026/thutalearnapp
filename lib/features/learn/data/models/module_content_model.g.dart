@@ -171,3 +171,35 @@ ChapterResourceDetailResponse _$ChapterResourceDetailResponseFromJson(
 Map<String, dynamic> _$ChapterResourceDetailResponseToJson(
   ChapterResourceDetailResponse instance,
 ) => <String, dynamic>{'data': instance.data};
+
+ChapterQuizModel _$ChapterQuizModelFromJson(Map<String, dynamic> json) =>
+    ChapterQuizModel(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      type: json['type'] as String,
+      status: json['status'] as String,
+      sortOrder: (json['sort_order'] as num).toInt(),
+      questionsCount: (json['questions_count'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$ChapterQuizModelToJson(ChapterQuizModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'title': instance.title,
+      'type': instance.type,
+      'status': instance.status,
+      'sort_order': instance.sortOrder,
+      'questions_count': instance.questionsCount,
+    };
+
+ChapterQuizzesResponse _$ChapterQuizzesResponseFromJson(
+  Map<String, dynamic> json,
+) => ChapterQuizzesResponse(
+  data: (json['data'] as List<dynamic>)
+      .map((e) => ChapterQuizModel.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
+
+Map<String, dynamic> _$ChapterQuizzesResponseToJson(
+  ChapterQuizzesResponse instance,
+) => <String, dynamic>{'data': instance.data};

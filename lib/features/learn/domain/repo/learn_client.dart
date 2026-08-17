@@ -43,4 +43,20 @@ abstract class LearnClient {
     required String chapterId,
     required String resourceId,
   });
+
+  Future<ChapterQuizzesResponse> getChapterQuizzes({
+    required String chapterId,
+  });
+
+  Future<QuizDetailResponse> getQuizDetail({
+    required String chapterId,
+    required String quizId,
+  });
+
+  Future<QuizAttemptResponse> submitQuizAttempt({
+    required String quizId,
+    required QuizAttemptRequest request,
+  });
+
+
 }

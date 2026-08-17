@@ -29,3 +29,12 @@ class OnGetChapterResources
     required this.chapterId,
   });
 }
+
+class OnGetChapterQuizzes
+    extends ModuleDetailEvent {
+  final String chapterId;
+
+  OnGetChapterQuizzes({
+    required this.chapterId,
+  });
+}

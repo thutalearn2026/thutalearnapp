@@ -130,9 +130,25 @@ abstract class RestClient {
   );
 
   @GET('chapters/{chapter}/resources/{resource}')
-  Future<ChapterResourceDetailResponse>
-  getChapterResourceDetail(
-      @Path('chapter') String chapterId,
-      @Path('resource') String resourceId,
-      );
+  Future<ChapterResourceDetailResponse> getChapterResourceDetail(
+    @Path('chapter') String chapterId,
+    @Path('resource') String resourceId,
+  );
+
+  @GET('chapters/{chapter}/quizzes')
+  Future<ChapterQuizzesResponse> getChapterQuizzes(
+    @Path('chapter') String chapterId,
+  );
+
+  @GET('chapters/{chapter}/quizzes/{quiz}')
+  Future<QuizDetailResponse> getQuizDetail(
+    @Path('chapter') String chapterId,
+    @Path('quiz') String quizId,
+  );
+
+  @POST('quizzes/{quiz}/attempts')
+  Future<QuizAttemptResponse> submitQuizAttempt(
+    @Path('quiz') String quizId,
+    @Body() QuizAttemptRequest request,
+  );
 }

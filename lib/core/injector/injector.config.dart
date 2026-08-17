@@ -47,6 +47,7 @@ import '../../features/learn/presentation/blocs/lesson_detail/lesson_detail_bloc
     as _i66;
 import '../../features/learn/presentation/blocs/module_detail/module_detail_bloc.dart'
     as _i529;
+import '../../features/learn/presentation/blocs/quiz/quiz_bloc.dart' as _i715;
 import '../../features/learn/presentation/blocs/resource_detail/resource_detail_bloc.dart'
     as _i897;
 import '../../features/onboarding/data/data_sources/remote/i_onboarding_client.dart'
@@ -182,6 +183,9 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i529.ModuleDetailBloc>(
     () => _i529.ModuleDetailBloc(learnUseCase: gh<_i592.LearnUseCase>()),
+  );
+  gh.factory<_i715.QuizBloc>(
+    () => _i715.QuizBloc(learnUseCase: gh<_i592.LearnUseCase>()),
   );
   gh.factory<_i897.ResourceDetailBloc>(
     () => _i897.ResourceDetailBloc(learnUseCase: gh<_i592.LearnUseCase>()),

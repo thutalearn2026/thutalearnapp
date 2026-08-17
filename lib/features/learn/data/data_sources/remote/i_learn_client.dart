@@ -102,4 +102,35 @@ class ILearnClient implements LearnClient {
       resourceId,
     );
   }
+
+  @override
+  Future<ChapterQuizzesResponse> getChapterQuizzes({
+    required String chapterId,
+  }) {
+    return client.getChapterQuizzes(
+      chapterId,
+    );
+  }
+
+  @override
+  Future<QuizDetailResponse> getQuizDetail({
+    required String chapterId,
+    required String quizId,
+  }) {
+    return client.getQuizDetail(
+      chapterId,
+      quizId,
+    );
+  }
+
+  @override
+  Future<QuizAttemptResponse> submitQuizAttempt({
+    required String quizId,
+    required QuizAttemptRequest request,
+  }) {
+    return client.submitQuizAttempt(
+      quizId,
+      request,
+    );
+  }
 }

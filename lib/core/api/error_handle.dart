@@ -41,6 +41,8 @@ class ErrorHandle extends Interceptor {
 
       case DioExceptionType.connectionError:
         throw NoInternetConnectionException(err.requestOptions);
+      case DioExceptionType.transformTimeout:
+        throw NoInternetConnectionException(err.requestOptions);
     }
 
 

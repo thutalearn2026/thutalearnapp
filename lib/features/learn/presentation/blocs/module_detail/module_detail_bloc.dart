@@ -10,8 +10,7 @@ part 'module_detail_event.dart';
 part 'module_detail_state.dart';
 
 @Injectable()
-class ModuleDetailBloc
-    extends Bloc<ModuleDetailEvent, ModuleDetailState> {
+class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
   final LearnUseCase learnUseCase;
 
   ModuleDetailBloc({
@@ -19,15 +18,14 @@ class ModuleDetailBloc
   }) : super(const ModuleDetailState()) {
     on<OnGetModuleDetail>(_onGetModuleDetail);
     on<OnGetChapterVideos>(_onGetChapterVideos);
-    on<OnGetChapterResources>(
-      _onGetChapterResources,
-    );
+    on<OnGetChapterResources>(_onGetChapterResources);
+    on<OnGetChapterQuizzes>(_onGetChapterQuizzes);
   }
 
   Future<void> _onGetModuleDetail(
-      OnGetModuleDetail event,
-      Emitter<ModuleDetailState> emit,
-      ) async {
+    OnGetModuleDetail event,
+    Emitter<ModuleDetailState> emit,
+  ) async {
     if (state.isLoading) return;
 
     emit(
@@ -37,14 +35,12 @@ class ModuleDetailBloc
       ),
     );
 
-    final moduleFuture =
-    learnUseCase.getModuleDetail(
+    final moduleFuture = learnUseCase.getModuleDetail(
       courseId: event.courseId,
       moduleId: event.moduleId,
     );
 
-    final chaptersFuture =
-    learnUseCase.getModuleChapters(
+    final chaptersFuture = learnUseCase.getModuleChapters(
       moduleId: event.moduleId,
     );
 
@@ -56,22 +52,22 @@ class ModuleDetailBloc
     List<ChapterModel> chapters = [];
 
     moduleResult.fold(
-          (failure) {
+      (failure) {
         requestFailure = failure;
       },
-          (response) {
+      (response) {
         module = response.data;
       },
     );
 
     chaptersResult.fold(
-          (failure) {
+      (failure) {
         requestFailure ??= failure;
       },
-          (response) {
+      (response) {
         chapters = [...response.data]
           ..sort(
-                (first, second) {
+            (first, second) {
               return first.rank.compareTo(second.rank);
             },
           );
@@ -102,6 +98,9 @@ class ModuleDetailBloc
         resourcesByChapter: const {},
         loadingResourceChapterIds: const {},
         chapterResourceErrors: const {},
+        quizzesByChapter: const {},
+        loadingQuizChapterIds: const {},
+        chapterQuizErrors: const {},
         clearMessage: true,
       ),
     );
@@ -120,12 +119,12 @@ class ModuleDetailBloc
   }
 
   Future<void> _onGetChapterVideos(
-      OnGetChapterVideos event,
-      Emitter<ModuleDetailState> emit,
-      ) async {
+    OnGetChapterVideos event,
+    Emitter<ModuleDetailState> emit,
+  ) async {
     if (state.loadingChapterIds.contains(
-      event.chapterId,
-    ) ||
+          event.chapterId,
+        ) ||
         state.videosByChapter.containsKey(
           event.chapterId,
         )) {
@@ -153,7 +152,7 @@ class ModuleDetailBloc
     );
 
     result.fold(
-          (failure) {
+      (failure) {
         final updatedLoadingIds = {
           ...state.loadingChapterIds,
         }..remove(event.chapterId);
@@ -170,10 +169,10 @@ class ModuleDetailBloc
           ),
         );
       },
-          (response) {
+      (response) {
         final videos = [...response.data]
           ..sort(
-                (first, second) {
+            (first, second) {
               return first.rank.compareTo(second.rank);
             },
           );
@@ -198,14 +197,14 @@ class ModuleDetailBloc
   }
 
   Future<void> _onGetChapterResources(
-      OnGetChapterResources event,
-      Emitter<ModuleDetailState> emit,
-      ) async {
+    OnGetChapterResources event,
+    Emitter<ModuleDetailState> emit,
+  ) async {
     final chapterId = event.chapterId;
 
     if (state.loadingResourceChapterIds.contains(
-      chapterId,
-    ) ||
+          chapterId,
+        ) ||
         state.resourcesByChapter.containsKey(
           chapterId,
         )) {
@@ -228,13 +227,12 @@ class ModuleDetailBloc
       ),
     );
 
-    final result =
-    await learnUseCase.getChapterResources(
+    final result = await learnUseCase.getChapterResources(
       chapterId: chapterId,
     );
 
     result.fold(
-          (failure) {
+      (failure) {
         final updatedLoadingIds = {
           ...state.loadingResourceChapterIds,
         }..remove(chapterId);
@@ -246,16 +244,15 @@ class ModuleDetailBloc
 
         emit(
           state.copyWith(
-            loadingResourceChapterIds:
-            updatedLoadingIds,
+            loadingResourceChapterIds: updatedLoadingIds,
             chapterResourceErrors: updatedErrors,
           ),
         );
       },
-          (response) {
+      (response) {
         final resources = [...response.data]
           ..sort(
-                (first, second) {
+            (first, second) {
               return first.rank.compareTo(
                 second.rank,
               );
@@ -274,8 +271,7 @@ class ModuleDetailBloc
         emit(
           state.copyWith(
             resourcesByChapter: updatedResources,
-            loadingResourceChapterIds:
-            updatedLoadingIds,
+            loadingResourceChapterIds: updatedLoadingIds,
           ),
         );
       },
@@ -294,5 +290,90 @@ class ModuleDetailBloc
     }
 
     return message;
+  }
+
+  Future<void> _onGetChapterQuizzes(
+      OnGetChapterQuizzes event,
+      Emitter<ModuleDetailState> emit,
+      ) async {
+    final chapterId = event.chapterId;
+
+    if (state.loadingQuizChapterIds.contains(
+      chapterId,
+    ) ||
+        state.quizzesByChapter.containsKey(
+          chapterId,
+        )) {
+      return;
+    }
+
+    final loadingIds = {
+      ...state.loadingQuizChapterIds,
+      chapterId,
+    };
+
+    final errors = {
+      ...state.chapterQuizErrors,
+    }..remove(chapterId);
+
+    emit(
+      state.copyWith(
+        loadingQuizChapterIds: loadingIds,
+        chapterQuizErrors: errors,
+      ),
+    );
+
+    final result =
+    await learnUseCase.getChapterQuizzes(
+      chapterId: chapterId,
+    );
+
+    result.fold(
+          (failure) {
+        final updatedLoadingIds = {
+          ...state.loadingQuizChapterIds,
+        }..remove(chapterId);
+
+        final updatedErrors = {
+          ...state.chapterQuizErrors,
+          chapterId: _failureMessage(failure),
+        };
+
+        emit(
+          state.copyWith(
+            loadingQuizChapterIds:
+            updatedLoadingIds,
+            chapterQuizErrors: updatedErrors,
+          ),
+        );
+      },
+          (response) {
+        final quizzes = [...response.data]
+          ..sort(
+                (first, second) {
+              return first.sortOrder.compareTo(
+                second.sortOrder,
+              );
+            },
+          );
+
+        final updatedQuizzes = {
+          ...state.quizzesByChapter,
+          chapterId: quizzes,
+        };
+
+        final updatedLoadingIds = {
+          ...state.loadingQuizChapterIds,
+        }..remove(chapterId);
+
+        emit(
+          state.copyWith(
+            quizzesByChapter: updatedQuizzes,
+            loadingQuizChapterIds:
+            updatedLoadingIds,
+          ),
+        );
+      },
+    );
   }
 }

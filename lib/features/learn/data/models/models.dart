@@ -9,3 +9,4 @@ export 'pronunciation_drill_item.dart';
 export 'vocabulary_flash_card_item.dart';
 export 'module_chapter_item.dart';
 export 'module_content_model.dart';
+export 'quiz_api_model.dart';

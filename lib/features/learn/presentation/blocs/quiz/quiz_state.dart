@@ -1,38 +1,71 @@
 part of 'quiz_bloc.dart';
 
 enum QuizStatus {
+  initial,
+  loading,
   inProgress,
+  submitting,
   completed,
+  failure,
 }
 
 class QuizState {
-  final List<QuizQuestion> questions;
-  final int currentQuestionIndex;
-  final int? selectedOptionIndex;
-  final int score;
-  final bool isAudioPlaying;
   final QuizStatus status;
+  final QuizDetailModel? quiz;
+  final int currentQuestionIndex;
+
+  final Map<String, String> selectedAnswers;
+
+  final QuizAttemptResultModel? attempt;
+  final bool isAudioPlaying;
+  final String? message;
 
   const QuizState({
-    required this.questions,
-    required this.currentQuestionIndex,
-    required this.score,
-    required this.status,
-    this.selectedOptionIndex,
+    this.status = QuizStatus.initial,
+    this.quiz,
+    this.currentQuestionIndex = 0,
+    this.selectedAnswers = const {},
+    this.attempt,
     this.isAudioPlaying = false,
+    this.message,
   });
 
-  QuizQuestion get currentQuestion {
+  bool get isLoading {
+    return status == QuizStatus.loading;
+  }
+
+  bool get isSubmitting {
+    return status == QuizStatus.submitting;
+  }
+
+  List<QuizQuestionModel> get questions {
+    return quiz?.questions ?? const [];
+  }
+
+  QuizQuestionModel? get currentQuestion {
+    if (questions.isEmpty || currentQuestionIndex >= questions.length) {
+      return null;
+    }
+
     return questions[currentQuestionIndex];
   }
 
-  bool get hasAnswered {
-    return selectedOptionIndex != null;
+  String? get currentSelectedOptionId {
+    final question = currentQuestion;
+
+    if (question == null) {
+      return null;
+    }
+
+    return selectedAnswers[question.id];
   }
 
-  bool get selectedAnswerIsCorrect {
-    return selectedOptionIndex ==
-        currentQuestion.correctOptionIndex;
+  bool get hasSelectedCurrentAnswer {
+    return currentSelectedOptionId != null;
+  }
+
+  bool get isLastQuestion {
+    return questions.isNotEmpty && currentQuestionIndex == questions.length - 1;
   }
 
   double get progress {
@@ -44,24 +77,23 @@ class QuizState {
   }
 
   QuizState copyWith({
-    int? currentQuestionIndex,
-    int? selectedOptionIndex,
-    int? score,
-    bool? isAudioPlaying,
     QuizStatus? status,
-    bool clearSelectedOption = false,
+    QuizDetailModel? quiz,
+    int? currentQuestionIndex,
+    Map<String, String>? selectedAnswers,
+    QuizAttemptResultModel? attempt,
+    bool? isAudioPlaying,
+    String? message,
+    bool clearMessage = false,
   }) {
     return QuizState(
-      questions: questions,
-      currentQuestionIndex:
-      currentQuestionIndex ?? this.currentQuestionIndex,
-      selectedOptionIndex: clearSelectedOption
-          ? null
-          : selectedOptionIndex ?? this.selectedOptionIndex,
-      score: score ?? this.score,
-      isAudioPlaying:
-      isAudioPlaying ?? this.isAudioPlaying,
       status: status ?? this.status,
+      quiz: quiz ?? this.quiz,
+      currentQuestionIndex: currentQuestionIndex ?? this.currentQuestionIndex,
+      selectedAnswers: selectedAnswers ?? this.selectedAnswers,
+      attempt: attempt ?? this.attempt,
+      isAudioPlaying: isAudioPlaying ?? this.isAudioPlaying,
+      message: clearMessage ? null : message ?? this.message,
     );
   }
 }

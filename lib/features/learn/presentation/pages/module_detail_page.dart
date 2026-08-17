@@ -78,24 +78,52 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
       _selectedTabIndex = selectedIndex;
     });
 
-    if (selectedIndex == 2) {
-      final state = context.read<ModuleDetailBloc>().state;
+    final state =
+        context.read<ModuleDetailBloc>().state;
 
-      if (state.chapters.isNotEmpty) {
-        _loadChapterResources(
-          state.chapters.first,
-        );
-      }
+    if (state.chapters.isEmpty) {
+      return;
+    }
+
+    final firstChapter = state.chapters.first;
+
+    if (selectedIndex == 1) {
+      _loadChapterQuizzes(firstChapter);
+    } else if (selectedIndex == 2) {
+      _loadChapterResources(firstChapter);
     }
   }
 
-  void _handleSecondaryAction() {
+  void _handleSecondaryAction(
+      ModuleDetailState state,
+      ) {
     if (_isLessonsTab) {
       // Overview video integration later.
       return;
     }
 
-    context.push(Routes.quiz);
+    if (_selectedTabIndex != 1) {
+      return;
+    }
+
+    for (final chapter in state.chapters) {
+      final quizzes =
+      state.quizzesByChapter[chapter.id];
+
+      if (quizzes != null && quizzes.isNotEmpty) {
+        _openQuizType(
+          chapter,
+          quizzes.first,
+        );
+
+        return;
+      }
+    }
+
+    context.showSnackBar(
+      'Please select a quiz from the Practice tab.',
+      snackBarType: SnackBarType.info,
+    );
   }
 
   void _loadChapterVideos(
@@ -188,6 +216,63 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
     }
   }
 
+  void _loadChapterQuizzes(
+      ChapterModel chapter,
+      ) {
+    context.read<ModuleDetailBloc>().add(
+      OnGetChapterQuizzes(
+        chapterId: chapter.id,
+      ),
+    );
+  }
+
+  void _openQuizType(
+      ChapterModel chapter,
+      ChapterQuizModel quiz,
+      ) {
+    final type = quiz.type
+        .trim()
+        .toLowerCase()
+        .replaceAll('-', '_')
+        .replaceAll(' ', '_');
+
+    switch (type) {
+      case 'multiple_choice':
+      case 'listening':
+      case 'reading':
+        context.push(
+          Routes.quiz,
+          extra: QuizDetailArgs(
+            chapterId: chapter.id,
+            quizId: quiz.id,
+          ),
+        );
+        break;
+
+      case 'pronunciation':
+      case 'pronunciation_drill':
+        context.push(
+          Routes.pronunciationDrill,
+        );
+        break;
+
+      case 'vocabulary':
+      case 'vocab':
+      case 'flash_card':
+      case 'flash_cards':
+        context.push(
+          Routes.vocabularyFlashCards,
+        );
+        break;
+
+      default:
+        context.showSnackBar(
+          '${quiz.title} is not supported yet.',
+          snackBarType: SnackBarType.warning,
+        );
+    }
+  }
+
   @override
   void dispose() {
     _tabController
@@ -271,7 +356,9 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
                           secondaryActionIcon: _isLessonsTab
                               ? Icons.play_arrow_rounded
                               : Icons.lightbulb_outline_rounded,
-                          onSecondaryAction: _handleSecondaryAction,
+                          onSecondaryAction: () {
+                            _handleSecondaryAction(state);
+                          },
                         ),
                       ),
                       SliverPersistentHeader(
@@ -324,7 +411,18 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
                       );
                     },
                   ),
-                  const ModulePracticeTabView(),
+                  ModulePracticeTabView(
+                    chapters: state.chapters,
+                    quizzesByChapter:
+                    state.quizzesByChapter,
+                    loadingChapterIds:
+                    state.loadingQuizChapterIds,
+                    chapterErrors:
+                    state.chapterQuizErrors,
+                    onChapterExpanded: _loadChapterQuizzes,
+                    onRetryChapter: _loadChapterQuizzes,
+                    onQuizTap: _openQuizType,
+                  ),
                   ModuleResourcesTabView(
                     chapters: state.chapters,
                     resourcesByChapter:

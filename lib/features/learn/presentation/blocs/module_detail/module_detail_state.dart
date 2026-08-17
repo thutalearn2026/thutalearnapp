@@ -26,6 +26,12 @@ class ModuleDetailState {
 
   final String? message;
 
+  final Map<String, List<ChapterQuizModel>> quizzesByChapter;
+
+  final Set<String> loadingQuizChapterIds;
+
+  final Map<String, String> chapterQuizErrors;
+
   const ModuleDetailState({
     this.status = ModuleDetailStatus.initial,
     this.module,
@@ -36,6 +42,9 @@ class ModuleDetailState {
     this.resourcesByChapter = const {},
     this.loadingResourceChapterIds = const {},
     this.chapterResourceErrors = const {},
+    this.quizzesByChapter = const {},
+    this.loadingQuizChapterIds = const {},
+    this.chapterQuizErrors = const {},
     this.message,
   });
 
@@ -64,6 +73,9 @@ class ModuleDetailState {
     Map<String, String>? chapterResourceErrors,
     String? message,
     bool clearMessage = false,
+    Map<String, List<ChapterQuizModel>>? quizzesByChapter,
+    Set<String>? loadingQuizChapterIds,
+    Map<String, String>? chapterQuizErrors,
   }) {
     return ModuleDetailState(
       status: status ?? this.status,
@@ -76,6 +88,9 @@ class ModuleDetailState {
       loadingResourceChapterIds: loadingResourceChapterIds ?? this.loadingResourceChapterIds,
       chapterResourceErrors: chapterResourceErrors ?? this.chapterResourceErrors,
       message: clearMessage ? null : message ?? this.message,
+      quizzesByChapter: quizzesByChapter ?? this.quizzesByChapter,
+      loadingQuizChapterIds: loadingQuizChapterIds ?? this.loadingQuizChapterIds,
+      chapterQuizErrors: chapterQuizErrors ?? this.chapterQuizErrors,
     );
   }
 }

@@ -155,4 +155,41 @@ class ILearnRepo implements LearnRepo {
       ),
     );
   }
+
+  @override
+  Future<Either<Failure, ChapterQuizzesResponse>> getChapterQuizzes({
+    required String chapterId,
+  }) {
+    return _request(
+      () => client.getChapterQuizzes(
+        chapterId: chapterId,
+      ),
+    );
+  }
+
+  @override
+  Future<Either<Failure, QuizDetailResponse>> getQuizDetail({
+    required String chapterId,
+    required String quizId,
+  }) {
+    return _request(
+      () => client.getQuizDetail(
+        chapterId: chapterId,
+        quizId: quizId,
+      ),
+    );
+  }
+
+  @override
+  Future<Either<Failure, QuizAttemptResponse>> submitQuizAttempt({
+    required String quizId,
+    required QuizAttemptRequest request,
+  }) {
+    return _request(
+      () => client.submitQuizAttempt(
+        quizId: quizId,
+        request: request,
+      ),
+    );
+  }
 }

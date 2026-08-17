@@ -120,7 +120,11 @@ class RouteClass {
     GoRoute(
       path: Routes.quiz,
       builder: (context, state) {
-        return const QuizPage();
+        final args = state.extra as QuizDetailArgs;
+
+        return QuizPage(
+          args: args,
+        );
       },
     ),
     GoRoute(

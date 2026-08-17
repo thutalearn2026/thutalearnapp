@@ -261,3 +261,53 @@ class ChapterResourceDetailResponse {
     );
   }
 }
+
+@JsonSerializable(
+  fieldRename: FieldRename.snake,
+)
+class ChapterQuizModel {
+  final String id;
+  final String title;
+  final String type;
+  final String status;
+  final int sortOrder;
+  final int questionsCount;
+
+  const ChapterQuizModel({
+    required this.id,
+    required this.title,
+    required this.type,
+    required this.status,
+    required this.sortOrder,
+    required this.questionsCount,
+  });
+
+  factory ChapterQuizModel.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    return _$ChapterQuizModelFromJson(json);
+  }
+
+  Map<String, dynamic> toJson() {
+    return _$ChapterQuizModelToJson(this);
+  }
+}
+
+@JsonSerializable()
+class ChapterQuizzesResponse {
+  final List<ChapterQuizModel> data;
+
+  const ChapterQuizzesResponse({
+    required this.data,
+  });
+
+  factory ChapterQuizzesResponse.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    return _$ChapterQuizzesResponseFromJson(json);
+  }
+
+  Map<String, dynamic> toJson() {
+    return _$ChapterQuizzesResponseToJson(this);
+  }
+}
