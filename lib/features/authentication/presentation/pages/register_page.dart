@@ -157,6 +157,18 @@ class _RegisterViewState extends State<_RegisterView> {
                   ),
 
                   // Keep your existing login and social-login sections here.
+                  20.gh,
+                  DoNotHaveAccountSectionView(
+                    content: StringUtils.alreadyHaveAccount,
+                    actionButton: StringUtils.login,
+                    onTap: () {
+                      context.pushReplacement(Routes.login);
+                    },
+                  ),
+                  28.gh,
+                  OrLoginWith(label: "or login with"),
+                  20.gh,
+                  SocialLoginSectionView(),
                 ],
               ),
             ),

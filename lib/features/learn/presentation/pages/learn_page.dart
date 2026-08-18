@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thuta_learn/core/core.dart';
@@ -179,11 +181,11 @@ class _LearnCoursesViewState
                           childCount: state.courses.length,
                         ),
                         gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
+                        SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 14,
-                          childAspectRatio: 0.5,
+                          childAspectRatio: Platform.isAndroid ? 0.5 : 0.56,
                         ),
                       ),
                     ),

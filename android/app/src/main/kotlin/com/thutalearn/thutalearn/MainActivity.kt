@@ -1,4 +1,4 @@
-package com.thuta.learn.app.thuta_learn
+package com.thutalearn.thutalearn
 
 import io.flutter.embedding.android.FlutterActivity
 
