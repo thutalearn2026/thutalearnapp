@@ -111,6 +111,10 @@ class GreetingView extends StatelessWidget {
     return Row(
       spacing: 12,
       children: [
+        Image.asset(
+          ImageUtils.logoLight,
+          width: 42,
+        ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

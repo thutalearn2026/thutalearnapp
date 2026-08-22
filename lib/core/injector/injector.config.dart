@@ -45,14 +45,20 @@ import '../../features/learn/presentation/blocs/courses/courses_bloc.dart'
     as _i335;
 import '../../features/learn/presentation/blocs/lesson_detail/lesson_detail_bloc.dart'
     as _i66;
+import '../../features/learn/presentation/blocs/lesson_download/lesson_download_cubit.dart'
+    as _i696;
 import '../../features/learn/presentation/blocs/module_detail/module_detail_bloc.dart'
     as _i529;
+import '../../features/learn/presentation/blocs/module_video_downloads/module_video_downloads_cubit.dart'
+    as _i305;
 import '../../features/learn/presentation/blocs/quiz/quiz_bloc.dart' as _i715;
 import '../../features/learn/presentation/blocs/resource_detail/resource_detail_bloc.dart'
     as _i897;
+import '../../features/learn/presentation/blocs/resource_download/resource_download_cubit.dart'
+    as _i387;
 import '../../features/onboarding/data/data_sources/remote/i_onboarding_client.dart'
     as _i865;
-import '../../features/onboarding/data/repo/i_onboarding_repo.dart' as _i827;
+import '../../features/onboarding/data/repo/i_onboarding_repo.dart' as _i828;
 import '../../features/onboarding/domain/domain.dart' as _i634;
 import '../../features/onboarding/domain/usecases/onboarding_usecase.dart'
     as _i706;
@@ -85,8 +91,10 @@ import '../../features/splash/domain/domain.dart' as _i502;
 import '../../features/splash/domain/usecases/splash_usecase.dart' as _i178;
 import '../../features/splash/splash.dart' as _i827;
 import '../api/config.dart' as _i474;
-import '../api/dio_provider.dart' as _i92;
+import '../api/dio_provider.dart' as _i93;
 import '../core.dart' as _i351;
+import '../services/resource_download_service.dart' as _i109;
+import '../services/video_download_service.dart' as _i281;
 
 // initializes the registration of main-scope dependencies inside of GetIt
 _i174.GetIt $initGetIt(
@@ -97,8 +105,29 @@ _i174.GetIt $initGetIt(
   final gh = _i526.GetItHelper(getIt, environment, environmentFilter);
   final dioProvider = _$DioProvider();
   gh.factory<_i1023.OnboardingBloc>(() => _i1023.OnboardingBloc());
+  gh.lazySingleton<_i109.ResourceDownloadService>(
+    () => _i109.ResourceDownloadService(),
+  );
+  gh.lazySingleton<_i281.VideoDownloadService>(
+    () => _i281.VideoDownloadService(),
+  );
   gh.factory<_i474.IConfig>(() => _i474.AppConfig());
+  gh.factory<_i387.ResourceDownloadCubit>(
+    () => _i387.ResourceDownloadCubit(
+      downloadService: gh<_i351.ResourceDownloadService>(),
+    ),
+  );
   gh.singleton<_i361.Dio>(() => dioProvider.dio(gh<_i351.IConfig>()));
+  gh.factory<_i696.LessonDownloadCubit>(
+    () => _i696.LessonDownloadCubit(
+      downloadService: gh<_i351.VideoDownloadService>(),
+    ),
+  );
+  gh.factory<_i305.ModuleVideoDownloadsCubit>(
+    () => _i305.ModuleVideoDownloadsCubit(
+      downloadService: gh<_i351.VideoDownloadService>(),
+    ),
+  );
   gh.factory<_i592.LearnClient>(
     () => _i664.ILearnClient(dio: gh<_i361.Dio>(), config: gh<_i351.IConfig>()),
   );
@@ -141,7 +170,7 @@ _i174.GetIt $initGetIt(
     () => _i178.SplashUseCase(splashRepo: gh<_i502.SplashRepo>()),
   );
   gh.factory<_i634.OnboardingRepo>(
-    () => _i827.IOnboardingRepo(client: gh<_i634.OnboardingClient>()),
+    () => _i828.IOnboardingRepo(client: gh<_i634.OnboardingClient>()),
   );
   gh.factory<_i315.ProfileRepo>(
     () => _i915.IProfileRepo(client: gh<_i315.ProfileClient>()),
@@ -227,4 +256,4 @@ _i174.GetIt $initGetIt(
   return getIt;
 }
 
-class _$DioProvider extends _i92.DioProvider {}
+class _$DioProvider extends _i93.DioProvider {}

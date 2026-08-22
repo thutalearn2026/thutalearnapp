@@ -40,7 +40,7 @@ class WordOfTheDaySectionView extends StatelessWidget {
                 child: const TtText(
                   'Word of the day',
                   color: Colors.white,
-                  fontSize: 10,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),

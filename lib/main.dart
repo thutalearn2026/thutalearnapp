@@ -11,8 +11,16 @@ import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/authentication/data/data_sources/box/auth_session_box.dart';
 import 'package:thuta_learn/features/onboarding/data/data_sources/box/onboarding_box.dart';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await FlutterDownloader.initialize(
+    debug: kDebugMode,
+    ignoreSsl: false,
+  );
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -26,6 +34,8 @@ void main() async {
   await Hive.openBox<dynamic>(OnboardingBox.boxName);
 
   configureDependencies();
+
+  await getIt<VideoDownloadService>().initialize();
 
   runApp(
     DevicePreview(

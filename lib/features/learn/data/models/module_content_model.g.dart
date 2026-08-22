@@ -64,6 +64,24 @@ Map<String, dynamic> _$ChapterDetailResponseToJson(
   ChapterDetailResponse instance,
 ) => <String, dynamic>{'data': instance.data};
 
+ChapterVideoMp4FileModel _$ChapterVideoMp4FileModelFromJson(
+  Map<String, dynamic> json,
+) => ChapterVideoMp4FileModel(
+  quality: json['quality'] as String?,
+  width: (json['width'] as num?)?.toInt(),
+  height: (json['height'] as num?)?.toInt(),
+  link: json['link'] as String,
+);
+
+Map<String, dynamic> _$ChapterVideoMp4FileModelToJson(
+  ChapterVideoMp4FileModel instance,
+) => <String, dynamic>{
+  'quality': instance.quality,
+  'width': instance.width,
+  'height': instance.height,
+  'link': instance.link,
+};
+
 ChapterVideoModel _$ChapterVideoModelFromJson(Map<String, dynamic> json) =>
     ChapterVideoModel(
       id: json['id'] as String,
@@ -73,6 +91,16 @@ ChapterVideoModel _$ChapterVideoModelFromJson(Map<String, dynamic> json) =>
       videoPath: json['video_path'] as String?,
       vimeoId: json['vimeo_id'] as String?,
       playerUrl: json['player_url'] as String?,
+      hlsUrl: json['hls_url'] as String?,
+      mp4Files:
+          (json['mp4_files'] as List<dynamic>?)
+              ?.map(
+                (e) => ChapterVideoMp4FileModel.fromJson(
+                  e as Map<String, dynamic>,
+                ),
+              )
+              .toList() ??
+          [],
       videoSource: json['video_source'] as String?,
       status: json['status'] as String,
       rank: (json['rank'] as num).toInt(),
@@ -90,6 +118,8 @@ Map<String, dynamic> _$ChapterVideoModelToJson(ChapterVideoModel instance) =>
       'video_path': instance.videoPath,
       'vimeo_id': instance.vimeoId,
       'player_url': instance.playerUrl,
+      'hls_url': instance.hlsUrl,
+      'mp4_files': instance.mp4Files,
       'video_source': instance.videoSource,
       'status': instance.status,
       'rank': instance.rank,

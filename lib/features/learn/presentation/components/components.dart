@@ -18,3 +18,5 @@ export 'flash_card_progress_header.dart';
 export 'vocabulary_flash_card_deck.dart';
 export 'vocabulary_flash_card_view.dart';
 export 'learn_course_card.dart';
+export 'lesson_download_button.dart';
+export 'lesson_download_status_view.dart';

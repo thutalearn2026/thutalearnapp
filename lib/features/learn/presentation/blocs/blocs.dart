@@ -6,3 +6,6 @@ export 'vocabulary_flash_card/vocabulary_flash_card_bloc.dart';
 export 'module_detail/module_detail_bloc.dart';
 export 'lesson_detail/lesson_detail_bloc.dart';
 export 'resource_detail/resource_detail_bloc.dart';
+export 'lesson_download/lesson_download_cubit.dart';
+export 'module_video_downloads/module_video_downloads_cubit.dart';
+export 'resource_download/resource_download_cubit.dart';

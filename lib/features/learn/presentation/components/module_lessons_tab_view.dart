@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
 
@@ -63,6 +64,7 @@ class ModuleLessonsTabView extends StatelessWidget {
             },
             itemBuilder: (context, index) {
               final chapter = chapters[index];
+
               final videos = videosByChapter[chapter.id];
 
               final isLoading = loadingChapterIds.contains(
@@ -95,8 +97,6 @@ class ModuleLessonsTabView extends StatelessWidget {
             },
           ),
         ),
-
-        // Keep the old Real-life Scenarios UI.
         const SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.fromLTRB(
@@ -496,8 +496,22 @@ class ChapterVideoView extends StatelessWidget {
             ),
           ),
           8.gw,
-          _VideoDownloadButton(
-            onPressed: onDownload,
+          BlocSelector<
+            ModuleVideoDownloadsCubit,
+            ModuleVideoDownloadsState,
+            VideoDownloadSnapshot?
+          >(
+            selector: (state) {
+              return state.downloadFor(
+                video.id,
+              );
+            },
+            builder: (context, download) {
+              return _VideoDownloadControl(
+                download: download,
+                onPressed: onDownload,
+              );
+            },
           ),
         ],
       ),
@@ -505,29 +519,144 @@ class ChapterVideoView extends StatelessWidget {
   }
 }
 
-class _VideoDownloadButton extends StatelessWidget {
+class _VideoDownloadControl extends StatelessWidget {
+  final VideoDownloadSnapshot? download;
   final VoidCallback onPressed;
 
-  const _VideoDownloadButton({
+  const _VideoDownloadControl({
+    required this.download,
     required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: ColorUtils.secondaryColor.withValues(
-        alpha: 0.10,
-      ),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: IconButton(
-        onPressed: onPressed,
-        tooltip: 'Download video',
-        icon: const Icon(
-          Icons.download_outlined,
-          size: 24,
-          color: ColorUtils.secondaryColor,
+    final status = download?.status ?? VideoDownloadStatus.notDownloaded;
+
+    final progress = download?.progress ?? 0;
+
+    final isDownloading =
+        status == VideoDownloadStatus.queued || status == VideoDownloadStatus.downloading;
+
+    final isDownloaded = download?.isDownloaded == true;
+
+    final hasFailed = status == VideoDownloadStatus.failed;
+
+    if (isDownloading) {
+      return SizedBox(
+        width: 58,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 38,
+              height: 38,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: progress > 0 ? progress / 100 : null,
+                    strokeWidth: 3,
+                    color: ColorUtils.secondaryColor,
+                    backgroundColor: ColorUtils.secondaryColor.withValues(
+                      alpha: 0.15,
+                    ),
+                  ),
+                  if (progress > 0)
+                    TtText(
+                      '$progress',
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: ColorUtils.primaryColor,
+                    )
+                  else
+                    const Icon(
+                      Icons.downloading_rounded,
+                      size: 18,
+                      color: ColorUtils.secondaryColor,
+                    ),
+                ],
+              ),
+            ),
+            5.gh,
+            TtText(
+              status == VideoDownloadStatus.queued ? 'Waiting' : '$progress%',
+              fontSize: 11,
+              color: ColorUtils.greyTextColor,
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
+      );
+    }
+
+    if (isDownloaded) {
+      return SizedBox(
+        width: 66,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: ColorUtils.secondaryColor.withValues(
+                  alpha: 0.12,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.download_done_rounded,
+                size: 24,
+                color: ColorUtils.secondaryColor,
+              ),
+            ),
+            5.gh,
+            const TtText(
+              'Downloaded',
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: ColorUtils.secondaryColor,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: 58,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Material(
+            color: hasFailed
+                ? Colors.red.withValues(
+                    alpha: 0.10,
+                  )
+                : ColorUtils.secondaryColor.withValues(
+                    alpha: 0.10,
+                  ),
+            shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: IconButton(
+              onPressed: onPressed,
+              tooltip: hasFailed ? 'Retry download' : 'Download video',
+              icon: Icon(
+                hasFailed ? Icons.refresh_rounded : Icons.download_outlined,
+                size: 24,
+                color: hasFailed ? Colors.red : ColorUtils.secondaryColor,
+              ),
+            ),
+          ),
+          5.gh,
+          TtText(
+            hasFailed ? 'Retry' : 'Download',
+            fontSize: 11,
+            color: hasFailed ? Colors.red : ColorUtils.greyTextColor,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -547,7 +676,7 @@ class _ChapterVideoThumbnail extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: SizedBox(
-        width: 125,
+        width: 100,
         height: 78,
         child: hasThumbnail
             ? Stack(
@@ -696,7 +825,7 @@ class RealLifeScenarioView extends StatelessWidget {
 
     return TtZoomTap(
       onTap: () {
-        // Real-life scenario API integration later.
+        // Real-life scenario integration later.
       },
       child: Container(
         decoration: BoxDecoration(

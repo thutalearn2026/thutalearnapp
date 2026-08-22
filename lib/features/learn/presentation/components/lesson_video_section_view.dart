@@ -1,15 +1,23 @@
+import 'dart:io';
+
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
 import 'package:video_player/video_player.dart';
 
-class LessonVideoSectionView extends StatefulWidget {
+class LessonVideoSectionView
+    extends StatefulWidget {
   final ChapterVideoModel video;
+
+  /// Private local MP4 path returned after the video
+  /// download has completed.
+  final String? localFilePath;
 
   const LessonVideoSectionView({
     super.key,
     required this.video,
+    this.localFilePath,
   });
 
   @override
@@ -26,6 +34,8 @@ class _LessonVideoSectionViewState
   bool _isLoading = true;
   String? _errorMessage;
 
+  int _initializationId = 0;
+
   @override
   void initState() {
     super.initState();
@@ -39,150 +49,312 @@ class _LessonVideoSectionViewState
       ) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.video.id != widget.video.id) {
+    final videoChanged =
+        oldWidget.video.id != widget.video.id;
+
+    final localFileChanged =
+        oldWidget.localFilePath !=
+            widget.localFilePath;
+
+    if (videoChanged || localFileChanged) {
       _releaseControllers();
 
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
+      _isLoading = true;
+      _errorMessage = null;
 
       _initializePlayer();
     }
   }
 
   Future<void> _initializePlayer() async {
-    final playableUrl = _resolvePlayableUrl(
-      widget.video,
-    );
+    final initializationId =
+    ++_initializationId;
 
-    if (playableUrl == null) {
-      if (!mounted) {
+    final playbackSources =
+    _buildPlaybackSources(widget.video);
+
+    if (playbackSources.isEmpty) {
+      if (!mounted ||
+          initializationId !=
+              _initializationId) {
         return;
       }
 
       setState(() {
         _isLoading = false;
         _errorMessage =
-        'This lesson does not currently contain a direct '
-            'MP4 or HLS playback URL.';
+        'This lesson does not currently contain '
+            'an offline, HLS, or MP4 playback source.';
       });
 
       return;
     }
 
-    try {
-      final videoController =
-      VideoPlayerController.networkUrl(
-        Uri.parse(playableUrl),
-      );
+    for (final source in playbackSources) {
+      VideoPlayerController? videoController;
 
-      await videoController.initialize();
+      try {
+        videoController =
+            _createVideoController(source);
 
-      if (!mounted) {
-        videoController.dispose();
+        await videoController
+            .initialize()
+            .timeout(
+          const Duration(seconds: 25),
+        );
+
+        if (!mounted ||
+            initializationId !=
+                _initializationId) {
+          await videoController.dispose();
+          return;
+        }
+
+        final videoAspectRatio =
+            videoController.value.aspectRatio;
+
+        final aspectRatio =
+        videoAspectRatio > 0
+            ? videoAspectRatio
+            : 16 / 9;
+
+        final chewieController =
+        ChewieController(
+          videoPlayerController:
+          videoController,
+          aspectRatio: aspectRatio,
+          autoInitialize: false,
+          autoPlay: false,
+          looping: false,
+          allowFullScreen: true,
+          allowMuting: true,
+          allowPlaybackSpeedChanging: true,
+          showControls: true,
+          materialProgressColors:
+          ChewieProgressColors(
+            playedColor:
+            ColorUtils.secondaryColor,
+            handleColor:
+            ColorUtils.secondaryColor,
+            bufferedColor: Colors.white54,
+            backgroundColor: Colors.white30,
+          ),
+          placeholder: _VideoThumbnailView(
+            thumbnailUrl:
+            widget.video.thumbnail,
+          ),
+          errorBuilder: (
+              context,
+              errorMessage,
+              ) {
+            return _VideoMessageView(
+              thumbnailUrl:
+              widget.video.thumbnail,
+              icon:
+              Icons.error_outline_rounded,
+              message:
+              'Unable to play this video.',
+              onRetry: _retry,
+            );
+          },
+        );
+
+        setState(() {
+          _videoController =
+              videoController;
+          _chewieController =
+              chewieController;
+          _isLoading = false;
+          _errorMessage = null;
+        });
+
         return;
+      } catch (_) {
+        if (videoController != null) {
+          await videoController.dispose();
+        }
+
+        // If the local video is missing or corrupted,
+        // continue with HLS and MP4 network sources.
       }
-
-      final aspectRatio =
-      videoController.value.aspectRatio > 0
-          ? videoController.value.aspectRatio
-          : 16 / 9;
-
-      final chewieController = ChewieController(
-        videoPlayerController: videoController,
-        aspectRatio: aspectRatio,
-        autoPlay: false,
-        looping: false,
-        allowFullScreen: true,
-        allowMuting: true,
-        allowPlaybackSpeedChanging: true,
-        showControls: true,
-        materialProgressColors: ChewieProgressColors(
-          playedColor: ColorUtils.secondaryColor,
-          handleColor: ColorUtils.secondaryColor,
-          bufferedColor: Colors.white54,
-          backgroundColor: Colors.white30,
-        ),
-        errorBuilder: (context, errorMessage) {
-          return _VideoMessageView(
-            thumbnailUrl: widget.video.thumbnail,
-            icon: Icons.error_outline_rounded,
-            message: 'Unable to play this video.',
-          );
-        },
-      );
-
-      setState(() {
-        _videoController = videoController;
-        _chewieController = chewieController;
-        _isLoading = false;
-      });
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _isLoading = false;
-        _errorMessage =
-        'The video could not be initialized. '
-            'Please try again.';
-      });
     }
+
+    if (!mounted ||
+        initializationId !=
+            _initializationId) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = false;
+      _errorMessage =
+      'The video could not be initialized. '
+          'Please check your connection or '
+          'download the lesson again.';
+    });
   }
 
-  String? _resolvePlayableUrl(
+  VideoPlayerController _createVideoController(
+      _PlaybackSource source,
+      ) {
+    final localFilePath =
+        source.localFilePath;
+
+    if (localFilePath != null) {
+      return VideoPlayerController.file(
+        File(localFilePath),
+      );
+    }
+
+    return VideoPlayerController.networkUrl(
+      source.uri!,
+      formatHint: source.formatHint,
+    );
+  }
+
+  List<_PlaybackSource> _buildPlaybackSources(
       ChapterVideoModel video,
       ) {
-    final candidates = [
-      video.videoPath,
-      video.playerUrl,
-    ];
+    final sources = <_PlaybackSource>[];
+    final addedUrls = <String>{};
 
-    for (final candidate in candidates) {
-      final value = candidate?.trim();
+    /*
+     * 1. Downloaded local video
+     */
+
+    final localFilePath =
+    widget.localFilePath?.trim();
+
+    if (localFilePath != null &&
+        localFilePath.isNotEmpty) {
+      final localFile = File(
+        localFilePath,
+      );
+
+      if (localFile.existsSync()) {
+        sources.add(
+          _PlaybackSource.local(
+            localFilePath,
+          ),
+        );
+      }
+    }
+
+    void addNetworkSource(
+        String? rawUrl, {
+          VideoFormat? formatHint,
+        }) {
+      final value = rawUrl?.trim();
 
       if (value == null || value.isEmpty) {
-        continue;
+        return;
       }
 
       final uri = Uri.tryParse(value);
 
       if (uri == null ||
-          !(uri.scheme == 'https' ||
-              uri.scheme == 'http')) {
-        continue;
+          !(uri.scheme == 'http' ||
+              uri.scheme == 'https') ||
+          uri.host.isEmpty) {
+        return;
       }
 
-      final path = uri.path.toLowerCase();
-
-      final isDirectMedia =
-          path.endsWith('.mp4') ||
-              path.endsWith('.m3u8') ||
-              path.endsWith('.mov') ||
-              path.endsWith('.webm');
-
-      if (isDirectMedia) {
-        return value;
+      if (!addedUrls.add(uri.toString())) {
+        return;
       }
 
-      // Non-Vimeo URLs may be redirecting playback
-      // endpoints which video_player can initialize.
-      if (video.videoSource?.toLowerCase() != 'vimeo') {
-        return value;
-      }
+      sources.add(
+        _PlaybackSource.network(
+          uri: uri,
+          formatHint: formatHint,
+        ),
+      );
     }
 
-    return null;
+    /*
+     * 2. Adaptive HLS stream
+     */
+
+    addNetworkSource(
+      video.hlsUrl,
+      formatHint: VideoFormat.hls,
+    );
+
+    /*
+     * 3. MP4 fallback sources
+     *
+     * Highest resolution is attempted first.
+     */
+
+    final mp4Files = [
+      ...video.mp4Files,
+    ]..sort(
+          (first, second) {
+        return (second.height ?? 0)
+            .compareTo(
+          first.height ?? 0,
+        );
+      },
+    );
+
+    for (final mp4File in mp4Files) {
+      addNetworkSource(
+        mp4File.link,
+      );
+    }
+
+    /*
+     * 4. Future direct video_path support
+     */
+
+    final videoPath =
+    video.videoPath?.trim();
+
+    if (videoPath != null &&
+        videoPath.isNotEmpty) {
+      final uri =
+      Uri.tryParse(videoPath);
+
+      final path =
+          uri?.path.toLowerCase() ?? '';
+
+      addNetworkSource(
+        videoPath,
+        formatHint:
+        path.endsWith('.m3u8')
+            ? VideoFormat.hls
+            : null,
+      );
+    }
+
+    return sources;
+  }
+
+  void _retry() {
+    _releaseControllers();
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    _initializePlayer();
   }
 
   void _releaseControllers() {
-    _chewieController?.dispose();
-    _videoController?.dispose();
+    _initializationId++;
+
+    final chewieController =
+        _chewieController;
+
+    final videoController =
+        _videoController;
 
     _chewieController = null;
     _videoController = null;
+
+    chewieController?.dispose();
+    videoController?.dispose();
   }
 
   @override
@@ -195,58 +367,48 @@ class _LessonVideoSectionViewState
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return AspectRatio(
-        aspectRatio: 16 / 9,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              _VideoThumbnailView(
-                thumbnailUrl: widget.video.thumbnail,
-              ),
-              Container(
-                color: Colors.black.withValues(
-                  alpha: 0.35,
-                ),
-              ),
-              const Center(
-                child: CircularProgressIndicator(
-                  color: ColorUtils.secondaryColor,
-                ),
-              ),
-            ],
-          ),
-        ),
+      return _VideoLoadingView(
+        thumbnailUrl:
+        widget.video.thumbnail,
       );
     }
 
     if (_errorMessage != null) {
       return _VideoMessageView(
-        thumbnailUrl: widget.video.thumbnail,
-        icon: Icons.video_library_outlined,
+        thumbnailUrl:
+        widget.video.thumbnail,
+        icon:
+        Icons.video_library_outlined,
         message: _errorMessage!,
+        onRetry: _retry,
       );
     }
 
-    final controller = _chewieController;
+    final chewieController =
+        _chewieController;
 
-    if (controller == null) {
+    if (chewieController == null) {
       return _VideoMessageView(
-        thumbnailUrl: widget.video.thumbnail,
-        icon: Icons.error_outline_rounded,
-        message: 'Video player is unavailable.',
+        thumbnailUrl:
+        widget.video.thumbnail,
+        icon:
+        Icons.error_outline_rounded,
+        message:
+        'Video player is unavailable.',
+        onRetry: _retry,
       );
     }
 
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius:
+        BorderRadius.circular(16),
         child: ColoredBox(
           color: Colors.black,
           child: Chewie(
-            controller: controller,
+            controller:
+            chewieController,
           ),
         ),
       ),
@@ -254,15 +416,28 @@ class _LessonVideoSectionViewState
   }
 }
 
-class _VideoMessageView extends StatelessWidget {
-  final String? thumbnailUrl;
-  final IconData icon;
-  final String message;
+class _PlaybackSource {
+  final Uri? uri;
+  final String? localFilePath;
+  final VideoFormat? formatHint;
 
-  const _VideoMessageView({
+  const _PlaybackSource.network({
+    required this.uri,
+    this.formatHint,
+  }) : localFilePath = null;
+
+  const _PlaybackSource.local(
+      this.localFilePath,
+      )   : uri = null,
+        formatHint = null;
+}
+
+class _VideoLoadingView
+    extends StatelessWidget {
+  final String? thumbnailUrl;
+
+  const _VideoLoadingView({
     required this.thumbnailUrl,
-    required this.icon,
-    required this.message,
   });
 
   @override
@@ -270,20 +445,68 @@ class _VideoMessageView extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius:
+        BorderRadius.circular(16),
         child: Stack(
           fit: StackFit.expand,
           children: [
             _VideoThumbnailView(
               thumbnailUrl: thumbnailUrl,
             ),
-            Container(
+            ColoredBox(
               color: Colors.black.withValues(
-                alpha: 0.62,
+                alpha: 0.35,
+              ),
+            ),
+            const Center(
+              child:
+              CircularProgressIndicator(
+                color:
+                ColorUtils.secondaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VideoMessageView
+    extends StatelessWidget {
+  final String? thumbnailUrl;
+  final IconData icon;
+  final String message;
+  final VoidCallback? onRetry;
+
+  const _VideoMessageView({
+    required this.thumbnailUrl,
+    required this.icon,
+    required this.message,
+    this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: ClipRRect(
+        borderRadius:
+        BorderRadius.circular(16),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _VideoThumbnailView(
+              thumbnailUrl: thumbnailUrl,
+            ),
+            ColoredBox(
+              color: Colors.black.withValues(
+                alpha: 0.65,
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding:
+              const EdgeInsets.all(20),
               child: Column(
                 mainAxisAlignment:
                 MainAxisAlignment.center,
@@ -293,14 +516,32 @@ class _VideoMessageView extends StatelessWidget {
                     size: 38,
                     color: Colors.white,
                   ),
-                  12.gh,
+                  10.gh,
                   TtText(
                     message,
                     fontSize: 14,
                     height: 1.4,
                     color: Colors.white,
-                    textAlign: TextAlign.center,
+                    textAlign:
+                    TextAlign.center,
                   ),
+                  if (onRetry != null) ...[
+                    10.gh,
+                    TextButton.icon(
+                      onPressed: onRetry,
+                      icon: const Icon(
+                        Icons.refresh_rounded,
+                        color: Colors.white,
+                      ),
+                      label: const TtText(
+                        'Try Again',
+                        fontSize: 14,
+                        fontWeight:
+                        FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -311,7 +552,8 @@ class _VideoMessageView extends StatelessWidget {
   }
 }
 
-class _VideoThumbnailView extends StatelessWidget {
+class _VideoThumbnailView
+    extends StatelessWidget {
   final String? thumbnailUrl;
 
   const _VideoThumbnailView({
@@ -329,7 +571,8 @@ class _VideoThumbnailView extends StatelessWidget {
           child: Icon(
             Icons.video_library_outlined,
             size: 60,
-            color: ColorUtils.primaryColor,
+            color:
+            ColorUtils.primaryColor,
           ),
         ),
       );

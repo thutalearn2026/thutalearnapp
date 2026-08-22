@@ -6,3 +6,5 @@ export 'utils/utils.dart';
 export 'errors/failure.dart';
 export 'base_components/base_components.dart';
 export 'helpers/app_helper.dart';
+export 'services/video_download_service.dart';
+export 'services/resource_download_service.dart';

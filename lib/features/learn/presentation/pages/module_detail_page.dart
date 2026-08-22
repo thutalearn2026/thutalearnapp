@@ -14,15 +14,29 @@ class ModuleDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) {
-        return getIt<ModuleDetailBloc>()..add(
-          OnGetModuleDetail(
-            courseId: args.courseId,
-            moduleId: args.moduleId,
-          ),
-        );
-      },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) {
+            return getIt<ModuleDetailBloc>()..add(
+              OnGetModuleDetail(
+                courseId: args.courseId,
+                moduleId: args.moduleId,
+              ),
+            );
+          },
+        ),
+        BlocProvider(
+          create: (_) {
+            return getIt<ModuleVideoDownloadsCubit>()..initialize();
+          },
+        ),
+        BlocProvider(
+          create: (_) {
+            return getIt<ResourceDownloadCubit>();
+          },
+        ),
+      ],
       child: _ModuleDetailView(
         args: args,
       ),
@@ -78,8 +92,7 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
       _selectedTabIndex = selectedIndex;
     });
 
-    final state =
-        context.read<ModuleDetailBloc>().state;
+    final state = context.read<ModuleDetailBloc>().state;
 
     if (state.chapters.isEmpty) {
       return;
@@ -95,10 +108,9 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
   }
 
   void _handleSecondaryAction(
-      ModuleDetailState state,
-      ) {
+    ModuleDetailState state,
+  ) {
     if (_isLessonsTab) {
-      // Overview video integration later.
       return;
     }
 
@@ -107,8 +119,7 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
     }
 
     for (final chapter in state.chapters) {
-      final quizzes =
-      state.quizzesByChapter[chapter.id];
+      final quizzes = state.quizzesByChapter[chapter.id];
 
       if (quizzes != null && quizzes.isNotEmpty) {
         _openQuizType(
@@ -145,6 +156,16 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
   ) {
     context.read<ModuleDetailBloc>().add(
       OnGetChapterResources(
+        chapterId: chapter.id,
+      ),
+    );
+  }
+
+  void _loadChapterQuizzes(
+    ChapterModel chapter,
+  ) {
+    context.read<ModuleDetailBloc>().add(
+      OnGetChapterQuizzes(
         chapterId: chapter.id,
       ),
     );
@@ -194,6 +215,7 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
         firstLesson.chapter,
         firstLesson.video,
       );
+
       return;
     }
 
@@ -207,7 +229,9 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
     }
 
     if (firstChapterWithVideos != null) {
-      _loadChapterVideos(firstChapterWithVideos);
+      _loadChapterVideos(
+        firstChapterWithVideos,
+      );
 
       context.showSnackBar(
         'Loading the first video...',
@@ -216,25 +240,11 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
     }
   }
 
-  void _loadChapterQuizzes(
-      ChapterModel chapter,
-      ) {
-    context.read<ModuleDetailBloc>().add(
-      OnGetChapterQuizzes(
-        chapterId: chapter.id,
-      ),
-    );
-  }
-
   void _openQuizType(
-      ChapterModel chapter,
-      ChapterQuizModel quiz,
-      ) {
-    final type = quiz.type
-        .trim()
-        .toLowerCase()
-        .replaceAll('-', '_')
-        .replaceAll(' ', '_');
+    ChapterModel chapter,
+    ChapterQuizModel quiz,
+  ) {
+    final type = quiz.type.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
 
     switch (type) {
       case 'multiple_choice':
@@ -244,6 +254,7 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
           Routes.quiz,
           extra: QuizDetailArgs(
             chapterId: chapter.id,
+            chapterTitle: chapter.title,
             quizId: quiz.id,
           ),
         );
@@ -273,183 +284,6 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
     }
   }
 
-  @override
-  void dispose() {
-    _tabController
-      ..removeListener(_handleTabChanged)
-      ..dispose();
-
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<ModuleDetailBloc, ModuleDetailState>(
-      builder: (context, state) {
-        if (state.isLoading && state.module == null) {
-          return const _ModuleLoadingPage();
-        }
-
-        if (state.status == ModuleDetailStatus.failure && state.module == null) {
-          return _ModuleErrorPage(
-            message: state.message ?? 'Unable to load this module.',
-            onRetry: () {
-              context.read<ModuleDetailBloc>().add(
-                OnGetModuleDetail(
-                  courseId: widget.args.courseId,
-                  moduleId: widget.args.moduleId,
-                ),
-              );
-            },
-          );
-        }
-
-        final module = state.module;
-
-        if (module == null) {
-          return const SizedBox.shrink();
-        }
-
-        final headerModule = LearnModuleItem(
-          id: module.id,
-          slug: module.slug,
-          moduleNumber: widget.args.moduleNumber,
-          title: module.title,
-          description:
-              '${module.chaptersCount} chapter'
-              '${module.chaptersCount == 1 ? '' : 's'} '
-              'available in this module.',
-          status: LearnModuleStatus.inProgress,
-          progress: 0,
-        );
-
-        return Scaffold(
-          backgroundColor: Colors.white,
-          appBar: AppBar(
-            backgroundColor: ColorUtils.primaryColor,
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              onPressed: context.pop,
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          body: TtFadeIn(
-            child: NestedScrollView(
-              headerSliverBuilder:
-                  (
-                    context,
-                    innerBoxIsScrolled,
-                  ) {
-                    return [
-                      SliverToBoxAdapter(
-                        child: ModuleDetailHeader(
-                          module: headerModule,
-                          videoCount: state.totalVideoCount,
-                          onResume: () {
-                            _handleResume(state);
-                          },
-                          secondaryActionLabel: _isLessonsTab ? 'Overview' : 'Take Quiz',
-                          secondaryActionIcon: _isLessonsTab
-                              ? Icons.play_arrow_rounded
-                              : Icons.lightbulb_outline_rounded,
-                          onSecondaryAction: () {
-                            _handleSecondaryAction(state);
-                          },
-                        ),
-                      ),
-                      SliverPersistentHeader(
-                        pinned: true,
-                        delegate: ModuleTabBarDelegate(
-                          tabBar: TabBar(
-                            controller: _tabController,
-                            labelColor: ColorUtils.primaryColor,
-                            unselectedLabelColor: ColorUtils.primaryColor,
-                            labelStyle: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            unselectedLabelStyle: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            indicatorColor: ColorUtils.secondaryColor,
-                            indicatorWeight: 3,
-                            dividerColor: const Color(
-                              0xFFE6E9ED,
-                            ),
-                            tabs: const [
-                              Tab(text: 'Lessons'),
-                              Tab(text: 'Practice'),
-                              Tab(text: 'Resources'),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ];
-                  },
-              body: TabBarView(
-                controller: _tabController,
-                children: [
-                  ModuleLessonsTabView(
-                    chapters: state.chapters,
-                    videosByChapter: state.videosByChapter,
-                    loadingChapterIds: state.loadingChapterIds,
-                    chapterVideoErrors: state.chapterVideoErrors,
-                    onChapterExpanded: _loadChapterVideos,
-                    onRetryChapter: _loadChapterVideos,
-                    onVideoTap: _openVideo,
-                    onVideoDownload: (video) {
-                      // Actual download implementation will be
-                      // added later.
-                      context.showSnackBar(
-                        'Video download will be available soon.',
-                        snackBarType: SnackBarType.info,
-                      );
-                    },
-                  ),
-                  ModulePracticeTabView(
-                    chapters: state.chapters,
-                    quizzesByChapter:
-                    state.quizzesByChapter,
-                    loadingChapterIds:
-                    state.loadingQuizChapterIds,
-                    chapterErrors:
-                    state.chapterQuizErrors,
-                    onChapterExpanded: _loadChapterQuizzes,
-                    onRetryChapter: _loadChapterQuizzes,
-                    onQuizTap: _openQuizType,
-                  ),
-                  ModuleResourcesTabView(
-                    chapters: state.chapters,
-                    resourcesByChapter:
-                    state.resourcesByChapter,
-                    loadingChapterIds:
-                    state.loadingResourceChapterIds,
-                    chapterErrors:
-                    state.chapterResourceErrors,
-                    onChapterExpanded: _loadChapterResources,
-                    onRetryChapter: _loadChapterResources,
-                    onResourceTap: _openResource,
-                    onDownload: (resource) {
-                      context.showSnackBar(
-                        '${resource.title} download will be available soon.',
-                        snackBarType: SnackBarType.info,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   void _openResource(
     ChapterModel chapter,
     ChapterResourceModel resource,
@@ -459,6 +293,236 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
       extra: ResourceDetailArgs(
         chapterId: chapter.id,
         resourceId: resource.id,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _tabController
+      ..removeListener(
+        _handleTabChanged,
+      )
+      ..dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ModuleDetailBloc, ModuleDetailState>(
+          listenWhen: (previous, current) {
+            return previous.videosByChapter != current.videosByChapter;
+          },
+          listener: (context, state) {
+            final videos = state.videosByChapter.values.expand(
+              (chapterVideos) => chapterVideos,
+            );
+
+            context.read<ModuleVideoDownloadsCubit>().registerVideos(videos);
+          },
+        ),
+        BlocListener<ModuleVideoDownloadsCubit, ModuleVideoDownloadsState>(
+          listenWhen: (previous, current) {
+            return previous.message != current.message && current.message != null;
+          },
+          listener: (context, state) {
+            final message = state.message;
+
+            if (message == null) {
+              return;
+            }
+
+            context.showSnackBar(
+              message,
+              snackBarType: state.messageIsError ? SnackBarType.error : SnackBarType.success,
+            );
+          },
+        ),
+        BlocListener<
+            ResourceDownloadCubit,
+            ResourceDownloadState
+        >(
+          listenWhen: (previous, current) {
+            return previous.message !=
+                current.message &&
+                current.message != null;
+          },
+          listener: (context, state) {
+            final message = state.message;
+
+            if (message == null) {
+              return;
+            }
+
+            context.showSnackBar(
+              message,
+              snackBarType: state.messageType,
+            );
+          },
+        ),
+      ],
+      child: BlocBuilder<ModuleDetailBloc, ModuleDetailState>(
+        builder: (context, state) {
+          if (state.isLoading && state.module == null) {
+            return const _ModuleLoadingPage();
+          }
+
+          if (state.status == ModuleDetailStatus.failure && state.module == null) {
+            return _ModuleErrorPage(
+              message: state.message ?? 'Unable to load this module.',
+              onRetry: () {
+                context.read<ModuleDetailBloc>().add(
+                  OnGetModuleDetail(
+                    courseId: widget.args.courseId,
+                    moduleId: widget.args.moduleId,
+                  ),
+                );
+              },
+            );
+          }
+
+          final module = state.module;
+
+          if (module == null) {
+            return const SizedBox.shrink();
+          }
+
+          final headerModule = LearnModuleItem(
+            id: module.id,
+            slug: module.slug,
+            moduleNumber: widget.args.moduleNumber,
+            title: module.title,
+            description:
+                '${module.chaptersCount} chapter'
+                '${module.chaptersCount == 1 ? '' : 's'} '
+                'available in this module.',
+            status: LearnModuleStatus.inProgress,
+            progress: 0,
+          );
+
+          return Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              backgroundColor: ColorUtils.primaryColor,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                onPressed: context.pop,
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            body: TtFadeIn(
+              child: NestedScrollView(
+                headerSliverBuilder:
+                    (
+                      context,
+                      innerBoxIsScrolled,
+                    ) {
+                      return [
+                        SliverToBoxAdapter(
+                          child: ModuleDetailHeader(
+                            module: headerModule,
+                            videoCount: state.totalVideoCount,
+                            onResume: () {
+                              _handleResume(state);
+                            },
+                            secondaryActionLabel: _isLessonsTab ? 'Overview' : 'Take Quiz',
+                            secondaryActionIcon: _isLessonsTab
+                                ? Icons.play_arrow_rounded
+                                : Icons.lightbulb_outline_rounded,
+                            onSecondaryAction: () {
+                              _handleSecondaryAction(
+                                state,
+                              );
+                            },
+                          ),
+                        ),
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: ModuleTabBarDelegate(
+                            tabBar: TabBar(
+                              controller: _tabController,
+                              labelColor: ColorUtils.primaryColor,
+                              unselectedLabelColor: ColorUtils.primaryColor,
+                              labelStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              unselectedLabelStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              indicatorColor: ColorUtils.secondaryColor,
+                              indicatorWeight: 3,
+                              dividerColor: const Color(
+                                0xFFE6E9ED,
+                              ),
+                              tabs: const [
+                                Tab(
+                                  text: 'Lessons',
+                                ),
+                                Tab(
+                                  text: 'Practice',
+                                ),
+                                Tab(
+                                  text: 'Resources',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ];
+                    },
+                body: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    ModuleLessonsTabView(
+                      chapters: state.chapters,
+                      videosByChapter: state.videosByChapter,
+                      loadingChapterIds: state.loadingChapterIds,
+                      chapterVideoErrors: state.chapterVideoErrors,
+                      onChapterExpanded: _loadChapterVideos,
+                      onRetryChapter: _loadChapterVideos,
+                      onVideoTap: _openVideo,
+                      onVideoDownload: (video) {
+                        context.read<ModuleVideoDownloadsCubit>().download(video);
+                      },
+                    ),
+                    ModulePracticeTabView(
+                      chapters: state.chapters,
+                      quizzesByChapter: state.quizzesByChapter,
+                      loadingChapterIds: state.loadingQuizChapterIds,
+                      chapterErrors: state.chapterQuizErrors,
+                      onChapterExpanded: _loadChapterQuizzes,
+                      onRetryChapter: _loadChapterQuizzes,
+                      onQuizTap: _openQuizType,
+                    ),
+                    ModuleResourcesTabView(
+                      chapters: state.chapters,
+                      resourcesByChapter: state.resourcesByChapter,
+                      loadingChapterIds: state.loadingResourceChapterIds,
+                      chapterErrors: state.chapterResourceErrors,
+                      onChapterExpanded: _loadChapterResources,
+                      onRetryChapter: _loadChapterResources,
+                      onResourceTap: _openResource,
+                      onDownload: (resource) {
+                        context
+                            .read<ResourceDownloadCubit>()
+                            .download(resource);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -538,7 +602,9 @@ class _ModuleLoadingPage extends StatelessWidget {
               ),
               Expanded(
                 child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(
+                    16,
+                  ),
                   itemCount: 3,
                   separatorBuilder: (_, __) {
                     return 14.gh;

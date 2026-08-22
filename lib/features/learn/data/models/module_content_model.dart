@@ -97,7 +97,36 @@ class ChapterDetailResponse {
   }
 }
 
-@JsonSerializable(fieldRename: FieldRename.snake)
+@JsonSerializable(
+  fieldRename: FieldRename.snake,
+)
+class ChapterVideoMp4FileModel {
+  final String? quality;
+  final int? width;
+  final int? height;
+  final String link;
+
+  const ChapterVideoMp4FileModel({
+    this.quality,
+    this.width,
+    this.height,
+    required this.link,
+  });
+
+  factory ChapterVideoMp4FileModel.fromJson(
+      Map<String, dynamic> json,
+      ) {
+    return _$ChapterVideoMp4FileModelFromJson(json);
+  }
+
+  Map<String, dynamic> toJson() {
+    return _$ChapterVideoMp4FileModelToJson(this);
+  }
+}
+
+@JsonSerializable(
+  fieldRename: FieldRename.snake,
+)
 class ChapterVideoModel {
   final String id;
   final String title;
@@ -106,6 +135,13 @@ class ChapterVideoModel {
   final String? videoPath;
   final String? vimeoId;
   final String? playerUrl;
+  final String? hlsUrl;
+
+  @JsonKey(
+    defaultValue: <ChapterVideoMp4FileModel>[],
+  )
+  final List<ChapterVideoMp4FileModel> mp4Files;
+
   final String? videoSource;
   final String status;
   final int rank;
@@ -121,6 +157,8 @@ class ChapterVideoModel {
     this.videoPath,
     this.vimeoId,
     this.playerUrl,
+    this.hlsUrl,
+    this.mp4Files = const [],
     this.videoSource,
     required this.status,
     required this.rank,

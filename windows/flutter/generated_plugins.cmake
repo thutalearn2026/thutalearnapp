@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   file_selector_windows
   permission_handler_windows
+  public_file_saver
   syncfusion_pdfviewer_windows
   url_launcher_windows
 )

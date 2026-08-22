@@ -16,13 +16,12 @@ class QuizPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) {
-        return getIt<QuizBloc>()
-          ..add(
-            OnGetQuizDetail(
-              chapterId: args.chapterId,
-              quizId: args.quizId,
-            ),
-          );
+        return getIt<QuizBloc>()..add(
+          OnGetQuizDetail(
+            chapterId: args.chapterId,
+            quizId: args.quizId,
+          ),
+        );
       },
       child: QuizBody(
         args: args,
@@ -59,8 +58,7 @@ class QuizBody extends StatelessWidget {
       ),
       body: BlocConsumer<QuizBloc, QuizState>(
         listenWhen: (previous, current) {
-          return previous.message !=
-              current.message &&
+          return previous.message != current.message &&
               current.message != null &&
               current.quiz != null;
         },
@@ -75,23 +73,19 @@ class QuizBody extends StatelessWidget {
             return const _QuizLoadingView();
           }
 
-          if (state.status ==
-              QuizStatus.failure &&
-              state.quiz == null) {
+          if (state.status == QuizStatus.failure && state.quiz == null) {
             return _QuizLoadErrorView(
-              message:
-              state.message ??
-                  'Unable to load this quiz.',
+              message: state.message ?? 'Unable to load this quiz.',
               onRetry: () {
                 _retry(context);
               },
             );
           }
 
-          if (state.status ==
-              QuizStatus.completed) {
+          if (state.status == QuizStatus.completed) {
             return QuizCompletedView(
               state: state,
+              chapterTitle: args.chapterTitle,
             );
           }
 
@@ -116,10 +110,9 @@ class _QuizQuestionContent extends StatelessWidget {
   });
 
   QuizAnswerVisualState _visualStateForOption(
-      QuizQuestionOptionModel option,
-      ) {
-    if (state.currentSelectedOptionId ==
-        option.id) {
+    QuizQuestionOptionModel option,
+  ) {
+    if (state.currentSelectedOptionId == option.id) {
       return QuizAnswerVisualState.selected;
     }
 
@@ -134,10 +127,10 @@ class _QuizQuestionContent extends StatelessWidget {
         .where((word) => word.isNotEmpty)
         .map(
           (word) {
-        return '${word[0].toUpperCase()}'
-            '${word.substring(1)}';
-      },
-    )
+            return '${word[0].toUpperCase()}'
+                '${word.substring(1)}';
+          },
+        )
         .join(' ');
   }
 
@@ -148,8 +141,7 @@ class _QuizQuestionContent extends StatelessWidget {
 
     final audioUrl = question.audioFile?.trim();
 
-    final hasAudio =
-        audioUrl != null && audioUrl.isNotEmpty;
+    final hasAudio = audioUrl != null && audioUrl.isNotEmpty;
 
     return Column(
       children: [
@@ -161,10 +153,8 @@ class _QuizQuestionContent extends StatelessWidget {
             0,
           ),
           child: QuizProgressHeader(
-            currentQuestion:
-            state.currentQuestionIndex + 1,
-            totalQuestions:
-            state.questions.length,
+            currentQuestion: state.currentQuestionIndex + 1,
+            totalQuestions: state.questions.length,
             progress: state.progress,
             onClose: () {
               context.pop();
@@ -180,16 +170,14 @@ class _QuizQuestionContent extends StatelessWidget {
               24,
             ),
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _QuestionTypeBadge(
                   label: hasAudio
                       ? 'Listening'
                       : _formatQuizType(
-                    state.quiz?.type ??
-                        'Quiz',
-                  ),
+                          state.quiz?.type ?? 'Quiz',
+                        ),
                 ),
                 16.gh,
                 TtText(
@@ -202,8 +190,7 @@ class _QuizQuestionContent extends StatelessWidget {
                 if (hasAudio) ...[
                   18.gh,
                   QuizAudioPrompt(
-                    isPlaying:
-                    state.isAudioPlaying,
+                    isPlaying: state.isAudioPlaying,
                     onTap: () {
                       context.read<QuizBloc>().add(
                         QuizAudioPressed(),
@@ -214,30 +201,24 @@ class _QuizQuestionContent extends StatelessWidget {
                 18.gh,
                 ...List.generate(
                   options.length,
-                      (index) {
+                  (index) {
                     final option = options[index];
 
                     return Padding(
-                      padding:
-                      const EdgeInsets.only(
+                      padding: const EdgeInsets.only(
                         bottom: 14,
                       ),
                       child: QuizAnswerOptionView(
                         optionIndex: index,
                         answer: option.text,
-                        visualState:
-                        _visualStateForOption(
+                        visualState: _visualStateForOption(
                           option,
                         ),
                         onTap: () {
-                          context
-                              .read<QuizBloc>()
-                              .add(
+                          context.read<QuizBloc>().add(
                             QuizAnswerSelected(
-                              questionId:
-                              question.id,
-                              optionId:
-                              option.id,
+                              questionId: question.id,
+                              optionId: option.id,
                             ),
                           );
                         },
@@ -266,38 +247,32 @@ class _QuizQuestionContent extends StatelessWidget {
                   child: TtButton(
                     onTap: () {
                       if (state.isLastQuestion) {
-                        context
-                            .read<QuizBloc>()
-                            .add(
+                        context.read<QuizBloc>().add(
                           QuizSubmitPressed(),
                         );
                       } else {
-                        context
-                            .read<QuizBloc>()
-                            .add(
+                        context.read<QuizBloc>().add(
                           QuizContinuePressed(),
                         );
                       }
                     },
                     child: state.isSubmitting
                         ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child:
-                      CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : TtText(
-                      state.isLastQuestion
-                          ? 'Submit Answers'
-                          : 'Continue',
-                      fontSize: 14,
-                      fontWeight:
-                      FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                            state.isLastQuestion
+                                ? 'Submit Answers'
+                                : 'Continue',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                   ),
                 ),
               ),
@@ -323,8 +298,7 @@ class _QuestionTypeBadge extends StatelessWidget {
         vertical: 5,
       ),
       decoration: BoxDecoration(
-        color:
-        ColorUtils.secondaryBackgroundColor,
+        color: ColorUtils.secondaryBackgroundColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: TtText(
@@ -339,10 +313,12 @@ class _QuestionTypeBadge extends StatelessWidget {
 
 class QuizCompletedView extends StatelessWidget {
   final QuizState state;
+  final String chapterTitle;
 
   const QuizCompletedView({
     super.key,
     required this.state,
+    required this.chapterTitle,
   });
 
   String _formatPercentage(num value) {
@@ -361,22 +337,17 @@ class QuizCompletedView extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final resultColor = result.passed
-        ? ColorUtils.secondaryColor
-        : Colors.red;
+    final resultColor = result.passed ? ColorUtils.secondaryColor : Colors.red;
 
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            minHeight:
-            MediaQuery.sizeOf(context).height -
-                48,
+            minHeight: MediaQuery.sizeOf(context).height - 48,
           ),
           child: Column(
-            mainAxisAlignment:
-            MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 width: 96,
@@ -397,19 +368,21 @@ class QuizCompletedView extends StatelessWidget {
               ),
               24.gh,
               TtText(
-                result.passed
-                    ? 'Quiz Passed!'
-                    : 'Keep Practicing',
+                result.passed ? 'Quiz Passed!' : 'Keep Practicing',
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: ColorUtils.primaryColor,
               ),
               12.gh,
+              _QuizChapterView(
+                chapterTitle: chapterTitle,
+              ),
+              16.gh,
               TtText(
                 'You answered '
-                    '${result.correctAnswers} out of '
-                    '${result.totalQuestions} questions '
-                    'correctly.',
+                '${result.correctAnswers} out of '
+                '${result.totalQuestions} questions '
+                'correctly.',
                 fontSize: 14,
                 height: 1.4,
                 textAlign: TextAlign.center,
@@ -434,8 +407,7 @@ class QuizCompletedView extends StatelessWidget {
                   child: const TtText(
                     'Finish',
                     fontSize: 14,
-                    fontWeight:
-                    FontWeight.w600,
+                    fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
                 ),
@@ -451,13 +423,80 @@ class QuizCompletedView extends StatelessWidget {
                   'Try Again',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color:
-                  ColorUtils.primaryColor,
+                  color: ColorUtils.primaryColor,
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _QuizChapterView extends StatelessWidget {
+  final String chapterTitle;
+
+  const _QuizChapterView({
+    required this.chapterTitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final title = chapterTitle.trim().isEmpty ? 'Chapter' : chapterTitle.trim();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: ColorUtils.secondaryBackgroundColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: ColorUtils.secondaryColor.withValues(
+            alpha: 0.25,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.menu_book_outlined,
+              size: 22,
+              color: ColorUtils.secondaryColor,
+            ),
+          ),
+          12.gw,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const TtText(
+                  'Chapter',
+                  fontSize: 14,
+                  color: ColorUtils.greyTextColor,
+                ),
+                3.gh,
+                TtText(
+                  title,
+                  fontSize: 14,
+                  height: 1.3,
+                  fontWeight: FontWeight.w600,
+                  color: ColorUtils.primaryColor,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

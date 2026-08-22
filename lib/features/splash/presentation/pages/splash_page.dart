@@ -39,8 +39,7 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   String _resolveNextRoute() {
-    final hasCompletedOnboarding =
-        OnboardingBox.hasCompletedOnboarding;
+    final hasCompletedOnboarding = OnboardingBox.hasCompletedOnboarding;
 
     if (!hasCompletedOnboarding) {
       return Routes.onboarding;
@@ -64,8 +63,7 @@ class _SplashPageState extends State<SplashPage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: Colors.transparent,
-        systemNavigationBarColor:
-        ColorUtils.primaryColor,
+        systemNavigationBarColor: ColorUtils.primaryColor,
       ),
       child: Scaffold(
         backgroundColor: ColorUtils.primaryColor,
@@ -76,33 +74,33 @@ class _SplashPageState extends State<SplashPage> {
                 child: Center(
                   child: Image.asset(
                     ImageUtils.logo,
-                    width: 120,
-                    height: 124,
+                    width: 160,
+                    height: 160,
                     fit: BoxFit.contain,
-                    errorBuilder: (
-                        context,
-                        error,
-                        stackTrace,
+                    errorBuilder:
+                        (
+                          context,
+                          error,
+                          stackTrace,
                         ) {
-                      // Temporary fallback until logo.png
-                      // is added.
-                      return Container(
-                        width: 96,
-                        height: 96,
-                        decoration: BoxDecoration(
-                          borderRadius:
-                          BorderRadius.circular(18),
-                          border: Border.all(
-                            color: Colors.white,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.school_outlined,
-                          size: 50,
-                          color: Colors.white,
-                        ),
-                      );
-                    },
+                          // Temporary fallback until logo.png
+                          // is added.
+                          return Container(
+                            width: 96,
+                            height: 96,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: Colors.white,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.school_outlined,
+                              size: 50,
+                              color: Colors.white,
+                            ),
+                          );
+                        },
                   ),
                 ),
               ),

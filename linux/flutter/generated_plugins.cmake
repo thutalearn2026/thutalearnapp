@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_linux
+  public_file_saver
   syncfusion_pdfviewer_linux
   url_launcher_linux
 )

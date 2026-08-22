@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 typedef ChapterResourceTapCallback =
     void Function(
@@ -462,19 +463,61 @@ class ChapterResourceView extends StatelessWidget {
                 ),
               ),
               8.gw,
-              Material(
-                color: ColorUtils.secondaryColor.withValues(alpha: 0.10),
-                shape: const CircleBorder(),
-                clipBehavior: Clip.antiAlias,
-                child: IconButton(
-                  onPressed: onDownload,
-                  tooltip: 'Download resource',
-                  icon: const Icon(
-                    Icons.download_outlined,
-                    size: 24,
-                    color: ColorUtils.secondaryColor,
-                  ),
-                ),
+              BlocSelector<
+                  ResourceDownloadCubit,
+                  ResourceDownloadState,
+                  ResourceDownloadItemState
+              >(
+                selector: (state) {
+                  return state.downloadFor(
+                    resource.id,
+                  );
+                },
+                builder: (context, downloadState) {
+                  if (downloadState.isDownloading) {
+                    return const SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Center(
+                        child: SizedBox(
+                          width: 25,
+                          height: 25,
+                          child:
+                          CircularProgressIndicator(
+                            strokeWidth: 2.6,
+                            color:
+                            ColorUtils.secondaryColor,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final downloaded =
+                      downloadState.isDownloaded;
+
+                  return Material(
+                    color: ColorUtils.secondaryColor
+                        .withValues(alpha: 0.10),
+                    shape: const CircleBorder(),
+                    clipBehavior: Clip.antiAlias,
+                    child: IconButton(
+                      onPressed:
+                      downloaded ? null : onDownload,
+                      tooltip: downloaded
+                          ? 'Resource saved'
+                          : 'Download resource',
+                      icon: Icon(
+                        downloaded
+                            ? Icons.download_done_rounded
+                            : Icons.download_outlined,
+                        size: 24,
+                        color:
+                        ColorUtils.secondaryColor,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
