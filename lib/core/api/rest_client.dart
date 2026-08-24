@@ -161,4 +161,7 @@ abstract class RestClient {
   Future<VocabularySaveResponse> saveVocabulary(
     @Path('vocabulary') String vocabularyId,
   );
+
+  @GET('profile/saved-vocabularies')
+  Future<SavedVocabulariesResponse> getSavedVocabularies();
 }

@@ -79,6 +79,8 @@ import '../../features/profile/presentation/blocs/logout/logout_bloc.dart'
     as _i987;
 import '../../features/profile/presentation/blocs/profile/profile_bloc.dart'
     as _i349;
+import '../../features/profile/presentation/blocs/saved_vocabulary/saved_vocabulary_bloc.dart'
+    as _i407;
 import '../../features/profile/profile.dart' as _i315;
 import '../../features/search/data/data_sources/remote/i_search_client.dart'
     as _i24;
@@ -224,6 +226,9 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i715.QuizBloc>(
     () => _i715.QuizBloc(learnUseCase: gh<_i592.LearnUseCase>()),
+  );
+  gh.factory<_i407.SavedVocabularyBloc>(
+    () => _i407.SavedVocabularyBloc(learnUseCase: gh<_i592.LearnUseCase>()),
   );
   gh.factory<_i430.AccountSetUpBloc>(
     () => _i430.AccountSetUpBloc(

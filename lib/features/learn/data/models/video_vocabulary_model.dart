@@ -102,12 +102,29 @@ class VocabularySaveResponse {
   });
 
   factory VocabularySaveResponse.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return _$VocabularySaveResponseFromJson(json);
   }
 
   Map<String, dynamic> toJson() {
     return _$VocabularySaveResponseToJson(this);
+  }
+}
+
+@JsonSerializable()
+class SavedVocabulariesResponse {
+  final List<VideoVocabularyModel> data;
+
+  const SavedVocabulariesResponse({required this.data});
+
+  factory SavedVocabulariesResponse.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return _$SavedVocabulariesResponseFromJson(json);
+  }
+
+  Map<String, dynamic> toJson() {
+    return _$SavedVocabulariesResponseToJson(this);
   }
 }

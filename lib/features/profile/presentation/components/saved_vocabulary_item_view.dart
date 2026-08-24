@@ -1,37 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:thuta_learn/core/core.dart';
-import 'package:thuta_learn/features/profile/profile.dart';
+import 'package:thuta_learn/features/learn/learn.dart';
 
 class SavedVocabularyItemView extends StatelessWidget {
-  final SavedVocabularyItem item;
+  final VideoVocabularyModel vocabulary;
+  final bool isSpeaking;
+  final bool isRemoving;
   final VoidCallback onAudio;
   final VoidCallback onRemove;
 
   const SavedVocabularyItemView({
     super.key,
-    required this.item,
+    required this.vocabulary,
+    required this.isSpeaking,
+    required this.isRemoving,
     required this.onAudio,
     required this.onRemove,
   });
 
   @override
   Widget build(BuildContext context) {
+    final word = vocabulary.word.trim().isEmpty
+        ? 'Untitled vocabulary'
+        : vocabulary.word.trim();
+
+    final pronunciation = vocabulary.pronunciation?.trim() ?? '';
+
+    final definition = vocabulary.definition?.trim() ?? '';
+
+    final example = vocabulary.example?.trim() ?? '';
+
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TtZoomTap(
           onTap: onAudio,
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
             width: 56,
             height: 56,
-            decoration: const BoxDecoration(
-              color: ColorUtils.secondaryBackgroundColor,
+            decoration: BoxDecoration(
+              color: isSpeaking
+                  ? ColorUtils.secondaryColor
+                  : ColorUtils.secondaryBackgroundColor,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.volume_up_outlined,
-              size: 28,
-              color: ColorUtils.secondaryColor,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                isSpeaking ? Icons.stop_rounded : Icons.volume_up_outlined,
+                key: ValueKey(isSpeaking),
+                size: 28,
+                color: isSpeaking ? Colors.white : ColorUtils.secondaryColor,
+              ),
             ),
           ),
         ),
@@ -46,56 +67,61 @@ class SavedVocabularyItemView extends StatelessWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   TtText(
-                    item.thaiWord,
+                    word,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: ColorUtils.primaryColor,
                   ),
-                  TtText(
-                    item.pronunciation,
-                    fontSize: 14,
-                    color: ColorUtils.greyTextColor,
-                  ),
+                  if (pronunciation.isNotEmpty)
+                    TtText(
+                      pronunciation,
+                      fontSize: 14,
+                      color: ColorUtils.greyTextColor,
+                    ),
                 ],
               ),
-              7.gh,
-              Wrap(
-                spacing: 10,
-                runSpacing: 5,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  TtText(
-                    item.englishMeaning,
-                    fontSize: 14,
-                    color: ColorUtils.primaryColor,
-                  ),
-                  const TtText(
-                    '•',
-                    fontSize: 14,
-                    color: ColorUtils.primaryColor,
-                  ),
-                  TtText(
-                    item.myanmarMeaning,
-                    fontSize: 14,
-                    family: TtFontFamily.myanmar_mn,
-                    color: ColorUtils.primaryColor,
-                  ),
-                ],
-              ),
+              if (definition.isNotEmpty) ...[
+                7.gh,
+                TtText(
+                  definition,
+                  fontSize: 14,
+                  height: 1.4,
+                  color: ColorUtils.primaryColor,
+                ),
+              ],
+              if (example.isNotEmpty) ...[
+                6.gh,
+                TtText(
+                  example,
+                  fontSize: 14,
+                  height: 1.4,
+                  color: ColorUtils.greyTextColor,
+                ),
+              ],
             ],
           ),
         ),
         12.gw,
-        TtZoomTap(
-          onTap: onRemove,
-          child: const Padding(
-            padding: EdgeInsets.all(6),
-            child: Icon(
-              Icons.favorite_rounded,
-              size: 30,
-              color: ColorUtils.secondaryColor,
-            ),
-          ),
+        SizedBox(
+          width: 42,
+          height: 42,
+          child: isRemoving
+              ? const Padding(
+                  padding: EdgeInsets.all(11),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: ColorUtils.secondaryColor,
+                  ),
+                )
+              : IconButton(
+                  onPressed: onRemove,
+                  tooltip: 'Remove from saved vocabulary',
+                  icon: const Icon(
+                    Icons.favorite_rounded,
+                    size: 30,
+                    color: ColorUtils.secondaryColor,
+                  ),
+                ),
         ),
       ],
     );

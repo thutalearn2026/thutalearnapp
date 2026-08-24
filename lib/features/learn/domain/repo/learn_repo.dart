@@ -136,4 +136,6 @@ abstract class LearnRepo {
   Future<Either<Failure, VocabularySaveResponse>> saveVocabulary({
     required String vocabularyId,
   });
+
+  Future<Either<Failure, SavedVocabulariesResponse>> getSavedVocabularies();
 }

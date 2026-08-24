@@ -14,7 +14,7 @@ class BottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Stack(
         children: [
           Positioned.fill(
@@ -22,6 +22,9 @@ class BottomNav extends StatelessWidget {
               children: [
                 HomePage(),
                 LearnPage(),
+                Container(
+                  color: Colors.yellow,
+                ),
                 ProfilePage(),
               ],
             ),
@@ -45,12 +48,12 @@ class BottomNavSectionView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
+        left: 8,
+        right: 8,
         bottom: 16,
       ),
       child: Row(
-        spacing: 8,
+        spacing: 4,
         children: [
           Expanded(
             child: ClipRRect(
@@ -89,13 +92,13 @@ class BottomNavSectionView extends StatelessWidget {
                     indicatorPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                     labelColor: Colors.white,
                     labelStyle: TextStyle(
-                      fontSize: 13,
+                      fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
                     unselectedLabelColor: ColorUtils.primaryColor,
                     unselectedLabelStyle: TextStyle(
                       fontWeight: FontWeight.w400,
-                      fontSize: 13,
+                      fontSize: 11,
                     ),
                     indicatorWeight: 0,
                     dividerHeight: 0,
@@ -115,6 +118,12 @@ class BottomNavSectionView extends StatelessWidget {
                           Icons.menu_book_outlined,
                         ),
                         text: "Learn",
+                      ),
+                      Tab(
+                        icon: Icon(
+                          Icons.video_library_outlined,
+                        ),
+                        text: "Reels",
                       ),
                       Tab(
                         icon: Icon(
@@ -175,7 +184,7 @@ class BottomNavSectionView extends StatelessWidget {
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );

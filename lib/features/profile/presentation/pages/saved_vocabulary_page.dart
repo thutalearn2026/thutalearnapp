@@ -1,217 +1,204 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thuta_learn/core/core.dart';
+import 'package:thuta_learn/features/learn/learn.dart';
 import 'package:thuta_learn/features/profile/profile.dart';
 
-class SavedVocabularyPage extends StatefulWidget {
-  const SavedVocabularyPage({super.key});
-
-  @override
-  State<SavedVocabularyPage> createState() =>
-      _SavedVocabularyPageState();
-}
-
-class _SavedVocabularyPageState
-    extends State<SavedVocabularyPage> {
-  bool _isAlphabeticallySorted = false;
-
-  final List<SavedVocabularyItem> _items = [
-    const SavedVocabularyItem(
-      id: 1,
-      originalOrder: 1,
-      thaiWord: 'สวัสดี',
-      pronunciation: 'sa-wat-dee',
-      englishMeaning: 'Hello',
-      myanmarMeaning: 'မင်္ဂလာပါ',
-    ),
-    const SavedVocabularyItem(
-      id: 2,
-      originalOrder: 2,
-      thaiWord: 'ขอบคุณ',
-      pronunciation: 'khop-khun',
-      englishMeaning: 'Thank you',
-      myanmarMeaning: 'ကျေးဇူးတင်ပါတယ်',
-    ),
-    const SavedVocabularyItem(
-      id: 3,
-      originalOrder: 3,
-      thaiWord: 'ยินดี',
-      pronunciation: 'yin-dee',
-      englishMeaning: 'Pleased to meet you',
-      myanmarMeaning: 'တွေ့ရတာဝမ်းသာပါတယ်',
-    ),
-    const SavedVocabularyItem(
-      id: 4,
-      originalOrder: 4,
-      thaiWord: 'งาน',
-      pronunciation: 'ngaan',
-      englishMeaning: 'Work / Job',
-      myanmarMeaning: 'အလုပ်',
-    ),
-    const SavedVocabularyItem(
-      id: 5,
-      originalOrder: 5,
-      thaiWord: 'สวัสดีครับ',
-      pronunciation: 'sa-wat-dee khrap',
-      englishMeaning: 'Hello',
-      myanmarMeaning: 'မင်္ဂလာပါ',
-    ),
-    const SavedVocabularyItem(
-      id: 6,
-      originalOrder: 6,
-      thaiWord: 'ขอบคุณครับ',
-      pronunciation: 'khop-khun khrap',
-      englishMeaning: 'Thank you',
-      myanmarMeaning: 'ကျေးဇူးတင်ပါတယ်',
-    ),
-    const SavedVocabularyItem(
-      id: 7,
-      originalOrder: 7,
-      thaiWord: 'ลาก่อน',
-      pronunciation: 'la-gon',
-      englishMeaning: 'Goodbye',
-      myanmarMeaning: 'နှုတ်ဆက်ပါတယ်',
-    ),
-    const SavedVocabularyItem(
-      id: 8,
-      originalOrder: 8,
-      thaiWord: 'อาหาร',
-      pronunciation: 'aa-harn',
-      englishMeaning: 'Food',
-      myanmarMeaning: 'အစားအစာ',
-    ),
-  ];
-
-  void _sortItems() {
-    setState(() {
-      _isAlphabeticallySorted =
-      !_isAlphabeticallySorted;
-
-      if (_isAlphabeticallySorted) {
-        _items.sort(
-              (first, second) => first.pronunciation.compareTo(
-            second.pronunciation,
-          ),
-        );
-      } else {
-        _items.sort(
-              (first, second) => first.originalOrder.compareTo(
-            second.originalOrder,
-          ),
-        );
-      }
-    });
-  }
-
-  void _removeItem(SavedVocabularyItem item) {
-    final removedIndex = _items.indexOf(item);
-
-    setState(() {
-      _items.remove(item);
-    });
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: TtText(
-            '${item.thaiWord} removed from saved vocabulary',
-            fontSize: 14,
-            color: Colors.white,
-          ),
-          action: SnackBarAction(
-            label: 'Undo',
-            textColor: ColorUtils.secondaryColor,
-            onPressed: () {
-              setState(() {
-                final insertIndex = removedIndex.clamp(
-                  0,
-                  _items.length,
-                );
-
-                _items.insert(insertIndex, item);
-
-                if (_isAlphabeticallySorted) {
-                  _items.sort(
-                        (first, second) =>
-                        first.pronunciation.compareTo(
-                          second.pronunciation,
-                        ),
-                  );
-                }
-              });
-            },
-          ),
-        ),
-      );
-  }
-
-  void _playAudio(SavedVocabularyItem item) {
-    // Play item pronunciation audio here later.
-  }
+class SavedVocabularyPage extends StatelessWidget {
+  const SavedVocabularyPage({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ColorUtils.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: ColorUtils.scaffoldBackgroundColor,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: context.pop,
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: ColorUtils.primaryColor,
-          ),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) {
+            return getIt<SavedVocabularyBloc>()..add(
+              OnGetSavedVocabularies(),
+            );
+          },
         ),
-        title: const TtText(
-          'Saved Vocabulary',
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
+        BlocProvider(
+          create: (_) {
+            return getIt<VocabularySpeechCubit>()..initialize();
+          },
         ),
-        actions: [
-          IconButton(
-            tooltip: _isAlphabeticallySorted
-                ? 'Restore saved order'
-                : 'Sort alphabetically',
-            onPressed: _sortItems,
-            icon: Icon(
-              _isAlphabeticallySorted
-                  ? Icons.sort_by_alpha_rounded
-                  : Icons.sort_rounded,
-              size: 29,
-              color: ColorUtils.primaryColor,
+      ],
+      child: const _SavedVocabularyView(),
+    );
+  }
+}
+
+class _SavedVocabularyView extends StatelessWidget {
+  const _SavedVocabularyView();
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<SavedVocabularyBloc, SavedVocabularyState>(
+          listenWhen: (previous, current) {
+            return previous.message != current.message &&
+                current.message != null &&
+                current.actionStatus != SavedVocabularyActionStatus.loading;
+          },
+          listener: (context, state) {
+            final message = state.message;
+
+            if (message == null) {
+              return;
+            }
+
+            context.showSnackBar(
+              message,
+              snackBarType: state.actionStatus == SavedVocabularyActionStatus.success
+                  ? SnackBarType.success
+                  : SnackBarType.error,
+            );
+          },
+        ),
+        BlocListener<VocabularySpeechCubit, VocabularySpeechState>(
+          listenWhen: (previous, current) {
+            return previous.message != current.message && current.message != null;
+          },
+          listener: (context, state) {
+            context.showSnackBar(
+              state.message!,
+              snackBarType: SnackBarType.error,
+            );
+          },
+        ),
+      ],
+      child: BlocBuilder<SavedVocabularyBloc, SavedVocabularyState>(
+        builder: (context, state) {
+          return Scaffold(
+            backgroundColor: ColorUtils.scaffoldBackgroundColor,
+            appBar: AppBar(
+              backgroundColor: ColorUtils.scaffoldBackgroundColor,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              leading: IconButton(
+                onPressed: context.pop,
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: ColorUtils.primaryColor,
+                ),
+              ),
+              title: const TtText(
+                'Saved Vocabulary',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              actions: [
+                IconButton(
+                  tooltip: state.isAlphabeticallySorted
+                      ? 'Restore saved order'
+                      : 'Sort alphabetically',
+                  onPressed: state.vocabularies.isEmpty
+                      ? null
+                      : () {
+                          context.read<SavedVocabularyBloc>().add(
+                            OnSortSavedVocabularies(),
+                          );
+                        },
+                  icon: Icon(
+                    state.isAlphabeticallySorted
+                        ? Icons.sort_by_alpha_rounded
+                        : Icons.sort_rounded,
+                    size: 29,
+                    color: ColorUtils.primaryColor,
+                  ),
+                ),
+                8.gw,
+              ],
             ),
-          ),
-          8.gw,
-        ],
+            body: _buildBody(
+              context,
+              state,
+            ),
+          );
+        },
       ),
-      body: _items.isEmpty
-          ? const SavedVocabularyEmptyView()
-          : ListView.separated(
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    SavedVocabularyState state,
+  ) {
+    if (state.isInitialLoading) {
+      return const _SavedVocabularyLoadingView();
+    }
+
+    if (state.status == SavedVocabularyStatus.failure && state.vocabularies.isEmpty) {
+      return _SavedVocabularyErrorView(
+        message: state.message ?? 'Unable to load saved vocabularies.',
+        onRetry: () {
+          context.read<SavedVocabularyBloc>().add(
+            OnGetSavedVocabularies(),
+          );
+        },
+      );
+    }
+
+    if (state.vocabularies.isEmpty) {
+      return const SavedVocabularyEmptyView();
+    }
+
+    return RefreshIndicator(
+      color: ColorUtils.secondaryColor,
+      onRefresh: () async {
+        final bloc = context.read<SavedVocabularyBloc>();
+
+        bloc.add(
+          OnGetSavedVocabularies(),
+        );
+
+        await bloc.stream.firstWhere(
+          (state) => state.status != SavedVocabularyStatus.loading,
+        );
+      },
+      child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(
           16,
           22,
           16,
           32,
         ),
-        itemCount: _items.length,
-        separatorBuilder: (context, index) {
-          return 22.gh;
-        },
+        itemCount: state.vocabularies.length,
+        separatorBuilder: (_, __) => 22.gh,
         itemBuilder: (context, index) {
-          final item = _items[index];
+          final vocabulary = state.vocabularies[index];
 
-          return SavedVocabularyItemView(
-            key: ValueKey(item.id),
-            item: item,
-            onAudio: () {
-              _playAudio(item);
+          return BlocSelector<VocabularySpeechCubit, VocabularySpeechState, bool>(
+            selector: (speechState) {
+              return speechState.isSpeaking(
+                vocabulary.id,
+              );
             },
-            onRemove: () {
-              _removeItem(item);
+            builder: (context, isSpeaking) {
+              return SavedVocabularyItemView(
+                key: ValueKey(vocabulary.id),
+                vocabulary: vocabulary,
+                isSpeaking: isSpeaking,
+                isRemoving: state.isRemoving(
+                  vocabulary.id,
+                ),
+                onAudio: () {
+                  context.read<VocabularySpeechCubit>().speak(vocabulary);
+                },
+                onRemove: () {
+                  context.read<SavedVocabularyBloc>().add(
+                    OnRemoveSavedVocabulary(
+                      vocabulary: vocabulary,
+                    ),
+                  );
+                },
+              );
             },
           );
         },
@@ -221,7 +208,9 @@ class _SavedVocabularyPageState
 }
 
 class SavedVocabularyEmptyView extends StatelessWidget {
-  const SavedVocabularyEmptyView({super.key});
+  const SavedVocabularyEmptyView({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -252,12 +241,114 @@ class SavedVocabularyEmptyView extends StatelessWidget {
             ),
             10.gh,
             const TtText(
-              'Tap the heart icon on vocabulary words to '
-                  'save them for later.',
+              'Tap the heart icon on vocabulary words '
+              'to save them for later.',
               fontSize: 14,
               height: 1.4,
               textAlign: TextAlign.center,
               color: ColorUtils.greyTextColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SavedVocabularyLoadingView extends StatelessWidget {
+  const _SavedVocabularyLoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(
+        16,
+        22,
+        16,
+        32,
+      ),
+      itemCount: 5,
+      separatorBuilder: (_, __) => 22.gh,
+      itemBuilder: (_, __) {
+        return Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE9EDF2),
+                shape: BoxShape.circle,
+              ),
+            ),
+            14.gw,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 160,
+                    height: 18,
+                    color: const Color(
+                      0xFFE9EDF2,
+                    ),
+                  ),
+                  9.gh,
+                  Container(
+                    width: 230,
+                    height: 15,
+                    color: const Color(
+                      0xFFE9EDF2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SavedVocabularyErrorView extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _SavedVocabularyErrorView({
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.menu_book_outlined,
+              size: 54,
+              color: ColorUtils.greyTextColor,
+            ),
+            14.gh,
+            TtText(
+              message,
+              fontSize: 14,
+              height: 1.4,
+              textAlign: TextAlign.center,
+              color: ColorUtils.greyTextColor,
+            ),
+            18.gh,
+            TtButton(
+              onTap: onRetry,
+              child: const TtText(
+                'Try Again',
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
             ),
           ],
         ),

@@ -278,4 +278,8 @@ class LearnUseCase {
       vocabularyId: vocabularyId,
     );
   }
+
+  Future<Either<Failure, SavedVocabulariesResponse>> getSavedVocabularies() {
+    return learnRepo.getSavedVocabularies();
+  }
 }

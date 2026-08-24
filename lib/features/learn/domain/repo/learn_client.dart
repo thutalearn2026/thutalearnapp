@@ -65,4 +65,6 @@ abstract class LearnClient {
   Future<VocabularySaveResponse> saveVocabulary({
     required String vocabularyId,
   });
+
+  Future<SavedVocabulariesResponse> getSavedVocabularies();
 }

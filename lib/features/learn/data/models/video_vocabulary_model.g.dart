@@ -57,3 +57,15 @@ VocabularySaveResponse _$VocabularySaveResponseFromJson(
 Map<String, dynamic> _$VocabularySaveResponseToJson(
   VocabularySaveResponse instance,
 ) => <String, dynamic>{'saved': instance.saved};
+
+SavedVocabulariesResponse _$SavedVocabulariesResponseFromJson(
+  Map<String, dynamic> json,
+) => SavedVocabulariesResponse(
+  data: (json['data'] as List<dynamic>)
+      .map((e) => VideoVocabularyModel.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
+
+Map<String, dynamic> _$SavedVocabulariesResponseToJson(
+  SavedVocabulariesResponse instance,
+) => <String, dynamic>{'data': instance.data};

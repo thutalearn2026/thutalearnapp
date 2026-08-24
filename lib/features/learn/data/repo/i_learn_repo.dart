@@ -361,4 +361,11 @@ class ILearnRepo implements LearnRepo {
       ),
     );
   }
+
+  @override
+  Future<Either<Failure, SavedVocabulariesResponse>> getSavedVocabularies() {
+    return _request(
+      () => client.getSavedVocabularies(),
+    );
+  }
 }
