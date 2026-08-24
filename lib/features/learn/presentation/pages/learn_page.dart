@@ -57,10 +57,20 @@ class _LearnCoursesViewState
   Future<void> _refreshCourses() async {
     final bloc = context.read<CoursesBloc>();
 
+    // If the initial background refresh is still running,
+    // wait for it rather than dispatching a duplicate request.
+    if (bloc.state.isRefreshing) {
+      await bloc.stream.firstWhere(
+            (state) => !state.isRefreshing,
+      );
+      return;
+    }
+
     final completed = bloc.stream.firstWhere(
           (state) {
-        return state.status == CoursesStatus.success ||
-            state.status == CoursesStatus.failure;
+        return !state.isRefreshing &&
+            (state.status == CoursesStatus.success ||
+                state.status == CoursesStatus.failure);
       },
     );
 

@@ -9,10 +9,19 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/authentication/data/data_sources/box/auth_session_box.dart';
+import 'package:thuta_learn/features/learn/learn.dart';
 import 'package:thuta_learn/features/onboarding/data/data_sources/box/onboarding_box.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
+
+import 'package:thuta_learn/features/learn/data/data_sources/box/courses_cache_box.dart';
+import 'package:thuta_learn/features/profile/data/data_sources/box/profile_cache_box.dart';
+import 'package:thuta_learn/features/learn/data/data_sources/box/course_detail_cache_box.dart';
+import 'package:thuta_learn/features/learn/data/data_sources/box/module_lessons_cache_box.dart';
+import 'package:thuta_learn/features/learn/data/data_sources/box/lesson_detail_cache_box.dart';
+import 'package:thuta_learn/features/learn/data/data_sources/box/module_resources_cache_box.dart';
+import 'package:thuta_learn/features/learn/data/data_sources/box/downloaded_resource_box.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +41,14 @@ void main() async {
   await Hive.initFlutter();
   await Hive.openBox<dynamic>(AuthSessionBox.boxName);
   await Hive.openBox<dynamic>(OnboardingBox.boxName);
+  await Hive.openBox<dynamic>(CoursesCacheBox.boxName);
+  await Hive.openBox<dynamic>(ProfileCacheBox.boxName);
+  await Hive.openBox<dynamic>(CourseDetailCacheBox.boxName);
+  await Hive.openBox<dynamic>(ModuleLessonsCacheBox.boxName);
+  await Hive.openBox<dynamic>(LessonDetailCacheBox.boxName);
+  await Hive.openBox<dynamic>(ModuleResourcesCacheBox.boxName);
+  await Hive.openBox<dynamic>(DownloadedResourceBox.boxName);
+  await Hive.openBox<dynamic>(LessonVocabularyCacheBox.boxName);
 
   configureDependencies();
 

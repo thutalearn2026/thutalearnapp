@@ -11,11 +11,13 @@ enum ResourceDownloadStatus {
 class ResourceDownloadItemState {
   final ResourceDownloadStatus status;
   final String? savedLocation;
+  final String? localFilePath;
 
   const ResourceDownloadItemState({
     this.status =
         ResourceDownloadStatus.initial,
     this.savedLocation,
+    this.localFilePath,
   });
 
   bool get isDownloading {
@@ -25,7 +27,8 @@ class ResourceDownloadItemState {
 
   bool get isDownloaded {
     return status ==
-        ResourceDownloadStatus.success;
+        ResourceDownloadStatus.success &&
+        localFilePath != null;
   }
 }
 
@@ -58,9 +61,8 @@ class ResourceDownloadState {
   }) {
     return ResourceDownloadState(
       downloads: downloads ?? this.downloads,
-      message: clearMessage
-          ? null
-          : message ?? this.message,
+      message:
+      clearMessage ? null : message ?? this.message,
       messageType:
       messageType ?? this.messageType,
     );

@@ -13,9 +13,21 @@ class IProfileRepo implements ProfileRepo {
   });
 
   @override
-  Future<Either<Failure, ProfileResponse>> getProfile() async {
+  Future<ProfileModel?> getCachedProfile() {
+    return ProfileCacheBox.read();
+  }
+
+  @override
+  Future<Either<Failure, ProfileResponse>>
+  getProfile() async {
     try {
       final response = await client.getProfile();
+
+      // Keep Hive synchronized with GET /profile.
+      await ProfileCacheBox.save(
+        response.data,
+      );
+
       return Right(response);
     } on DioException catch (error) {
       if (checkConnectionFailure(error)) {
@@ -37,7 +49,8 @@ class IProfileRepo implements ProfileRepo {
   }
 
   @override
-  Future<Either<Failure, UpdateProfileResponse>> updateProfile({
+  Future<Either<Failure, UpdateProfileResponse>>
+  updateProfile({
     required String name,
     required String email,
     String? photoPath,
@@ -49,6 +62,11 @@ class IProfileRepo implements ProfileRepo {
         photoPath: photoPath,
       );
 
+      // Update Hive immediately after PUT /profile succeeds.
+      await ProfileCacheBox.save(
+        response.data,
+      );
+
       return Right(response);
     } on DioException catch (error) {
       if (checkConnectionFailure(error)) {
@@ -70,9 +88,10 @@ class IProfileRepo implements ProfileRepo {
   }
 
   @override
-  Future<Either<Failure, ChangePasswordResponse>> changePassword(
-    ChangePasswordRequest request,
-  ) async {
+  Future<Either<Failure, ChangePasswordResponse>>
+  changePassword(
+      ChangePasswordRequest request,
+      ) async {
     try {
       final response = await client.changePassword(
         request,

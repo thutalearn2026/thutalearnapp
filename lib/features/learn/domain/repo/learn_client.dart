@@ -58,5 +58,7 @@ abstract class LearnClient {
     required QuizAttemptRequest request,
   });
 
-
+  Future<VideoVocabulariesResponse> getVideoVocabularies({
+    required String videoId,
+  });
 }

@@ -482,38 +482,60 @@ class ChapterResourceView extends StatelessWidget {
                         child: SizedBox(
                           width: 25,
                           height: 25,
-                          child:
-                          CircularProgressIndicator(
+                          child: CircularProgressIndicator(
                             strokeWidth: 2.6,
-                            color:
-                            ColorUtils.secondaryColor,
+                            color: ColorUtils.secondaryColor,
                           ),
                         ),
                       ),
                     );
                   }
 
-                  final downloaded =
-                      downloadState.isDownloaded;
+                  if (downloadState.isDownloaded) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: ColorUtils.secondaryColor.withValues(
+                          alpha: 0.10,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.download_done_rounded,
+                            size: 18,
+                            color: ColorUtils.secondaryColor,
+                          ),
+                          SizedBox(width: 5),
+                          TtText(
+                            'Downloaded',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: ColorUtils.secondaryColor,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
 
                   return Material(
-                    color: ColorUtils.secondaryColor
-                        .withValues(alpha: 0.10),
+                    color: ColorUtils.secondaryColor.withValues(
+                      alpha: 0.10,
+                    ),
                     shape: const CircleBorder(),
                     clipBehavior: Clip.antiAlias,
                     child: IconButton(
-                      onPressed:
-                      downloaded ? null : onDownload,
-                      tooltip: downloaded
-                          ? 'Resource saved'
-                          : 'Download resource',
-                      icon: Icon(
-                        downloaded
-                            ? Icons.download_done_rounded
-                            : Icons.download_outlined,
+                      onPressed: onDownload,
+                      tooltip: 'Download resource',
+                      icon: const Icon(
+                        Icons.download_outlined,
                         size: 24,
-                        color:
-                        ColorUtils.secondaryColor,
+                        color: ColorUtils.secondaryColor,
                       ),
                     ),
                   );

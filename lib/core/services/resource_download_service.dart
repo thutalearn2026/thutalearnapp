@@ -1,27 +1,30 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:public_file_saver/public_file_saver.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
 
 class ResourceDownloadResult {
   final String fileName;
-  final String? path;
-  final String? uri;
+  final String localFilePath;
+  final String? publicPath;
+  final String? publicUri;
 
   const ResourceDownloadResult({
     required this.fileName,
-    this.path,
-    this.uri,
+    required this.localFilePath,
+    this.publicPath,
+    this.publicUri,
   });
 
-  String? get location {
-    return path ?? uri;
+  String? get publicLocation {
+    return publicPath ?? publicUri;
   }
 }
 
-class ResourceDownloadCanceledException
-    implements Exception {
+class ResourceDownloadCanceledException implements Exception {
   const ResourceDownloadCanceledException();
 
   @override
@@ -32,15 +35,47 @@ class ResourceDownloadCanceledException
 
 @lazySingleton
 class ResourceDownloadService {
-  static const String androidDownloadFolder =
-      'Thuta Learn/Downloaded Resources';
+  static const String androidDownloadFolder = 'Thuta Learn/Downloaded Resources';
 
-  final PublicFileSaver _fileSaver =
-  PublicFileSaver();
+  final PublicFileSaver _fileSaver = PublicFileSaver();
+
+  // Use a separate Dio instance because resource files
+  // may be hosted outside the authenticated API domain.
+  final Dio _dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(minutes: 5),
+      followRedirects: true,
+    ),
+  );
+
+  Future<DownloadedResourceRecord?> getDownloadedResource(
+    String resourceId,
+  ) {
+    return DownloadedResourceBox.read(
+      resourceId,
+    );
+  }
+
+  Future<void> updateResourceMetadata(
+    ChapterResourceModel resource,
+  ) async {
+    final record = await getDownloadedResource(resource.id);
+
+    if (record == null) {
+      return;
+    }
+
+    await DownloadedResourceBox.save(
+      record.copyWith(
+        resource: resource,
+      ),
+    );
+  }
 
   Future<ResourceDownloadResult> download(
-      ChapterResourceModel resource,
-      ) async {
+    ChapterResourceModel resource,
+  ) async {
     final url = resource.fileUrl.trim();
 
     if (url.isEmpty) {
@@ -49,60 +84,125 @@ class ResourceDownloadService {
       );
     }
 
+    final userId = DownloadedResourceBox.currentUserId;
+
+    if (userId == null) {
+      throw StateError(
+        'Please log in before downloading resources.',
+      );
+    }
+
     final fileName = _createFileName(resource);
+    final extension = _getFileExtension(resource);
     final mimeType = _getMimeType(resource);
 
-    final PublicSavedFile? savedFile;
+    final documentsDirectory = await getApplicationDocumentsDirectory();
 
-    if (Platform.isAndroid) {
-      savedFile = await _fileSaver.saveFromUrl(
-        url: url,
-        fileName: fileName,
-        mimeType: mimeType,
-        subDir: androidDownloadFolder,
-        useDialog: false,
-      );
-    } else if (Platform.isIOS) {
-      // iOS uses the native Save to Files dialog.
-      // This avoids exposing the private video directory.
-      savedFile = await _fileSaver.saveFromUrl(
-        url: url,
-        fileName: fileName,
-        mimeType: mimeType,
-        useDialog: true,
-      );
-    } else {
-      savedFile = await _fileSaver.saveFromUrl(
-        url: url,
-        fileName: fileName,
-        mimeType: mimeType,
-        useDialog: true,
-      );
-    }
-
-    if (savedFile == null) {
-      throw const ResourceDownloadCanceledException();
-    }
-
-    if (!savedFile.isSuccess) {
-      throw StateError(
-        'Unable to save this resource.',
-      );
-    }
-
-    return ResourceDownloadResult(
-      fileName: savedFile.fileName,
-      path: savedFile.path,
-      uri: savedFile.uri,
+    final privateDirectory = Directory(
+      '${documentsDirectory.path}/'
+      'downloaded_resources/$userId',
     );
+
+    if (!await privateDirectory.exists()) {
+      await privateDirectory.create(
+        recursive: true,
+      );
+    }
+
+    final finalFile = File(
+      '${privateDirectory.path}/'
+      '${resource.id}.$extension',
+    );
+
+    final temporaryFile = File(
+      '${privateDirectory.path}/'
+      '${resource.id}.$extension.part',
+    );
+
+    if (await temporaryFile.exists()) {
+      await temporaryFile.delete();
+    }
+
+    try {
+      await _dio.download(
+        url,
+        temporaryFile.path,
+        deleteOnError: true,
+      );
+
+      if (!await temporaryFile.exists() || await temporaryFile.length() == 0) {
+        throw StateError(
+          'The downloaded resource is empty.',
+        );
+      }
+
+      final fileBytes = await temporaryFile.readAsBytes();
+
+      final PublicSavedFile? publicFile;
+
+      if (Platform.isAndroid) {
+        publicFile = await _fileSaver.saveBytes(
+          bytes: fileBytes,
+          fileName: fileName,
+          mimeType: mimeType,
+          subDir: androidDownloadFolder,
+        );
+      } else {
+        publicFile = await _fileSaver.saveBytesWithDialog(
+          bytes: fileBytes,
+          fileName: fileName,
+          mimeType: mimeType,
+        );
+      }
+
+      if (publicFile == null) {
+        throw const ResourceDownloadCanceledException();
+      }
+
+      if (!publicFile.isSuccess) {
+        throw StateError(
+          'Unable to save this resource.',
+        );
+      }
+
+      if (await finalFile.exists()) {
+        await finalFile.delete();
+      }
+
+      await temporaryFile.rename(
+        finalFile.path,
+      );
+
+      final record = DownloadedResourceRecord(
+        resource: resource,
+        fileName: publicFile.fileName,
+        localFilePath: finalFile.path,
+        publicPath: publicFile.path,
+        publicUri: publicFile.uri,
+        downloadedAt: DateTime.now(),
+      );
+
+      await DownloadedResourceBox.save(record);
+
+      return ResourceDownloadResult(
+        fileName: publicFile.fileName,
+        localFilePath: finalFile.path,
+        publicPath: publicFile.path,
+        publicUri: publicFile.uri,
+      );
+    } catch (_) {
+      if (await temporaryFile.exists()) {
+        await temporaryFile.delete();
+      }
+
+      rethrow;
+    }
   }
 
   String _createFileName(
-      ChapterResourceModel resource,
-      ) {
-    var title = resource.title
-        .trim()
-        .replaceAll('_', ' ');
+    ChapterResourceModel resource,
+  ) {
+    var title = resource.title.trim().replaceAll('_', ' ');
 
     if (title.isEmpty) {
       title = 'Thuta Learn Resource';
@@ -112,12 +212,9 @@ class ResourceDownloadService {
       title,
     );
 
-    final extension =
-    _getFileExtension(resource);
+    final extension = _getFileExtension(resource);
 
-    final lowerTitle = title.toLowerCase();
-
-    if (lowerTitle.endsWith(
+    if (title.toLowerCase().endsWith(
       '.$extension',
     )) {
       return title;
@@ -127,14 +224,12 @@ class ResourceDownloadService {
   }
 
   String _getFileExtension(
-      ChapterResourceModel resource,
-      ) {
-    final fileType =
-    resource.fileType.trim().toLowerCase();
+    ChapterResourceModel resource,
+  ) {
+    final type = resource.fileType.trim().toLowerCase();
 
-    if (fileType.isNotEmpty &&
-        fileType != 'file') {
-      switch (fileType) {
+    if (type.isNotEmpty && type != 'file') {
+      switch (type) {
         case 'word':
           return 'docx';
 
@@ -142,7 +237,7 @@ class ResourceDownloadService {
           return 'mp3';
 
         default:
-          return fileType;
+          return type;
       }
     }
 
@@ -150,17 +245,11 @@ class ResourceDownloadService {
       resource.fileUrl,
     );
 
-    final path = uri?.path ?? '';
+    final segments =
+        uri?.pathSegments.where((segment) => segment.isNotEmpty).toList() ?? const <String>[];
 
-    final lastSegment = path
-        .split('/')
-        .where((segment) => segment.isNotEmpty)
-        .lastOrNull;
-
-    if (lastSegment != null &&
-        lastSegment.contains('.')) {
-      final extension =
-          lastSegment.split('.').last;
+    if (segments.isNotEmpty && segments.last.contains('.')) {
+      final extension = segments.last.split('.').last.trim();
 
       if (extension.isNotEmpty) {
         return extension.toLowerCase();
@@ -171,8 +260,8 @@ class ResourceDownloadService {
   }
 
   String _getMimeType(
-      ChapterResourceModel resource,
-      ) {
+    ChapterResourceModel resource,
+  ) {
     switch (_getFileExtension(resource)) {
       case 'pdf':
         return 'application/pdf';

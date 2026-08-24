@@ -173,9 +173,19 @@ class _ProfileViewState extends State<_ProfileView> {
   Future<void> _refreshProfile() async {
     final profileBloc = context.read<ProfileBloc>();
 
-    final refreshCompleted = profileBloc.stream.firstWhere(
-      (state) {
-        return state.status == ProfileStatus.success || state.status == ProfileStatus.failure;
+    if (profileBloc.state.isRefreshing) {
+      await profileBloc.stream.firstWhere(
+            (state) => !state.isRefreshing,
+      );
+      return;
+    }
+
+    final refreshCompleted =
+    profileBloc.stream.firstWhere(
+          (state) {
+        return !state.isRefreshing &&
+            (state.status == ProfileStatus.success ||
+                state.status == ProfileStatus.failure);
       },
     );
 
@@ -187,14 +197,20 @@ class _ProfileViewState extends State<_ProfileView> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ProfileBloc, ProfileState>(
+      listenWhen: (previous, current) {
+        return previous.message != current.message &&
+            current.message != null;
+      },
       listener: (context, state) {
-        if (state.status == ProfileStatus.failure) {
-          context.showSnackBar(
-            state.message ?? 'Unable to load your profile.',
-            margin: EdgeInsets.only(bottom: 100, left: 16, right: 16,),
-            snackBarType: SnackBarType.error,
-          );
-        }
+        context.showSnackBar(
+          state.message!,
+          margin: const EdgeInsets.only(
+            bottom: 100,
+            left: 16,
+            right: 16,
+          ),
+          snackBarType: SnackBarType.error,
+        );
       },
       builder: (context, state) {
         if (state.isLoading && state.profile == null) {
@@ -238,7 +254,7 @@ class _ProfileViewState extends State<_ProfileView> {
                 child: _buildProfileContent(profile),
               ),
 
-              if (state.isLoading)
+              if (state.isRefreshing && state.profile != null)
                 const Positioned(
                   top: 0,
                   left: 0,

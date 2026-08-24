@@ -9,3 +9,4 @@ export 'resource_detail/resource_detail_bloc.dart';
 export 'lesson_download/lesson_download_cubit.dart';
 export 'module_video_downloads/module_video_downloads_cubit.dart';
 export 'resource_download/resource_download_cubit.dart';
+export 'vocabulary_speech/vocabulary_speech_cubit.dart';

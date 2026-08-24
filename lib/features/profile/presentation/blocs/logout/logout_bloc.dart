@@ -5,6 +5,13 @@ import 'package:injectable/injectable.dart';
 import 'package:meta/meta.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/authentication/authentication.dart';
+import 'package:thuta_learn/features/learn/data/data_sources/box/courses_cache_box.dart';
+import 'package:thuta_learn/features/profile/data/data_sources/box/profile_cache_box.dart';
+import 'package:thuta_learn/features/learn/data/data_sources/box/course_detail_cache_box.dart';
+import 'package:thuta_learn/features/learn/data/data_sources/box/module_lessons_cache_box.dart';
+import 'package:thuta_learn/features/learn/data/data_sources/box/lesson_detail_cache_box.dart';
+import 'package:thuta_learn/features/learn/data/data_sources/box/downloaded_resource_box.dart';
+import 'package:thuta_learn/features/learn/learn.dart';
 
 part 'logout_event.dart';
 part 'logout_state.dart';
@@ -20,9 +27,9 @@ class LogoutBloc extends Bloc<LogoutEvent, LogoutState> {
   }
 
   Future<void> _onLogout(
-      OnLogout event,
-      Emitter<LogoutState> emit,
-      ) async {
+    OnLogout event,
+    Emitter<LogoutState> emit,
+  ) async {
     if (state.isLoading) return;
 
     emit(
@@ -34,7 +41,7 @@ class LogoutBloc extends Bloc<LogoutEvent, LogoutState> {
     final result = await authenticationUseCase.logout();
 
     await result.fold<Future<void>>(
-          (failure) async {
+      (failure) async {
         emit(
           LogoutState(
             status: LogoutStatus.failure,
@@ -42,9 +49,17 @@ class LogoutBloc extends Bloc<LogoutEvent, LogoutState> {
           ),
         );
       },
-          (response) async {
+      (response) async {
         // Clear local authentication only after the
         // server successfully revokes the token.
+        await CoursesCacheBox.clearCurrentUser();
+        await CourseDetailCacheBox.clearCurrentUser();
+        await ModuleLessonsCacheBox.clearCurrentUser();
+        await LessonDetailCacheBox.clearCurrentUser();
+        await ProfileCacheBox.clearCurrentUser();
+        await LessonVocabularyCacheBox.clearCurrentUser();
+        await DownloadedResourceBox.clearCurrentUser(deletePrivateFiles: true);
+
         await AuthSessionBox.clearSession();
 
         emit(

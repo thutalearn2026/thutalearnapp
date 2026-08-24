@@ -10,7 +10,8 @@ part 'profile_event.dart';
 part 'profile_state.dart';
 
 @Injectable()
-class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
+class ProfileBloc
+    extends Bloc<ProfileEvent, ProfileState> {
   final ProfileUseCase profileUseCase;
 
   ProfileBloc({
@@ -23,10 +24,24 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       OnGetProfile event,
       Emitter<ProfileState> emit,
       ) async {
+    if (state.isRefreshing) {
+      return;
+    }
+
+    final cachedProfile =
+    await profileUseCase.getCachedProfile();
+
+    final visibleProfile =
+        cachedProfile ?? state.profile;
+
     emit(
-      ProfileState(
-        status: ProfileStatus.loading,
-        profile: state.profile,
+      state.copyWith(
+        status: visibleProfile != null
+            ? ProfileStatus.success
+            : ProfileStatus.loading,
+        profile: visibleProfile,
+        isRefreshing: true,
+        clearMessage: true,
       ),
     );
 
@@ -35,18 +50,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     result.fold(
           (failure) {
         emit(
-          ProfileState(
-            status: ProfileStatus.failure,
-            profile: state.profile,
+          state.copyWith(
+            status: visibleProfile != null
+                ? ProfileStatus.success
+                : ProfileStatus.failure,
+            profile: visibleProfile,
+            isRefreshing: false,
             message: _failureMessage(failure),
           ),
         );
       },
           (response) {
+        // IProfileRepo has already synchronized this
+        // response with Hive.
         emit(
-          ProfileState(
+          state.copyWith(
             status: ProfileStatus.success,
             profile: response.data,
+            isRefreshing: false,
+            clearMessage: true,
           ),
         );
       },
@@ -55,13 +77,17 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
   String _failureMessage(Failure failure) {
     if (failure is ConnectionFailure) {
-      return 'Please check your internet connection and try again.';
+      return state.profile != null
+          ? 'You are offline. Showing your saved profile.'
+          : 'Please check your internet connection and try again.';
     }
 
     final message = failure.e?.toString();
 
-    if (message == null || message.isEmpty) {
-      return 'Unable to load your profile.';
+    if (message == null || message.trim().isEmpty) {
+      return state.profile != null
+          ? 'Unable to refresh your profile. Showing saved data.'
+          : 'Unable to load your profile.';
     }
 
     return message;

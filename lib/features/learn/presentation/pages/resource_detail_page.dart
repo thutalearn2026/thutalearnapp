@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -17,13 +18,12 @@ class ResourceDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) {
-        return getIt<ResourceDetailBloc>()
-          ..add(
-            OnGetResourceDetail(
-              chapterId: args.chapterId,
-              resourceId: args.resourceId,
-            ),
-          );
+        return getIt<ResourceDetailBloc>()..add(
+          OnGetResourceDetail(
+            chapterId: args.chapterId,
+            resourceId: args.resourceId,
+          ),
+        );
       },
       child: _ResourceDetailView(
         args: args,
@@ -45,10 +45,8 @@ class _ResourceDetailView extends StatefulWidget {
   }
 }
 
-class _ResourceDetailViewState
-    extends State<_ResourceDetailView> {
-  final PdfViewerController _pdfController =
-  PdfViewerController();
+class _ResourceDetailViewState extends State<_ResourceDetailView> {
+  final PdfViewerController _pdfController = PdfViewerController();
 
   bool _isDocumentLoading = true;
   String? _documentError;
@@ -88,23 +86,15 @@ class _ResourceDetailViewState
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<
-        ResourceDetailBloc,
-        ResourceDetailState
-    >(
+    return BlocBuilder<ResourceDetailBloc, ResourceDetailState>(
       builder: (context, state) {
-        if (state.isLoading &&
-            state.resource == null) {
+        if (state.isLoading && state.resource == null) {
           return const _ResourceLoadingPage();
         }
 
-        if (state.status ==
-            ResourceDetailStatus.failure &&
-            state.resource == null) {
+        if (state.status == ResourceDetailStatus.failure && state.resource == null) {
           return _ResourceErrorPage(
-            message:
-            state.message ??
-                'Unable to load this resource.',
+            message: state.message ?? 'Unable to load this resource.',
             onRetry: _retryApi,
           );
         }
@@ -115,13 +105,10 @@ class _ResourceDetailViewState
           return const SizedBox.shrink();
         }
 
-        final displayTitle = resource.title
-            .trim()
-            .replaceAll('_', ' ');
+        final displayTitle = resource.title.trim().replaceAll('_', ' ');
 
         return Scaffold(
-          backgroundColor:
-          ColorUtils.scaffoldBackgroundColor,
+          backgroundColor: ColorUtils.scaffoldBackgroundColor,
           appBar: AppBar(
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
@@ -158,8 +145,7 @@ class _ResourceDetailViewState
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE34D59)
-                            .withValues(alpha: 0.10),
+                        color: const Color(0xFFE34D59).withValues(alpha: 0.10),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -170,50 +156,40 @@ class _ResourceDetailViewState
                     12.gw,
                     Expanded(
                       child: Column(
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           TtText(
                             displayTitle,
                             fontSize: 16,
-                            fontWeight:
-                            FontWeight.bold,
-                            color:
-                            ColorUtils.primaryColor,
+                            fontWeight: FontWeight.bold,
+                            color: ColorUtils.primaryColor,
                             maxLines: 2,
-                            overflow:
-                            TextOverflow.ellipsis,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           5.gh,
                           TtText(
-                            resource.fileType
-                                .toUpperCase(),
+                            resource.fileType.toUpperCase(),
                             fontSize: 14,
-                            color:
-                            ColorUtils.greyTextColor,
+                            color: ColorUtils.greyTextColor,
                           ),
                         ],
                       ),
                     ),
                     if (_pageCount > 0)
                       Container(
-                        padding:
-                        const EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 7,
                         ),
                         decoration: BoxDecoration(
-                          color: ColorUtils
-                              .secondaryBackgroundColor,
-                          borderRadius:
-                          BorderRadius.circular(16),
+                          color: ColorUtils.secondaryBackgroundColor,
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: TtText(
                           '$_currentPage / $_pageCount',
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color:
-                          ColorUtils.primaryColor,
+                          color: ColorUtils.primaryColor,
                         ),
                       ),
                   ],
@@ -225,11 +201,13 @@ class _ResourceDetailViewState
               ),
               Expanded(
                 child: _isPdf(resource)
-                    ? _buildPdfViewer(resource)
+                    ? _buildPdfViewer(
+                        resource,
+                        state.localFilePath,
+                      )
                     : _UnsupportedResourceView(
-                  fileType:
-                  resource.fileType,
-                ),
+                        fileType: resource.fileType,
+                      ),
               ),
             ],
           ),
@@ -240,6 +218,7 @@ class _ResourceDetailViewState
 
   Widget _buildPdfViewer(
       ChapterResourceModel resource,
+      String? localFilePath,
       ) {
     if (_documentError != null) {
       return _PdfErrorView(
@@ -249,80 +228,115 @@ class _ResourceDetailViewState
             _documentError = null;
             _isDocumentLoading = true;
           });
-
-          _pdfController.jumpToPage(1);
         },
+      );
+    }
+
+    final localPath = localFilePath?.trim();
+
+    final localFile = localPath == null ||
+        localPath.isEmpty
+        ? null
+        : File(localPath);
+
+    final hasLocalFile =
+        localFile != null && localFile.existsSync();
+
+    void handleDocumentLoaded(
+        PdfDocumentLoadedDetails details,
+        ) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isDocumentLoading = false;
+        _documentError = null;
+        _pageCount = details.document.pages.count;
+        _currentPage = 1;
+      });
+    }
+
+    void handlePageChanged(
+        PdfPageChangedDetails details,
+        ) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _currentPage = details.newPageNumber;
+      });
+    }
+
+    void handleLoadFailed(
+        PdfDocumentLoadFailedDetails details,
+        ) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isDocumentLoading = false;
+        _documentError = details.description.isEmpty
+            ? 'Unable to open this PDF.'
+            : details.description;
+      });
+    }
+
+    final Widget viewer;
+
+    if (hasLocalFile) {
+      viewer = SfPdfViewer.file(
+        localFile,
+        key: ValueKey(
+          'local:${localFile.path}',
+        ),
+        controller: _pdfController,
+        canShowScrollHead: true,
+        canShowScrollStatus: true,
+        canShowPaginationDialog: true,
+        enableDoubleTapZooming: true,
+        enableTextSelection: true,
+        pageSpacing: 8,
+        onDocumentLoaded: handleDocumentLoaded,
+        onPageChanged: handlePageChanged,
+        onDocumentLoadFailed: handleLoadFailed,
+      );
+    } else {
+      viewer = SfPdfViewer.network(
+        resource.fileUrl,
+        key: ValueKey(
+          'network:${resource.fileUrl}',
+        ),
+        controller: _pdfController,
+        canShowScrollHead: true,
+        canShowScrollStatus: true,
+        canShowPaginationDialog: true,
+        enableDoubleTapZooming: true,
+        enableTextSelection: true,
+        pageSpacing: 8,
+        onDocumentLoaded: handleDocumentLoaded,
+        onPageChanged: handlePageChanged,
+        onDocumentLoadFailed: handleLoadFailed,
       );
     }
 
     return Stack(
       children: [
-        SfPdfViewer.network(
-          resource.fileUrl,
-          key: ValueKey(resource.fileUrl),
-          controller: _pdfController,
-          canShowScrollHead: true,
-          canShowScrollStatus: true,
-          canShowPaginationDialog: true,
-          enableDoubleTapZooming: true,
-          enableTextSelection: true,
-          pageSpacing: 8,
-          onDocumentLoaded: (details) {
-            if (!mounted) {
-              return;
-            }
-
-            setState(() {
-              _isDocumentLoading = false;
-              _documentError = null;
-              _pageCount =
-                  details.document.pages.count;
-              _currentPage = 1;
-            });
-          },
-          onPageChanged: (details) {
-            if (!mounted) {
-              return;
-            }
-
-            setState(() {
-              _currentPage =
-                  details.newPageNumber;
-            });
-          },
-          onDocumentLoadFailed: (details) {
-            if (!mounted) {
-              return;
-            }
-
-            setState(() {
-              _isDocumentLoading = false;
-              _documentError =
-              details.description.isEmpty
-                  ? 'Unable to open this PDF.'
-                  : details.description;
-            });
-          },
+        Positioned.fill(
+          child: viewer,
         ),
         if (_isDocumentLoading)
           Container(
             color: Colors.white,
             alignment: Alignment.center,
-            child: const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(
-                  color:
-                  ColorUtils.secondaryColor,
-                ),
-                SizedBox(height: 14),
-                TtText(
-                  'Opening resource...',
-                  fontSize: 14,
-                  color:
-                  ColorUtils.greyTextColor,
-                ),
-              ],
+            child: TtText(
+              hasLocalFile
+                  ? 'Opening downloaded resource...'
+                  : 'Opening resource...',
+              fontSize: 14,
+              color: ColorUtils.greyTextColor,
             ),
           ),
       ],
@@ -330,8 +344,7 @@ class _ResourceDetailViewState
   }
 }
 
-class _UnsupportedResourceView
-    extends StatelessWidget {
+class _UnsupportedResourceView extends StatelessWidget {
   final String fileType;
 
   const _UnsupportedResourceView({
@@ -361,7 +374,7 @@ class _UnsupportedResourceView
             8.gh,
             TtText(
               '${fileType.toUpperCase()} files cannot '
-                  'currently be displayed inside the app.',
+              'currently be displayed inside the app.',
               fontSize: 14,
               height: 1.4,
               color: ColorUtils.greyTextColor,
@@ -425,8 +438,7 @@ class _ResourceLoadingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-      ColorUtils.scaffoldBackgroundColor,
+      backgroundColor: ColorUtils.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
@@ -467,8 +479,7 @@ class _ResourceErrorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-      ColorUtils.scaffoldBackgroundColor,
+      backgroundColor: ColorUtils.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,

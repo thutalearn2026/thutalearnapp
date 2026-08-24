@@ -363,6 +363,42 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
             );
           },
         ),
+        BlocListener<
+            ModuleDetailBloc,
+            ModuleDetailState
+        >(
+          listenWhen: (previous, current) {
+            return previous.resourcesByChapter !=
+                current.resourcesByChapter;
+          },
+          listener: (context, state) {
+            final resources = state
+                .resourcesByChapter.values
+                .expand(
+                  (chapterResources) => chapterResources,
+            );
+
+            context
+                .read<ResourceDownloadCubit>()
+                .registerResources(resources);
+          },
+        ),
+        // BlocListener<
+        //     ModuleDetailBloc,
+        //     ModuleDetailState
+        // >(
+        //   listenWhen: (previous, current) {
+        //     return previous.message != current.message &&
+        //         current.message != null &&
+        //         current.module != null;
+        //   },
+        //   listener: (context, state) {
+        //     context.showSnackBar(
+        //       state.message!,
+        //       snackBarType: SnackBarType.warning,
+        //     );
+        //   },
+        // ),
       ],
       child: BlocBuilder<ModuleDetailBloc, ModuleDetailState>(
         builder: (context, state) {

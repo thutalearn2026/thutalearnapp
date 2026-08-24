@@ -10,3 +10,4 @@ export 'vocabulary_flash_card_item.dart';
 export 'module_chapter_item.dart';
 export 'module_content_model.dart';
 export 'quiz_api_model.dart';
+export 'video_vocabulary_model.dart';

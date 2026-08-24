@@ -24,21 +24,43 @@ class CourseDetailBloc
       OnGetCourseDetail event,
       Emitter<CourseDetailState> emit,
       ) async {
-    if (state.isLoading) return;
+    if (state.isRefreshing) {
+      return;
+    }
+
+    final cachedSnapshot =
+    await learnUseCase.getCachedCourseDetail(
+      courseId: event.courseId,
+    );
+
+    final visibleCourse =
+        cachedSnapshot?.course ?? state.course;
+
+    final visibleModules =
+        cachedSnapshot?.modules ?? state.modules;
+
+    final hasCachedData = visibleCourse != null;
 
     emit(
       state.copyWith(
-        status: CourseDetailStatus.loading,
+        status: hasCachedData
+            ? CourseDetailStatus.success
+            : CourseDetailStatus.loading,
+        course: visibleCourse,
+        modules: visibleModules,
+        isRefreshing: true,
         clearMessage: true,
       ),
     );
 
-    // Both requests start together.
-    final courseFuture = learnUseCase.getCourseDetail(
+    // Start both API requests concurrently.
+    final courseFuture =
+    learnUseCase.getCourseDetail(
       courseId: event.courseId,
     );
 
-    final modulesFuture = learnUseCase.getCourseModules(
+    final modulesFuture =
+    learnUseCase.getCourseModules(
       courseId: event.courseId,
     );
 
@@ -46,15 +68,15 @@ class CourseDetailBloc
     final modulesResult = await modulesFuture;
 
     Failure? requestFailure;
-    CourseModel? course;
-    List<CourseModuleModel> modules = [];
+    CourseModel? remoteCourse;
+    List<CourseModuleModel>? remoteModules;
 
     courseResult.fold(
           (failure) {
         requestFailure = failure;
       },
           (response) {
-        course = response.data;
+        remoteCourse = response.data;
       },
     );
 
@@ -63,7 +85,7 @@ class CourseDetailBloc
         requestFailure ??= failure;
       },
           (response) {
-        modules = [...response.data]
+        remoteModules = [...response.data]
           ..sort(
                 (first, second) {
               return first.rank.compareTo(second.rank);
@@ -72,36 +94,66 @@ class CourseDetailBloc
       },
     );
 
-    if (requestFailure != null || course == null) {
+    // Do not partially update the cache. Both responses
+    // must succeed before the snapshot is replaced.
+    if (requestFailure != null ||
+        remoteCourse == null ||
+        remoteModules == null) {
       emit(
         state.copyWith(
-          status: CourseDetailStatus.failure,
-          message: _failureMessage(requestFailure),
+          status: hasCachedData
+              ? CourseDetailStatus.success
+              : CourseDetailStatus.failure,
+          course: visibleCourse,
+          modules: visibleModules,
+          isRefreshing: false,
+          message: _failureMessage(
+            requestFailure,
+            hasCachedData: hasCachedData,
+          ),
         ),
       );
 
       return;
     }
 
+    final snapshot = CourseDetailCacheSnapshot(
+      course: remoteCourse!,
+      modules: remoteModules!,
+      cachedAt: DateTime.now(),
+    );
+
+    await learnUseCase.saveCourseDetailCache(
+      snapshot,
+    );
+
     emit(
       state.copyWith(
         status: CourseDetailStatus.success,
-        course: course,
-        modules: modules,
+        course: remoteCourse,
+        modules: remoteModules,
+        isRefreshing: false,
         clearMessage: true,
       ),
     );
   }
 
-  String _failureMessage(Failure? failure) {
+  String _failureMessage(
+      Failure? failure, {
+        required bool hasCachedData,
+      }) {
     if (failure is ConnectionFailure) {
-      return 'Please check your internet connection and try again.';
+      return hasCachedData
+          ? 'You are offline. Showing the saved course.'
+          : 'Please check your internet connection and try again.';
     }
 
     final message = failure?.e?.toString();
 
-    if (message == null || message.isEmpty) {
-      return 'Unable to load course details.';
+    if (message == null || message.trim().isEmpty) {
+      return hasCachedData
+          ? 'Unable to refresh this course. Showing saved data.'
+          : 'Unable to load course details.';
     }
 
     return message;

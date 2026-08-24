@@ -40,4 +40,8 @@ class ProfileUseCase {
       ),
     );
   }
+
+  Future<ProfileModel?> getCachedProfile() {
+    return profileRepo.getCachedProfile();
+  }
 }

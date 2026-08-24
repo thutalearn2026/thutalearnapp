@@ -192,4 +192,162 @@ class ILearnRepo implements LearnRepo {
       ),
     );
   }
+
+  @override
+  Future<CoursesCacheSnapshot?> getCachedCourses() {
+    return CoursesCacheBox.read();
+  }
+
+  @override
+  Future<void> saveCoursesCache(
+    CoursesCacheSnapshot snapshot,
+  ) {
+    return CoursesCacheBox.save(snapshot);
+  }
+
+  @override
+  Future<CourseDetailCacheSnapshot?> getCachedCourseDetail({
+    required String courseId,
+  }) {
+    return CourseDetailCacheBox.read(
+      courseId: courseId,
+    );
+  }
+
+  @override
+  Future<void> saveCourseDetailCache(
+    CourseDetailCacheSnapshot snapshot,
+  ) {
+    return CourseDetailCacheBox.save(snapshot);
+  }
+
+  @override
+  Future<ModuleLessonsCacheSnapshot?> getCachedModuleLessons({
+    required String moduleId,
+  }) {
+    return ModuleLessonsCacheBox.read(
+      moduleId: moduleId,
+    );
+  }
+
+  @override
+  Future<void> saveModuleLessonsCache(
+    ModuleLessonsCacheSnapshot snapshot,
+  ) {
+    return ModuleLessonsCacheBox.saveModuleSnapshot(
+      snapshot,
+    );
+  }
+
+  @override
+  Future<void> saveChapterVideosCache({
+    required String moduleId,
+    required String chapterId,
+    required List<ChapterVideoModel> videos,
+  }) {
+    return ModuleLessonsCacheBox.saveChapterVideos(
+      moduleId: moduleId,
+      chapterId: chapterId,
+      videos: videos,
+    );
+  }
+
+  @override
+  Future<void> pruneChapterVideosCache({
+    required String moduleId,
+    required Set<String> validChapterIds,
+  }) {
+    return ModuleLessonsCacheBox.pruneChapterVideos(
+      moduleId: moduleId,
+      validChapterIds: validChapterIds,
+    );
+  }
+
+  @override
+  Future<ChapterVideoModel?> getCachedLessonDetail({
+    required String chapterId,
+    required String videoId,
+  }) {
+    return LessonDetailCacheBox.read(
+      chapterId: chapterId,
+      videoId: videoId,
+    );
+  }
+
+  @override
+  Future<void> saveLessonDetailCache({
+    required String chapterId,
+    required ChapterVideoModel video,
+  }) {
+    return LessonDetailCacheBox.save(
+      chapterId: chapterId,
+      video: video,
+    );
+  }
+
+  @override
+  Future<List<ChapterResourceModel>?> getCachedChapterResources({
+    required String moduleId,
+    required String chapterId,
+  }) {
+    return ModuleResourcesCacheBox.read(
+      moduleId: moduleId,
+      chapterId: chapterId,
+    );
+  }
+
+  @override
+  Future<void> saveChapterResourcesCache({
+    required String moduleId,
+    required String chapterId,
+    required List<ChapterResourceModel> resources,
+  }) {
+    return ModuleResourcesCacheBox.save(
+      moduleId: moduleId,
+      chapterId: chapterId,
+      resources: resources,
+    );
+  }
+
+  @override
+  Future<void> pruneChapterResourcesCache({
+    required String moduleId,
+    required Set<String> validChapterIds,
+  }) {
+    return ModuleResourcesCacheBox.prune(
+      moduleId: moduleId,
+      validChapterIds: validChapterIds,
+    );
+  }
+
+  @override
+  Future<Either<Failure, VideoVocabulariesResponse>> getVideoVocabularies({
+    required String videoId,
+  }) {
+    return _request(
+      () => client.getVideoVocabularies(
+        videoId: videoId,
+      ),
+    );
+  }
+
+  @override
+  Future<List<VideoVocabularyModel>?> getCachedVideoVocabularies({
+    required String videoId,
+  }) {
+    return LessonVocabularyCacheBox.read(
+      videoId: videoId,
+    );
+  }
+
+  @override
+  Future<void> saveVideoVocabulariesCache({
+    required String videoId,
+    required List<VideoVocabularyModel> vocabularies,
+  }) {
+    return LessonVocabularyCacheBox.save(
+      videoId: videoId,
+      vocabularies: vocabularies,
+    );
+  }
 }

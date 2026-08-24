@@ -10,15 +10,15 @@ part 'resource_detail_event.dart';
 part 'resource_detail_state.dart';
 
 @Injectable()
-class ResourceDetailBloc
-    extends Bloc<
-        ResourceDetailEvent,
-        ResourceDetailState
-    > {
+class ResourceDetailBloc extends Bloc<
+    ResourceDetailEvent,
+    ResourceDetailState> {
   final LearnUseCase learnUseCase;
+  final ResourceDownloadService downloadService;
 
   ResourceDetailBloc({
     required this.learnUseCase,
+    required this.downloadService,
   }) : super(const ResourceDetailState()) {
     on<OnGetResourceDetail>(
       _onGetResourceDetail,
@@ -29,13 +29,34 @@ class ResourceDetailBloc
       OnGetResourceDetail event,
       Emitter<ResourceDetailState> emit,
       ) async {
-    if (state.isLoading) {
+    if (state.isRefreshing) {
       return;
     }
 
+    final downloadedRecord =
+    await downloadService.getDownloadedResource(
+      event.resourceId,
+    );
+
+    final visibleResource =
+        downloadedRecord?.resource ?? state.resource;
+
+    final localFilePath =
+        downloadedRecord?.localFilePath ??
+            state.localFilePath;
+
+    final hasOfflineData =
+        visibleResource != null &&
+            localFilePath != null;
+
     emit(
       state.copyWith(
-        status: ResourceDetailStatus.loading,
+        status: visibleResource != null
+            ? ResourceDetailStatus.success
+            : ResourceDetailStatus.loading,
+        resource: visibleResource,
+        localFilePath: localFilePath,
+        isRefreshing: true,
         clearMessage: true,
       ),
     );
@@ -46,20 +67,44 @@ class ResourceDetailBloc
       resourceId: event.resourceId,
     );
 
-    result.fold(
-          (failure) {
+    await result.fold<Future<void>>(
+          (failure) async {
+        if (hasOfflineData) {
+          // Silently keep the downloaded local file.
+          emit(
+            state.copyWith(
+              status: ResourceDetailStatus.success,
+              resource: visibleResource,
+              localFilePath: localFilePath,
+              isRefreshing: false,
+              clearMessage: true,
+            ),
+          );
+
+          return;
+        }
+
         emit(
           state.copyWith(
             status: ResourceDetailStatus.failure,
+            isRefreshing: false,
             message: _failureMessage(failure),
           ),
         );
       },
-          (response) {
+          (response) async {
+        if (downloadedRecord != null) {
+          await downloadService.updateResourceMetadata(
+            response.data,
+          );
+        }
+
         emit(
           state.copyWith(
             status: ResourceDetailStatus.success,
             resource: response.data,
+            localFilePath: localFilePath,
+            isRefreshing: false,
             clearMessage: true,
           ),
         );
@@ -74,8 +119,7 @@ class ResourceDetailBloc
 
     final message = failure.e?.toString();
 
-    if (message == null ||
-        message.trim().isEmpty) {
+    if (message == null || message.trim().isEmpty) {
       return 'Unable to load this resource.';
     }
 

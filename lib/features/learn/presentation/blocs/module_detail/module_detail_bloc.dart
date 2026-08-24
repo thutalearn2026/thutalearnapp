@@ -26,14 +26,41 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
     OnGetModuleDetail event,
     Emitter<ModuleDetailState> emit,
   ) async {
-    if (state.isLoading) return;
+    if (state.isRefreshing) {
+      return;
+    }
+
+    final cachedSnapshot = await learnUseCase.getCachedModuleLessons(
+      moduleId: event.moduleId,
+    );
+
+    final visibleModule = cachedSnapshot?.module ?? state.module;
+
+    final visibleChapters = cachedSnapshot?.chapters ?? state.chapters;
+
+    final visibleVideos = cachedSnapshot?.videosByChapter ?? state.videosByChapter;
+
+    final hasCachedData = visibleModule != null;
 
     emit(
       state.copyWith(
-        status: ModuleDetailStatus.loading,
+        status: hasCachedData ? ModuleDetailStatus.success : ModuleDetailStatus.loading,
+        module: visibleModule,
+        chapters: visibleChapters,
+        videosByChapter: visibleVideos,
+        isRefreshing: true,
+        loadingChapterIds: const {},
+        refreshingVideoChapterIds: const {},
+        refreshedVideoChapterIds: const {},
+        chapterVideoErrors: const {},
         clearMessage: true,
       ),
     );
+
+    // Cached videos are already visible. This request
+    // refreshes the first available chapter in the
+    // background.
+    _queueFirstVideoChapter(visibleChapters);
 
     final moduleFuture = learnUseCase.getModuleDetail(
       courseId: event.courseId,
@@ -48,15 +75,15 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
     final chaptersResult = await chaptersFuture;
 
     Failure? requestFailure;
-    CourseModuleModel? module;
-    List<ChapterModel> chapters = [];
+    CourseModuleModel? remoteModule;
+    List<ChapterModel>? remoteChapters;
 
     moduleResult.fold(
       (failure) {
         requestFailure = failure;
       },
       (response) {
-        module = response.data;
+        remoteModule = response.data;
       },
     );
 
@@ -65,7 +92,7 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
         requestFailure ??= failure;
       },
       (response) {
-        chapters = [...response.data]
+        remoteChapters = [...response.data]
           ..sort(
             (first, second) {
               return first.rank.compareTo(second.rank);
@@ -74,11 +101,27 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
       },
     );
 
-    if (requestFailure != null || module == null) {
+    if (requestFailure != null || remoteModule == null || remoteChapters == null) {
+      if (hasCachedData) {
+        // Silently retain cached module and chapters.
+        emit(
+          state.copyWith(
+            status: ModuleDetailStatus.success,
+            module: visibleModule,
+            chapters: visibleChapters,
+            isRefreshing: false,
+            clearMessage: true,
+          ),
+        );
+
+        return;
+      }
+
       emit(
         state.copyWith(
           status: ModuleDetailStatus.failure,
-          message: _failureMessage(
+          isRefreshing: false,
+          message: _moduleFailureMessage(
             requestFailure,
           ),
         ),
@@ -87,25 +130,67 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
       return;
     }
 
+    final validChapterIds = remoteChapters!.map((chapter) => chapter.id).toSet();
+
+    final preservedResources = <String, List<ChapterResourceModel>>{
+      for (final entry in state.resourcesByChapter.entries)
+        if (validChapterIds.contains(entry.key)) entry.key: entry.value,
+    };
+
+    final preservedRefreshedResourceIds = state.refreshedResourceChapterIds
+        .where(validChapterIds.contains)
+        .toSet();
+
+    final preservedVideos = <String, List<ChapterVideoModel>>{
+      for (final entry in state.videosByChapter.entries)
+        if (validChapterIds.contains(entry.key)) entry.key: entry.value,
+    };
+
+    final preservedRefreshedIds = state.refreshedVideoChapterIds
+        .where(validChapterIds.contains)
+        .toSet();
+
+    final snapshot = ModuleLessonsCacheSnapshot(
+      module: remoteModule!,
+      chapters: remoteChapters!,
+      videosByChapter: preservedVideos,
+      cachedAt: DateTime.now(),
+    );
+
+    await learnUseCase.saveModuleLessonsCache(
+      snapshot,
+    );
+
+    await learnUseCase.pruneChapterVideosCache(
+      moduleId: event.moduleId,
+      validChapterIds: validChapterIds,
+    );
+
+    await learnUseCase.pruneChapterResourcesCache(
+      moduleId: event.moduleId,
+      validChapterIds: validChapterIds,
+    );
+
     emit(
       state.copyWith(
         status: ModuleDetailStatus.success,
-        module: module,
-        chapters: chapters,
-        videosByChapter: const {},
-        loadingChapterIds: const {},
-        chapterVideoErrors: const {},
-        resourcesByChapter: const {},
-        loadingResourceChapterIds: const {},
-        chapterResourceErrors: const {},
-        quizzesByChapter: const {},
-        loadingQuizChapterIds: const {},
-        chapterQuizErrors: const {},
+        module: remoteModule,
+        chapters: remoteChapters,
+        videosByChapter: preservedVideos,
+        refreshedVideoChapterIds: preservedRefreshedIds,
+        isRefreshing: false,
         clearMessage: true,
+        resourcesByChapter: preservedResources,
+        refreshedResourceChapterIds: preservedRefreshedResourceIds,
       ),
     );
 
-    // The first chapter is initially expanded.
+    _queueFirstVideoChapter(remoteChapters!);
+  }
+
+  void _queueFirstVideoChapter(
+    List<ChapterModel> chapters,
+  ) {
     for (final chapter in chapters) {
       if (chapter.videosCount > 0) {
         add(
@@ -113,7 +198,8 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
             chapterId: chapter.id,
           ),
         );
-        break;
+
+        return;
       }
     }
   }
@@ -122,19 +208,39 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
     OnGetChapterVideos event,
     Emitter<ModuleDetailState> emit,
   ) async {
-    if (state.loadingChapterIds.contains(
+    final moduleId = state.module?.id;
+
+    if (moduleId == null) {
+      return;
+    }
+
+    if (state.refreshingVideoChapterIds.contains(
           event.chapterId,
         ) ||
-        state.videosByChapter.containsKey(
+        state.refreshedVideoChapterIds.contains(
           event.chapterId,
         )) {
       return;
     }
 
-    final loadingIds = {
-      ...state.loadingChapterIds,
+    final hasCachedVideos = state.videosByChapter.containsKey(
+      event.chapterId,
+    );
+
+    final refreshingIds = {
+      ...state.refreshingVideoChapterIds,
       event.chapterId,
     };
+
+    final loadingIds = {
+      ...state.loadingChapterIds,
+    };
+
+    // Only show the large loading indicator when there
+    // is no cached list to display.
+    if (!hasCachedVideos) {
+      loadingIds.add(event.chapterId);
+    }
 
     final errors = {
       ...state.chapterVideoErrors,
@@ -142,8 +248,10 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
 
     emit(
       state.copyWith(
+        refreshingVideoChapterIds: refreshingIds,
         loadingChapterIds: loadingIds,
         chapterVideoErrors: errors,
+        clearMessage: true,
       ),
     );
 
@@ -151,25 +259,43 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
       chapterId: event.chapterId,
     );
 
-    result.fold(
-      (failure) {
+    await result.fold<Future<void>>(
+      (failure) async {
+        final updatedRefreshingIds = {
+          ...state.refreshingVideoChapterIds,
+        }..remove(event.chapterId);
+
         final updatedLoadingIds = {
           ...state.loadingChapterIds,
         }..remove(event.chapterId);
 
+        if (hasCachedVideos) {
+          // Silently retain the cached video list.
+          emit(
+            state.copyWith(
+              refreshingVideoChapterIds: updatedRefreshingIds,
+              loadingChapterIds: updatedLoadingIds,
+              clearMessage: true,
+            ),
+          );
+
+          return;
+        }
+
         final updatedErrors = {
           ...state.chapterVideoErrors,
-          event.chapterId: _failureMessage(failure),
+          event.chapterId: _chapterVideoFailureMessage(failure),
         };
 
         emit(
           state.copyWith(
+            refreshingVideoChapterIds: updatedRefreshingIds,
             loadingChapterIds: updatedLoadingIds,
             chapterVideoErrors: updatedErrors,
           ),
         );
       },
-      (response) {
+      (response) async {
         final videos = [...response.data]
           ..sort(
             (first, second) {
@@ -177,44 +303,133 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
             },
           );
 
+        // Replacing this chapter key also handles an empty
+        // response and removes videos deleted by backend.
         final updatedVideos = {
           ...state.videosByChapter,
           event.chapterId: videos,
         };
 
+        final updatedRefreshingIds = {
+          ...state.refreshingVideoChapterIds,
+        }..remove(event.chapterId);
+
         final updatedLoadingIds = {
           ...state.loadingChapterIds,
         }..remove(event.chapterId);
 
+        final updatedRefreshedIds = {
+          ...state.refreshedVideoChapterIds,
+          event.chapterId,
+        };
+
+        final updatedErrors = {
+          ...state.chapterVideoErrors,
+        }..remove(event.chapterId);
+
+        await learnUseCase.saveChapterVideosCache(
+          moduleId: moduleId,
+          chapterId: event.chapterId,
+          videos: videos,
+        );
+
         emit(
           state.copyWith(
             videosByChapter: updatedVideos,
+            refreshingVideoChapterIds: updatedRefreshingIds,
+            refreshedVideoChapterIds: updatedRefreshedIds,
             loadingChapterIds: updatedLoadingIds,
+            chapterVideoErrors: updatedErrors,
+            clearMessage: true,
           ),
         );
       },
     );
   }
 
+  String _moduleFailureMessage(
+    Failure? failure,
+  ) {
+    if (failure is ConnectionFailure) {
+      return 'Please check your internet connection and try again.';
+    }
+
+    final message = failure?.e?.toString();
+
+    if (message == null || message.trim().isEmpty) {
+      return 'Unable to load module information.';
+    }
+
+    return message;
+  }
+
+  String _chapterVideoFailureMessage(
+    Failure? failure,
+  ) {
+    if (failure is ConnectionFailure) {
+      return 'Please check your internet connection and try again.';
+    }
+
+    final message = failure?.e?.toString();
+
+    if (message == null || message.trim().isEmpty) {
+      return 'Unable to load the videos in this chapter.';
+    }
+
+    return message;
+  }
+
   Future<void> _onGetChapterResources(
     OnGetChapterResources event,
     Emitter<ModuleDetailState> emit,
   ) async {
+    final moduleId = state.module?.id;
     final chapterId = event.chapterId;
 
-    if (state.loadingResourceChapterIds.contains(
+    if (moduleId == null) {
+      return;
+    }
+
+    if (state.refreshingResourceChapterIds.contains(
           chapterId,
         ) ||
-        state.resourcesByChapter.containsKey(
+        state.refreshedResourceChapterIds.contains(
           chapterId,
         )) {
       return;
     }
 
-    final loadingIds = {
-      ...state.loadingResourceChapterIds,
+    final cachedResources =
+        state.resourcesByChapter[chapterId] ??
+        await learnUseCase.getCachedChapterResources(
+          moduleId: moduleId,
+          chapterId: chapterId,
+        );
+
+    final hasCachedResources = cachedResources != null;
+
+    final updatedResources = {
+      ...state.resourcesByChapter,
+    };
+
+    if (cachedResources != null) {
+      updatedResources[chapterId] = cachedResources;
+    }
+
+    final refreshingIds = {
+      ...state.refreshingResourceChapterIds,
       chapterId,
     };
+
+    final loadingIds = {
+      ...state.loadingResourceChapterIds,
+    };
+
+    // Keep cached resources visible while the network
+    // request refreshes in the background.
+    if (!hasCachedResources) {
+      loadingIds.add(chapterId);
+    }
 
     final errors = {
       ...state.chapterResourceErrors,
@@ -222,8 +437,11 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
 
     emit(
       state.copyWith(
+        resourcesByChapter: updatedResources,
+        refreshingResourceChapterIds: refreshingIds,
         loadingResourceChapterIds: loadingIds,
         chapterResourceErrors: errors,
+        clearMessage: true,
       ),
     );
 
@@ -231,51 +449,110 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
       chapterId: chapterId,
     );
 
-    result.fold(
-      (failure) {
+    await result.fold<Future<void>>(
+      (failure) async {
+        final updatedRefreshingIds = {
+          ...state.refreshingResourceChapterIds,
+        }..remove(chapterId);
+
         final updatedLoadingIds = {
           ...state.loadingResourceChapterIds,
         }..remove(chapterId);
 
+        if (hasCachedResources) {
+          // Silently retain cached resources.
+          emit(
+            state.copyWith(
+              refreshingResourceChapterIds: updatedRefreshingIds,
+              loadingResourceChapterIds: updatedLoadingIds,
+              clearMessage: true,
+            ),
+          );
+
+          return;
+        }
+
         final updatedErrors = {
           ...state.chapterResourceErrors,
-          chapterId: _failureMessage(failure),
+          chapterId: _chapterResourceFailureMessage(
+            failure,
+          ),
         };
 
         emit(
           state.copyWith(
+            refreshingResourceChapterIds: updatedRefreshingIds,
             loadingResourceChapterIds: updatedLoadingIds,
             chapterResourceErrors: updatedErrors,
           ),
         );
       },
-      (response) {
+      (response) async {
         final resources = [...response.data]
           ..sort(
             (first, second) {
-              return first.rank.compareTo(
-                second.rank,
-              );
+              return first.rank.compareTo(second.rank);
             },
           );
 
+        // This replaces previous data even when the
+        // response is empty.
         final updatedResources = {
           ...state.resourcesByChapter,
           chapterId: resources,
         };
 
+        final updatedRefreshingIds = {
+          ...state.refreshingResourceChapterIds,
+        }..remove(chapterId);
+
         final updatedLoadingIds = {
           ...state.loadingResourceChapterIds,
         }..remove(chapterId);
 
+        final updatedRefreshedIds = {
+          ...state.refreshedResourceChapterIds,
+          chapterId,
+        };
+
+        final updatedErrors = {
+          ...state.chapterResourceErrors,
+        }..remove(chapterId);
+
+        await learnUseCase.saveChapterResourcesCache(
+          moduleId: moduleId,
+          chapterId: chapterId,
+          resources: resources,
+        );
+
         emit(
           state.copyWith(
             resourcesByChapter: updatedResources,
+            refreshingResourceChapterIds: updatedRefreshingIds,
+            refreshedResourceChapterIds: updatedRefreshedIds,
             loadingResourceChapterIds: updatedLoadingIds,
+            chapterResourceErrors: updatedErrors,
+            clearMessage: true,
           ),
         );
       },
     );
+  }
+
+  String _chapterResourceFailureMessage(
+    Failure? failure,
+  ) {
+    if (failure is ConnectionFailure) {
+      return 'Please check your internet connection and try again.';
+    }
+
+    final message = failure?.e?.toString();
+
+    if (message == null || message.trim().isEmpty) {
+      return 'Unable to load the resources in this chapter.';
+    }
+
+    return message;
   }
 
   String _failureMessage(Failure? failure) {
@@ -293,14 +570,14 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
   }
 
   Future<void> _onGetChapterQuizzes(
-      OnGetChapterQuizzes event,
-      Emitter<ModuleDetailState> emit,
-      ) async {
+    OnGetChapterQuizzes event,
+    Emitter<ModuleDetailState> emit,
+  ) async {
     final chapterId = event.chapterId;
 
     if (state.loadingQuizChapterIds.contains(
-      chapterId,
-    ) ||
+          chapterId,
+        ) ||
         state.quizzesByChapter.containsKey(
           chapterId,
         )) {
@@ -323,13 +600,12 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
       ),
     );
 
-    final result =
-    await learnUseCase.getChapterQuizzes(
+    final result = await learnUseCase.getChapterQuizzes(
       chapterId: chapterId,
     );
 
     result.fold(
-          (failure) {
+      (failure) {
         final updatedLoadingIds = {
           ...state.loadingQuizChapterIds,
         }..remove(chapterId);
@@ -341,16 +617,15 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
 
         emit(
           state.copyWith(
-            loadingQuizChapterIds:
-            updatedLoadingIds,
+            loadingQuizChapterIds: updatedLoadingIds,
             chapterQuizErrors: updatedErrors,
           ),
         );
       },
-          (response) {
+      (response) {
         final quizzes = [...response.data]
           ..sort(
-                (first, second) {
+            (first, second) {
               return first.sortOrder.compareTo(
                 second.sortOrder,
               );
@@ -369,8 +644,7 @@ class ModuleDetailBloc extends Bloc<ModuleDetailEvent, ModuleDetailState> {
         emit(
           state.copyWith(
             quizzesByChapter: updatedQuizzes,
-            loadingQuizChapterIds:
-            updatedLoadingIds,
+            loadingQuizChapterIds: updatedLoadingIds,
           ),
         );
       },

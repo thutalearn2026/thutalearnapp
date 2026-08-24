@@ -10,7 +10,8 @@ part 'courses_event.dart';
 part 'courses_state.dart';
 
 @Injectable()
-class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
+class CoursesBloc
+    extends Bloc<CoursesEvent, CoursesState> {
   final LearnUseCase learnUseCase;
 
   CoursesBloc({
@@ -24,15 +25,35 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
       OnGetCourses event,
       Emitter<CoursesState> emit,
       ) async {
-    if (state.isLoading) return;
+    if (state.isRefreshing) {
+      return;
+    }
+
+    final cachedSnapshot =
+    await learnUseCase.getCachedCourses();
+
+    final cachedCourses =
+        cachedSnapshot?.courses ?? state.courses;
+
+    final hasCachedCourses = cachedCourses.isNotEmpty;
 
     emit(
       state.copyWith(
-        status: CoursesStatus.loading,
-        courses: const [],
-        currentPage: 0,
-        lastPage: 1,
-        total: 0,
+        status: hasCachedCourses
+            ? CoursesStatus.success
+            : CoursesStatus.loading,
+        courses: cachedCourses,
+        currentPage:
+        cachedSnapshot?.currentPage ??
+            state.currentPage,
+        lastPage:
+        cachedSnapshot?.lastPage ?? state.lastPage,
+        total:
+        cachedSnapshot?.total ??
+            (state.total > 0
+                ? state.total
+                : cachedCourses.length),
+        isRefreshing: true,
         isLoadingMore: false,
         clearMessage: true,
       ),
@@ -42,22 +63,39 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
       page: 1,
     );
 
-    result.fold(
-          (failure) {
+    await result.fold<Future<void>>(
+          (failure) async {
         emit(
           state.copyWith(
-            status: CoursesStatus.failure,
+            status: hasCachedCourses
+                ? CoursesStatus.success
+                : CoursesStatus.failure,
+            isRefreshing: false,
             message: _failureMessage(failure),
           ),
         );
       },
-          (response) {
+          (response) async {
         final courses = [...response.data]
           ..sort(
                 (first, second) {
               return first.rank.compareTo(second.rank);
             },
           );
+
+        final snapshot = CoursesCacheSnapshot(
+          courses: courses,
+          currentPage: response.meta.currentPage,
+          lastPage: response.meta.lastPage,
+          total: response.meta.total,
+          cachedAt: DateTime.now(),
+        );
+
+        // Replace the old cache only after the API
+        // request has completed successfully.
+        await learnUseCase.saveCoursesCache(
+          snapshot,
+        );
 
         emit(
           state.copyWith(
@@ -66,6 +104,8 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
             currentPage: response.meta.currentPage,
             lastPage: response.meta.lastPage,
             total: response.meta.total,
+            isRefreshing: false,
+            isLoadingMore: false,
             clearMessage: true,
           ),
         );
@@ -78,6 +118,7 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
       Emitter<CoursesState> emit,
       ) async {
     if (state.status != CoursesStatus.success ||
+        state.isRefreshing ||
         state.isLoadingMore ||
         !state.hasMore) {
       return;
@@ -96,8 +137,8 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
       page: nextPage,
     );
 
-    result.fold(
-          (failure) {
+    await result.fold<Future<void>>(
+          (failure) async {
         emit(
           state.copyWith(
             isLoadingMore: false,
@@ -105,7 +146,7 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
           ),
         );
       },
-          (response) {
+          (response) async {
         final courseMap = <String, CourseModel>{
           for (final course in state.courses)
             course.id: course,
@@ -119,6 +160,18 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
               return first.rank.compareTo(second.rank);
             },
           );
+
+        final snapshot = CoursesCacheSnapshot(
+          courses: courses,
+          currentPage: response.meta.currentPage,
+          lastPage: response.meta.lastPage,
+          total: response.meta.total,
+          cachedAt: DateTime.now(),
+        );
+
+        await learnUseCase.saveCoursesCache(
+          snapshot,
+        );
 
         emit(
           state.copyWith(
@@ -137,13 +190,13 @@ class CoursesBloc extends Bloc<CoursesEvent, CoursesState> {
 
   String _failureMessage(Failure failure) {
     if (failure is ConnectionFailure) {
-      return 'Please check your internet connection and try again.';
+      return 'You are offline. Showing your saved courses.';
     }
 
     final message = failure.e?.toString();
 
-    if (message == null || message.isEmpty) {
-      return 'Unable to load courses.';
+    if (message == null || message.trim().isEmpty) {
+      return 'Unable to update courses. Showing saved data.';
     }
 
     return message;

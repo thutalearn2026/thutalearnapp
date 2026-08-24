@@ -151,4 +151,9 @@ abstract class RestClient {
     @Path('quiz') String quizId,
     @Body() QuizAttemptRequest request,
   );
+
+  @GET('videos/{video}/vocabularies')
+  Future<VideoVocabulariesResponse> getVideoVocabularies(
+    @Path('video') String videoId,
+  );
 }

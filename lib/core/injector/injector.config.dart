@@ -56,6 +56,8 @@ import '../../features/learn/presentation/blocs/resource_detail/resource_detail_
     as _i897;
 import '../../features/learn/presentation/blocs/resource_download/resource_download_cubit.dart'
     as _i387;
+import '../../features/learn/presentation/blocs/vocabulary_speech/vocabulary_speech_cubit.dart'
+    as _i680;
 import '../../features/onboarding/data/data_sources/remote/i_onboarding_client.dart'
     as _i865;
 import '../../features/onboarding/data/repo/i_onboarding_repo.dart' as _i828;
@@ -104,6 +106,7 @@ _i174.GetIt $initGetIt(
 }) {
   final gh = _i526.GetItHelper(getIt, environment, environmentFilter);
   final dioProvider = _$DioProvider();
+  gh.factory<_i680.VocabularySpeechCubit>(() => _i680.VocabularySpeechCubit());
   gh.factory<_i1023.OnboardingBloc>(() => _i1023.OnboardingBloc());
   gh.lazySingleton<_i109.ResourceDownloadService>(
     () => _i109.ResourceDownloadService(),
@@ -195,6 +198,12 @@ _i174.GetIt $initGetIt(
   gh.factory<_i891.LearnUseCase>(
     () => _i891.LearnUseCase(learnRepo: gh<_i592.LearnRepo>()),
   );
+  gh.factory<_i897.ResourceDetailBloc>(
+    () => _i897.ResourceDetailBloc(
+      learnUseCase: gh<_i592.LearnUseCase>(),
+      downloadService: gh<_i351.ResourceDownloadService>(),
+    ),
+  );
   gh.factory<_i996.ProfileUseCase>(
     () => _i996.ProfileUseCase(profileRepo: gh<_i315.ProfileRepo>()),
   );
@@ -215,9 +224,6 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i715.QuizBloc>(
     () => _i715.QuizBloc(learnUseCase: gh<_i592.LearnUseCase>()),
-  );
-  gh.factory<_i897.ResourceDetailBloc>(
-    () => _i897.ResourceDetailBloc(learnUseCase: gh<_i592.LearnUseCase>()),
   );
   gh.factory<_i430.AccountSetUpBloc>(
     () => _i430.AccountSetUpBloc(

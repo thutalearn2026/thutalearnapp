@@ -133,4 +133,13 @@ class ILearnClient implements LearnClient {
       request,
     );
   }
+
+  @override
+  Future<VideoVocabulariesResponse> getVideoVocabularies({
+    required String videoId,
+  }) {
+    return client.getVideoVocabularies(
+      videoId,
+    );
+  }
 }

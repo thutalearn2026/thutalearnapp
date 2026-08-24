@@ -13,6 +13,7 @@ class CoursesState {
   final int currentPage;
   final int lastPage;
   final int total;
+  final bool isRefreshing;
   final bool isLoadingMore;
   final String? message;
 
@@ -22,16 +23,23 @@ class CoursesState {
     this.currentPage = 0,
     this.lastPage = 1,
     this.total = 0,
+    this.isRefreshing = false,
     this.isLoadingMore = false,
     this.message,
   });
 
   bool get isLoading {
-    return status == CoursesStatus.loading;
+    return (status == CoursesStatus.initial ||
+        status == CoursesStatus.loading) &&
+        courses.isEmpty;
   }
 
   bool get hasMore {
     return currentPage < lastPage;
+  }
+
+  bool get isShowingCachedData {
+    return courses.isNotEmpty && isRefreshing;
   }
 
   CoursesState copyWith({
@@ -40,6 +48,7 @@ class CoursesState {
     int? currentPage,
     int? lastPage,
     int? total,
+    bool? isRefreshing,
     bool? isLoadingMore,
     String? message,
     bool clearMessage = false,
@@ -50,8 +59,11 @@ class CoursesState {
       currentPage: currentPage ?? this.currentPage,
       lastPage: lastPage ?? this.lastPage,
       total: total ?? this.total,
-      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-      message: clearMessage ? null : message ?? this.message,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
+      isLoadingMore:
+      isLoadingMore ?? this.isLoadingMore,
+      message:
+      clearMessage ? null : message ?? this.message,
     );
   }
 }

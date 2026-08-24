@@ -60,4 +60,76 @@ abstract class LearnRepo {
     required String quizId,
     required QuizAttemptRequest request,
   });
+
+  Future<CoursesCacheSnapshot?> getCachedCourses();
+
+  Future<void> saveCoursesCache(
+    CoursesCacheSnapshot snapshot,
+  );
+
+  Future<CourseDetailCacheSnapshot?> getCachedCourseDetail({
+    required String courseId,
+  });
+
+  Future<void> saveCourseDetailCache(
+    CourseDetailCacheSnapshot snapshot,
+  );
+
+  Future<ModuleLessonsCacheSnapshot?> getCachedModuleLessons({
+    required String moduleId,
+  });
+
+  Future<void> saveModuleLessonsCache(
+    ModuleLessonsCacheSnapshot snapshot,
+  );
+
+  Future<void> saveChapterVideosCache({
+    required String moduleId,
+    required String chapterId,
+    required List<ChapterVideoModel> videos,
+  });
+
+  Future<void> pruneChapterVideosCache({
+    required String moduleId,
+    required Set<String> validChapterIds,
+  });
+
+  Future<ChapterVideoModel?> getCachedLessonDetail({
+    required String chapterId,
+    required String videoId,
+  });
+
+  Future<void> saveLessonDetailCache({
+    required String chapterId,
+    required ChapterVideoModel video,
+  });
+
+  Future<List<ChapterResourceModel>?> getCachedChapterResources({
+    required String moduleId,
+    required String chapterId,
+  });
+
+  Future<void> saveChapterResourcesCache({
+    required String moduleId,
+    required String chapterId,
+    required List<ChapterResourceModel> resources,
+  });
+
+  Future<void> pruneChapterResourcesCache({
+    required String moduleId,
+    required Set<String> validChapterIds,
+  });
+
+  Future<Either<Failure, VideoVocabulariesResponse>> getVideoVocabularies({
+    required String videoId,
+  });
+
+  Future<List<VideoVocabularyModel>?> getCachedVideoVocabularies({
+    required String videoId,
+  });
+
+  Future<void> saveVideoVocabulariesCache({
+    required String videoId,
+    required List<VideoVocabularyModel> vocabularies,
+  });
 }

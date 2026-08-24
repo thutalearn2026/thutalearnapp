@@ -16,12 +16,11 @@ class CourseDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) {
-        return getIt<CourseDetailBloc>()
-          ..add(
-            OnGetCourseDetail(
-              courseId: courseId,
-            ),
-          );
+        return getIt<CourseDetailBloc>()..add(
+          OnGetCourseDetail(
+            courseId: courseId,
+          ),
+        );
       },
       child: _CourseDetailView(
         courseId: courseId,
@@ -38,15 +37,22 @@ class _CourseDetailView extends StatelessWidget {
   });
 
   Future<void> _refresh(
-      BuildContext context,
-      ) async {
+    BuildContext context,
+  ) async {
     final bloc = context.read<CourseDetailBloc>();
 
+    if (bloc.state.isRefreshing) {
+      await bloc.stream.firstWhere(
+        (state) => !state.isRefreshing,
+      );
+      return;
+    }
+
     final completed = bloc.stream.firstWhere(
-          (state) {
-        return state.status ==
-            CourseDetailStatus.success ||
-            state.status == CourseDetailStatus.failure;
+      (state) {
+        return !state.isRefreshing &&
+            (state.status == CourseDetailStatus.success ||
+                state.status == CourseDetailStatus.failure);
       },
     );
 
@@ -61,16 +67,23 @@ class _CourseDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<
-        CourseDetailBloc,
-        CourseDetailState>(
+    return BlocConsumer<CourseDetailBloc, CourseDetailState>(
+      listenWhen: (previous, current) {
+        return previous.message != current.message &&
+            current.message != null &&
+            current.course != null;
+      },
+      listener: (context, state) {
+        context.showSnackBar(
+          state.message!,
+          snackBarType: SnackBarType.warning,
+        );
+      },
       builder: (context, state) {
         return Scaffold(
-          backgroundColor:
-          ColorUtils.scaffoldBackgroundColor,
+          backgroundColor: ColorUtils.scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor:
-            ColorUtils.scaffoldBackgroundColor,
+            backgroundColor: ColorUtils.scaffoldBackgroundColor,
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             centerTitle: true,
@@ -93,18 +106,15 @@ class _CourseDetailView extends StatelessWidget {
                 context,
                 state,
               ),
-              if (state.isLoading &&
-                  state.course != null)
+              if (state.isRefreshing && state.course != null)
                 const Positioned(
                   top: 0,
                   left: 0,
                   right: 0,
                   child: LinearProgressIndicator(
                     minHeight: 2,
-                    color:
-                    ColorUtils.secondaryColor,
-                    backgroundColor:
-                    Colors.transparent,
+                    color: ColorUtils.secondaryColor,
+                    backgroundColor: Colors.transparent,
                   ),
                 ),
             ],
@@ -115,19 +125,16 @@ class _CourseDetailView extends StatelessWidget {
   }
 
   Widget _buildBody(
-      BuildContext context,
-      CourseDetailState state,
-      ) {
+    BuildContext context,
+    CourseDetailState state,
+  ) {
     if (state.isLoading && state.course == null) {
       return const _CourseDetailLoadingView();
     }
 
-    if (state.status ==
-        CourseDetailStatus.failure &&
-        state.course == null) {
+    if (state.status == CourseDetailStatus.failure && state.course == null) {
       return _CourseDetailErrorView(
-        message: state.message ??
-            'Unable to load course details.',
+        message: state.message ?? 'Unable to load course details.',
         onRetry: () {
           context.read<CourseDetailBloc>().add(
             OnGetCourseDetail(
@@ -149,8 +156,7 @@ class _CourseDetailView extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: TtFadeIn(
         child: ListView(
-          physics:
-          const AlwaysScrollableScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(
             16,
             8,
@@ -173,16 +179,14 @@ class _CourseDetailView extends StatelessWidget {
             else
               ...List.generate(
                 state.modules.length,
-                    (index) {
-                  final module =
-                  state.modules[index];
+                (index) {
+                  final module = state.modules[index];
 
                   return _ApiModuleTimelineView(
                     module: module,
                     moduleNumber: index + 1,
                     isFirst: index == 0,
-                    isLast: index ==
-                        state.modules.length - 1,
+                    isLast: index == state.modules.length - 1,
                     onTap: () {
                       context.push(
                         Routes.moduleDetail,
@@ -203,8 +207,7 @@ class _CourseDetailView extends StatelessWidget {
   }
 }
 
-class _CourseTitleSectionView
-    extends StatelessWidget {
+class _CourseTitleSectionView extends StatelessWidget {
   final String courseTitle;
   final int moduleCount;
 
@@ -216,8 +219,7 @@ class _CourseTitleSectionView
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment:
-      CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: TtText(
@@ -229,11 +231,10 @@ class _CourseTitleSectionView
         ),
         12.gw,
         Padding(
-          padding:
-          const EdgeInsets.only(top: 2),
+          padding: const EdgeInsets.only(top: 2),
           child: TtText(
             '$moduleCount module'
-                '${moduleCount == 1 ? '' : 's'}',
+            '${moduleCount == 1 ? '' : 's'}',
             fontSize: 14,
             color: ColorUtils.greyTextColor,
           ),
@@ -243,8 +244,7 @@ class _CourseTitleSectionView
   }
 }
 
-class _ApiModuleTimelineView
-    extends StatelessWidget {
+class _ApiModuleTimelineView extends StatelessWidget {
   final CourseModuleModel module;
   final int moduleNumber;
   final bool isFirst;
@@ -308,9 +308,7 @@ class _TimelineIndicator extends StatelessWidget {
         Expanded(
           child: Container(
             width: 1,
-            color: isFirst
-                ? Colors.transparent
-                : const Color(0xFFD9DEE5),
+            color: isFirst ? Colors.transparent : const Color(0xFFD9DEE5),
           ),
         ),
         Container(
@@ -329,9 +327,7 @@ class _TimelineIndicator extends StatelessWidget {
         Expanded(
           child: Container(
             width: 1,
-            color: isLast
-                ? Colors.transparent
-                : ColorUtils.secondaryColor,
+            color: isLast ? Colors.transparent : ColorUtils.secondaryColor,
           ),
         ),
       ],
@@ -374,8 +370,7 @@ class _ApiModuleCard extends StatelessWidget {
             ],
           ),
           child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Temporary UI values until the progress
               // API provides these fields.
@@ -383,18 +378,14 @@ class _ApiModuleCard extends StatelessWidget {
                 children: [
                   _ModuleStatusBadge(
                     label: 'Completed',
-                    foregroundColor:
-                    ColorUtils.primaryColor,
-                    backgroundColor:
-                    Color(0xFFEFF3F8),
+                    foregroundColor: ColorUtils.primaryColor,
+                    backgroundColor: Color(0xFFEFF3F8),
                   ),
                   SizedBox(width: 8),
                   _ModuleStatusBadge(
                     label: 'Quiz Passed',
-                    foregroundColor:
-                    Color(0xFF21A965),
-                    backgroundColor:
-                    Color(0xFFE7F8ED),
+                    foregroundColor: Color(0xFF21A965),
+                    backgroundColor: Color(0xFFE7F8ED),
                   ),
                 ],
               ),
@@ -408,9 +399,9 @@ class _ApiModuleCard extends StatelessWidget {
               7.gh,
               TtText(
                 'This module contains '
-                    '${module.chaptersCount} chapter'
-                    '${module.chaptersCount == 1 ? '' : 's'} '
-                    'with lessons and learning activities.',
+                '${module.chaptersCount} chapter'
+                '${module.chaptersCount == 1 ? '' : 's'} '
+                'with lessons and learning activities.',
                 fontSize: 14,
                 height: 1.35,
                 color: const Color(0xFF333B44),
@@ -492,8 +483,7 @@ class _EmptyModulesView extends StatelessWidget {
   }
 }
 
-class _CourseDetailLoadingView
-    extends StatelessWidget {
+class _CourseDetailLoadingView extends StatelessWidget {
   const _CourseDetailLoadingView();
 
   @override
@@ -511,8 +501,7 @@ class _CourseDetailLoadingView
             height: 58,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius:
-              BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           16.gh,
@@ -520,8 +509,7 @@ class _CourseDetailLoadingView
             height: 120,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius:
-              BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
           20.gh,
@@ -533,18 +521,16 @@ class _CourseDetailLoadingView
           14.gh,
           ...List.generate(
             3,
-                (_) {
+            (_) {
               return Container(
                 height: 120,
-                margin:
-                const EdgeInsets.only(
+                margin: const EdgeInsets.only(
                   left: 34,
                   bottom: 12,
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius:
-                  BorderRadius.circular(13),
+                  borderRadius: BorderRadius.circular(13),
                 ),
               );
             },
@@ -555,8 +541,7 @@ class _CourseDetailLoadingView
   }
 }
 
-class _CourseDetailErrorView
-    extends StatelessWidget {
+class _CourseDetailErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
 
@@ -597,8 +582,7 @@ class _CourseDetailErrorView
             ElevatedButton.icon(
               onPressed: onRetry,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                ColorUtils.primaryColor,
+                backgroundColor: ColorUtils.primaryColor,
                 foregroundColor: Colors.white,
               ),
               icon: const Icon(

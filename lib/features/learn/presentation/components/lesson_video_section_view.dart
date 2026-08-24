@@ -6,8 +6,7 @@ import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
 import 'package:video_player/video_player.dart';
 
-class LessonVideoSectionView
-    extends StatefulWidget {
+class LessonVideoSectionView extends StatefulWidget {
   final ChapterVideoModel video;
 
   /// Private local MP4 path returned after the video
@@ -26,8 +25,7 @@ class LessonVideoSectionView
   }
 }
 
-class _LessonVideoSectionViewState
-    extends State<LessonVideoSectionView> {
+class _LessonVideoSectionViewState extends State<LessonVideoSectionView> {
   VideoPlayerController? _videoController;
   ChewieController? _chewieController;
 
@@ -45,18 +43,18 @@ class _LessonVideoSectionViewState
 
   @override
   void didUpdateWidget(
-      LessonVideoSectionView oldWidget,
-      ) {
+    LessonVideoSectionView oldWidget,
+  ) {
     super.didUpdateWidget(oldWidget);
 
-    final videoChanged =
-        oldWidget.video.id != widget.video.id;
+    final videoChanged = oldWidget.video.id != widget.video.id;
 
-    final localFileChanged =
-        oldWidget.localFilePath !=
-            widget.localFilePath;
+    final localFileChanged = oldWidget.localFilePath != widget.localFilePath;
 
-    if (videoChanged || localFileChanged) {
+    final playbackSourcesChanged =
+        _playbackSignature(oldWidget.video) != _playbackSignature(widget.video);
+
+    if (videoChanged || localFileChanged || playbackSourcesChanged) {
       _releaseControllers();
 
       _isLoading = true;
@@ -66,24 +64,32 @@ class _LessonVideoSectionViewState
     }
   }
 
-  Future<void> _initializePlayer() async {
-    final initializationId =
-    ++_initializationId;
+  String _playbackSignature(
+    ChapterVideoModel video,
+  ) {
+    final mp4Links = video.mp4Files.map((file) => file.link.trim()).join('|');
 
-    final playbackSources =
-    _buildPlaybackSources(widget.video);
+    return [
+      video.hlsUrl?.trim() ?? '',
+      video.videoPath?.trim() ?? '',
+      mp4Links,
+    ].join('::');
+  }
+
+  Future<void> _initializePlayer() async {
+    final initializationId = ++_initializationId;
+
+    final playbackSources = _buildPlaybackSources(widget.video);
 
     if (playbackSources.isEmpty) {
-      if (!mounted ||
-          initializationId !=
-              _initializationId) {
+      if (!mounted || initializationId != _initializationId) {
         return;
       }
 
       setState(() {
         _isLoading = false;
         _errorMessage =
-        'This lesson does not currently contain '
+            'This lesson does not currently contain '
             'an offline, HLS, or MP4 playback source.';
       });
 
@@ -94,34 +100,23 @@ class _LessonVideoSectionViewState
       VideoPlayerController? videoController;
 
       try {
-        videoController =
-            _createVideoController(source);
+        videoController = _createVideoController(source);
 
-        await videoController
-            .initialize()
-            .timeout(
+        await videoController.initialize().timeout(
           const Duration(seconds: 25),
         );
 
-        if (!mounted ||
-            initializationId !=
-                _initializationId) {
+        if (!mounted || initializationId != _initializationId) {
           await videoController.dispose();
           return;
         }
 
-        final videoAspectRatio =
-            videoController.value.aspectRatio;
+        final videoAspectRatio = videoController.value.aspectRatio;
 
-        final aspectRatio =
-        videoAspectRatio > 0
-            ? videoAspectRatio
-            : 16 / 9;
+        final aspectRatio = videoAspectRatio > 0 ? videoAspectRatio : 16 / 9;
 
-        final chewieController =
-        ChewieController(
-          videoPlayerController:
-          videoController,
+        final chewieController = ChewieController(
+          videoPlayerController: videoController,
           aspectRatio: aspectRatio,
           autoInitialize: false,
           autoPlay: false,
@@ -130,40 +125,36 @@ class _LessonVideoSectionViewState
           allowMuting: true,
           allowPlaybackSpeedChanging: true,
           showControls: true,
-          materialProgressColors:
-          ChewieProgressColors(
-            playedColor:
-            ColorUtils.secondaryColor,
-            handleColor:
-            ColorUtils.secondaryColor,
+          customControls: CustomCupertinoControls(
+            backgroundColor: Colors.black.withValues(alpha: 0.05),
+            iconColor: Colors.white,
+          ),
+          materialProgressColors: ChewieProgressColors(
+            playedColor: ColorUtils.secondaryColor,
+            handleColor: ColorUtils.secondaryColor,
             bufferedColor: Colors.white54,
             backgroundColor: Colors.white30,
           ),
           placeholder: _VideoThumbnailView(
-            thumbnailUrl:
-            widget.video.thumbnail,
+            thumbnailUrl: widget.video.thumbnail,
           ),
-          errorBuilder: (
-              context,
-              errorMessage,
+          errorBuilder:
+              (
+                context,
+                errorMessage,
               ) {
-            return _VideoMessageView(
-              thumbnailUrl:
-              widget.video.thumbnail,
-              icon:
-              Icons.error_outline_rounded,
-              message:
-              'Unable to play this video.',
-              onRetry: _retry,
-            );
-          },
+                return _VideoMessageView(
+                  thumbnailUrl: widget.video.thumbnail,
+                  icon: Icons.error_outline_rounded,
+                  message: 'Unable to play this video.',
+                  onRetry: _retry,
+                );
+              },
         );
 
         setState(() {
-          _videoController =
-              videoController;
-          _chewieController =
-              chewieController;
+          _videoController = videoController;
+          _chewieController = chewieController;
           _isLoading = false;
           _errorMessage = null;
         });
@@ -179,26 +170,23 @@ class _LessonVideoSectionViewState
       }
     }
 
-    if (!mounted ||
-        initializationId !=
-            _initializationId) {
+    if (!mounted || initializationId != _initializationId) {
       return;
     }
 
     setState(() {
       _isLoading = false;
       _errorMessage =
-      'The video could not be initialized. '
+          'The video could not be initialized. '
           'Please check your connection or '
           'download the lesson again.';
     });
   }
 
   VideoPlayerController _createVideoController(
-      _PlaybackSource source,
-      ) {
-    final localFilePath =
-        source.localFilePath;
+    _PlaybackSource source,
+  ) {
+    final localFilePath = source.localFilePath;
 
     if (localFilePath != null) {
       return VideoPlayerController.file(
@@ -213,8 +201,8 @@ class _LessonVideoSectionViewState
   }
 
   List<_PlaybackSource> _buildPlaybackSources(
-      ChapterVideoModel video,
-      ) {
+    ChapterVideoModel video,
+  ) {
     final sources = <_PlaybackSource>[];
     final addedUrls = <String>{};
 
@@ -222,11 +210,9 @@ class _LessonVideoSectionViewState
      * 1. Downloaded local video
      */
 
-    final localFilePath =
-    widget.localFilePath?.trim();
+    final localFilePath = widget.localFilePath?.trim();
 
-    if (localFilePath != null &&
-        localFilePath.isNotEmpty) {
+    if (localFilePath != null && localFilePath.isNotEmpty) {
       final localFile = File(
         localFilePath,
       );
@@ -241,9 +227,9 @@ class _LessonVideoSectionViewState
     }
 
     void addNetworkSource(
-        String? rawUrl, {
-          VideoFormat? formatHint,
-        }) {
+      String? rawUrl, {
+      VideoFormat? formatHint,
+    }) {
       final value = rawUrl?.trim();
 
       if (value == null || value.isEmpty) {
@@ -253,8 +239,7 @@ class _LessonVideoSectionViewState
       final uri = Uri.tryParse(value);
 
       if (uri == null ||
-          !(uri.scheme == 'http' ||
-              uri.scheme == 'https') ||
+          !(uri.scheme == 'http' || uri.scheme == 'https') ||
           uri.host.isEmpty) {
         return;
       }
@@ -286,16 +271,16 @@ class _LessonVideoSectionViewState
      * Highest resolution is attempted first.
      */
 
-    final mp4Files = [
-      ...video.mp4Files,
-    ]..sort(
+    final mp4Files =
+        [
+          ...video.mp4Files,
+        ]..sort(
           (first, second) {
-        return (second.height ?? 0)
-            .compareTo(
-          first.height ?? 0,
+            return (second.height ?? 0).compareTo(
+              first.height ?? 0,
+            );
+          },
         );
-      },
-    );
 
     for (final mp4File in mp4Files) {
       addNetworkSource(
@@ -307,23 +292,16 @@ class _LessonVideoSectionViewState
      * 4. Future direct video_path support
      */
 
-    final videoPath =
-    video.videoPath?.trim();
+    final videoPath = video.videoPath?.trim();
 
-    if (videoPath != null &&
-        videoPath.isNotEmpty) {
-      final uri =
-      Uri.tryParse(videoPath);
+    if (videoPath != null && videoPath.isNotEmpty) {
+      final uri = Uri.tryParse(videoPath);
 
-      final path =
-          uri?.path.toLowerCase() ?? '';
+      final path = uri?.path.toLowerCase() ?? '';
 
       addNetworkSource(
         videoPath,
-        formatHint:
-        path.endsWith('.m3u8')
-            ? VideoFormat.hls
-            : null,
+        formatHint: path.endsWith('.m3u8') ? VideoFormat.hls : null,
       );
     }
 
@@ -344,11 +322,9 @@ class _LessonVideoSectionViewState
   void _releaseControllers() {
     _initializationId++;
 
-    final chewieController =
-        _chewieController;
+    final chewieController = _chewieController;
 
-    final videoController =
-        _videoController;
+    final videoController = _videoController;
 
     _chewieController = null;
     _videoController = null;
@@ -368,33 +344,26 @@ class _LessonVideoSectionViewState
   Widget build(BuildContext context) {
     if (_isLoading) {
       return _VideoLoadingView(
-        thumbnailUrl:
-        widget.video.thumbnail,
+        thumbnailUrl: widget.video.thumbnail,
       );
     }
 
     if (_errorMessage != null) {
       return _VideoMessageView(
-        thumbnailUrl:
-        widget.video.thumbnail,
-        icon:
-        Icons.video_library_outlined,
+        thumbnailUrl: widget.video.thumbnail,
+        icon: Icons.video_library_outlined,
         message: _errorMessage!,
         onRetry: _retry,
       );
     }
 
-    final chewieController =
-        _chewieController;
+    final chewieController = _chewieController;
 
     if (chewieController == null) {
       return _VideoMessageView(
-        thumbnailUrl:
-        widget.video.thumbnail,
-        icon:
-        Icons.error_outline_rounded,
-        message:
-        'Video player is unavailable.',
+        thumbnailUrl: widget.video.thumbnail,
+        icon: Icons.error_outline_rounded,
+        message: 'Video player is unavailable.',
         onRetry: _retry,
       );
     }
@@ -402,13 +371,11 @@ class _LessonVideoSectionViewState
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: ClipRRect(
-        borderRadius:
-        BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
         child: ColoredBox(
           color: Colors.black,
           child: Chewie(
-            controller:
-            chewieController,
+            controller: chewieController,
           ),
         ),
       ),
@@ -427,13 +394,12 @@ class _PlaybackSource {
   }) : localFilePath = null;
 
   const _PlaybackSource.local(
-      this.localFilePath,
-      )   : uri = null,
-        formatHint = null;
+    this.localFilePath,
+  ) : uri = null,
+      formatHint = null;
 }
 
-class _VideoLoadingView
-    extends StatelessWidget {
+class _VideoLoadingView extends StatelessWidget {
   final String? thumbnailUrl;
 
   const _VideoLoadingView({
@@ -445,8 +411,7 @@ class _VideoLoadingView
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: ClipRRect(
-        borderRadius:
-        BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -459,10 +424,8 @@ class _VideoLoadingView
               ),
             ),
             const Center(
-              child:
-              CircularProgressIndicator(
-                color:
-                ColorUtils.secondaryColor,
+              child: CircularProgressIndicator(
+                color: ColorUtils.secondaryColor,
               ),
             ),
           ],
@@ -472,8 +435,7 @@ class _VideoLoadingView
   }
 }
 
-class _VideoMessageView
-    extends StatelessWidget {
+class _VideoMessageView extends StatelessWidget {
   final String? thumbnailUrl;
   final IconData icon;
   final String message;
@@ -491,8 +453,7 @@ class _VideoMessageView
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: ClipRRect(
-        borderRadius:
-        BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -505,11 +466,9 @@ class _VideoMessageView
               ),
             ),
             Padding(
-              padding:
-              const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Column(
-                mainAxisAlignment:
-                MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     icon,
@@ -522,8 +481,7 @@ class _VideoMessageView
                     fontSize: 14,
                     height: 1.4,
                     color: Colors.white,
-                    textAlign:
-                    TextAlign.center,
+                    textAlign: TextAlign.center,
                   ),
                   if (onRetry != null) ...[
                     10.gh,
@@ -536,8 +494,7 @@ class _VideoMessageView
                       label: const TtText(
                         'Try Again',
                         fontSize: 14,
-                        fontWeight:
-                        FontWeight.w600,
+                        fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
                     ),
@@ -552,8 +509,7 @@ class _VideoMessageView
   }
 }
 
-class _VideoThumbnailView
-    extends StatelessWidget {
+class _VideoThumbnailView extends StatelessWidget {
   final String? thumbnailUrl;
 
   const _VideoThumbnailView({
@@ -571,8 +527,7 @@ class _VideoThumbnailView
           child: Icon(
             Icons.video_library_outlined,
             size: 60,
-            color:
-            ColorUtils.primaryColor,
+            color: ColorUtils.primaryColor,
           ),
         ),
       );

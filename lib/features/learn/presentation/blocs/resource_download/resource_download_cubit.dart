@@ -8,21 +8,70 @@ import 'package:thuta_learn/features/learn/learn.dart';
 part 'resource_download_state.dart';
 
 @Injectable()
-class ResourceDownloadCubit extends Cubit<ResourceDownloadState> {
+class ResourceDownloadCubit
+    extends Cubit<ResourceDownloadState> {
   final ResourceDownloadService downloadService;
 
   ResourceDownloadCubit({
     required this.downloadService,
-  }) : super(
-         const ResourceDownloadState(),
-       );
+  }) : super(const ResourceDownloadState());
+
+  Future<void> registerResources(
+      Iterable<ChapterResourceModel> resources,
+      ) async {
+    final updatedDownloads = {
+      ...state.downloads,
+    };
+
+    var hasChanges = false;
+
+    for (final resource in resources) {
+      final current =
+      updatedDownloads[resource.id];
+
+      if (current?.isDownloading == true ||
+          current?.isDownloaded == true) {
+        continue;
+      }
+
+      final record =
+      await downloadService.getDownloadedResource(
+        resource.id,
+      );
+
+      if (record == null) {
+        continue;
+      }
+
+      updatedDownloads[resource.id] =
+          ResourceDownloadItemState(
+            status: ResourceDownloadStatus.success,
+            savedLocation: record.publicLocation,
+            localFilePath: record.localFilePath,
+          );
+
+      hasChanges = true;
+    }
+
+    if (!hasChanges || isClosed) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        downloads: updatedDownloads,
+      ),
+    );
+  }
 
   Future<void> download(
-    ChapterResourceModel resource,
-  ) async {
-    final current = state.downloadFor(resource.id);
+      ChapterResourceModel resource,
+      ) async {
+    final current =
+    state.downloadFor(resource.id);
 
-    if (current.isDownloading) {
+    if (current.isDownloading ||
+        current.isDownloaded) {
       return;
     }
 
@@ -30,8 +79,10 @@ class ResourceDownloadCubit extends Cubit<ResourceDownloadState> {
       state.copyWith(
         downloads: {
           ...state.downloads,
-          resource.id: const ResourceDownloadItemState(
-            status: ResourceDownloadStatus.downloading,
+          resource.id:
+          const ResourceDownloadItemState(
+            status:
+            ResourceDownloadStatus.downloading,
           ),
         },
         clearMessage: true,
@@ -39,9 +90,8 @@ class ResourceDownloadCubit extends Cubit<ResourceDownloadState> {
     );
 
     try {
-      final result = await downloadService.download(
-        resource,
-      );
+      final result =
+      await downloadService.download(resource);
 
       if (isClosed) {
         return;
@@ -51,9 +101,13 @@ class ResourceDownloadCubit extends Cubit<ResourceDownloadState> {
         state.copyWith(
           downloads: {
             ...state.downloads,
-            resource.id: ResourceDownloadItemState(
+            resource.id:
+            ResourceDownloadItemState(
               status: ResourceDownloadStatus.success,
-              savedLocation: result.location,
+              savedLocation:
+              result.publicLocation,
+              localFilePath:
+              result.localFilePath,
             ),
           },
           message: Platform.isAndroid
@@ -71,11 +125,13 @@ class ResourceDownloadCubit extends Cubit<ResourceDownloadState> {
         state.copyWith(
           downloads: {
             ...state.downloads,
-            resource.id: const ResourceDownloadItemState(
+            resource.id:
+            const ResourceDownloadItemState(
               status: ResourceDownloadStatus.canceled,
             ),
           },
-          message: 'Resource download was cancelled.',
+          message:
+          'Resource download was cancelled.',
           messageType: SnackBarType.info,
         ),
       );
@@ -86,13 +142,16 @@ class ResourceDownloadCubit extends Cubit<ResourceDownloadState> {
 
       var message = error.toString();
 
-      message = message.replaceFirst('Bad state: ', '').replaceFirst('Exception: ', '');
+      message = message
+          .replaceFirst('Bad state: ', '')
+          .replaceFirst('Exception: ', '');
 
       emit(
         state.copyWith(
           downloads: {
             ...state.downloads,
-            resource.id: const ResourceDownloadItemState(
+            resource.id:
+            const ResourceDownloadItemState(
               status: ResourceDownloadStatus.failure,
             ),
           },

@@ -18,17 +18,28 @@ class LessonDetailPage extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (_) {
-            return getIt<LessonDetailBloc>()..add(
-              OnGetLessonDetail(
-                chapterId: args.chapterId,
-                videoId: args.videoId,
-              ),
-            );
+            return getIt<LessonDetailBloc>()
+              ..add(
+                OnGetLessonDetail(
+                  chapterId: args.chapterId,
+                  videoId: args.videoId,
+                ),
+              )
+              ..add(
+                OnGetLessonVocabularies(
+                  videoId: args.videoId,
+                ),
+              );
           },
         ),
         BlocProvider(
           create: (_) {
             return getIt<LessonDownloadCubit>()..initialize(args.videoId);
+          },
+        ),
+        BlocProvider(
+          create: (_) {
+            return getIt<VocabularySpeechCubit>()..initialize();
           },
         ),
       ],
@@ -193,10 +204,7 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
                   ),
 
                   12.gh,
-                  BlocBuilder<
-                      LessonDownloadCubit,
-                      LessonDownloadState
-                  >(
+                  BlocBuilder<LessonDownloadCubit, LessonDownloadState>(
                     builder: (context, downloadState) {
                       return LessonDownloadStatusView(
                         status: downloadState.status,
@@ -212,7 +220,18 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
                   20.gh,
                   const LessonTranscriptSectionView(),
                   24.gh,
-                  const LessonVocabularySectionView(),
+                  LessonVocabularySectionView(
+                    status: state.vocabularyStatus,
+                    vocabularies: state.vocabularies,
+                    errorMessage: state.vocabularyMessage,
+                    onRetry: () {
+                      context.read<LessonDetailBloc>().add(
+                        OnGetLessonVocabularies(
+                          videoId: widget.args.videoId,
+                        ),
+                      );
+                    },
+                  ),
                   28.gh,
                   const LessonSpecialNotesView(),
                 ],
