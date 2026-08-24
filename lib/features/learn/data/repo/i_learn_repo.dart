@@ -350,4 +350,15 @@ class ILearnRepo implements LearnRepo {
       vocabularies: vocabularies,
     );
   }
+
+  @override
+  Future<Either<Failure, VocabularySaveResponse>> saveVocabulary({
+    required String vocabularyId,
+  }) {
+    return _request(
+      () => client.saveVocabulary(
+        vocabularyId: vocabularyId,
+      ),
+    );
+  }
 }

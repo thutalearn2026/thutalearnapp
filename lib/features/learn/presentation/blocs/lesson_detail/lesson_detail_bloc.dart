@@ -18,6 +18,7 @@ class LessonDetailBloc extends Bloc<LessonDetailEvent, LessonDetailState> {
   }) : super(const LessonDetailState()) {
     on<OnGetLessonDetail>(_onGetLessonDetail);
     on<OnGetLessonVocabularies>(_onGetLessonVocabularies);
+    on<OnToggleVocabularySaved>(_onToggleVocabularySaved);
   }
 
   Future<void> _onGetLessonDetail(
@@ -94,23 +95,20 @@ class LessonDetailBloc extends Bloc<LessonDetailEvent, LessonDetailState> {
   }
 
   Future<void> _onGetLessonVocabularies(
-      OnGetLessonVocabularies event,
-      Emitter<LessonDetailState> emit,
-      ) async {
+    OnGetLessonVocabularies event,
+    Emitter<LessonDetailState> emit,
+  ) async {
     if (state.isVocabularyRefreshing) {
       return;
     }
 
-    final cachedVocabularies =
-    await learnUseCase.getCachedVideoVocabularies(
+    final cachedVocabularies = await learnUseCase.getCachedVideoVocabularies(
       videoId: event.videoId,
     );
 
-    final visibleVocabularies =
-        cachedVocabularies ?? state.vocabularies;
+    final visibleVocabularies = cachedVocabularies ?? state.vocabularies;
 
-    final hasCachedData =
-        cachedVocabularies != null;
+    final hasCachedData = cachedVocabularies != null;
 
     emit(
       state.copyWith(
@@ -123,19 +121,17 @@ class LessonDetailBloc extends Bloc<LessonDetailEvent, LessonDetailState> {
       ),
     );
 
-    final result =
-    await learnUseCase.getVideoVocabularies(
+    final result = await learnUseCase.getVideoVocabularies(
       videoId: event.videoId,
     );
 
     await result.fold<Future<void>>(
-          (failure) async {
+      (failure) async {
         if (hasCachedData) {
           // Silently retain cached vocabularies.
           emit(
             state.copyWith(
-              vocabularyStatus:
-              LessonVocabularyStatus.success,
+              vocabularyStatus: LessonVocabularyStatus.success,
               vocabularies: visibleVocabularies,
               isVocabularyRefreshing: false,
               clearVocabularyMessage: true,
@@ -147,18 +143,16 @@ class LessonDetailBloc extends Bloc<LessonDetailEvent, LessonDetailState> {
 
         emit(
           state.copyWith(
-            vocabularyStatus:
-            LessonVocabularyStatus.failure,
+            vocabularyStatus: LessonVocabularyStatus.failure,
             isVocabularyRefreshing: false,
-            vocabularyMessage:
-            _vocabularyFailureMessage(failure),
+            vocabularyMessage: _vocabularyFailureMessage(failure),
           ),
         );
       },
-          (response) async {
+      (response) async {
         final vocabularies = [...response.data]
           ..sort(
-                (first, second) {
+            (first, second) {
               return first.rank.compareTo(second.rank);
             },
           );
@@ -170,8 +164,7 @@ class LessonDetailBloc extends Bloc<LessonDetailEvent, LessonDetailState> {
 
         emit(
           state.copyWith(
-            vocabularyStatus:
-            LessonVocabularyStatus.success,
+            vocabularyStatus: LessonVocabularyStatus.success,
             vocabularies: vocabularies,
             isVocabularyRefreshing: false,
             clearVocabularyMessage: true,
@@ -182,8 +175,8 @@ class LessonDetailBloc extends Bloc<LessonDetailEvent, LessonDetailState> {
   }
 
   String _vocabularyFailureMessage(
-      Failure failure,
-      ) {
+    Failure failure,
+  ) {
     if (failure is ConnectionFailure) {
       return 'Please check your internet connection and try again.';
     }
@@ -206,6 +199,145 @@ class LessonDetailBloc extends Bloc<LessonDetailEvent, LessonDetailState> {
 
     if (message == null || message.trim().isEmpty) {
       return 'Unable to load this lesson.';
+    }
+
+    return message;
+  }
+
+  Future<void> _onToggleVocabularySaved(
+    OnToggleVocabularySaved event,
+    Emitter<LessonDetailState> emit,
+  ) async {
+    if (state.isVocabularySaving(
+      event.vocabularyId,
+    )) {
+      return;
+    }
+
+    VideoVocabularyModel? selectedVocabulary;
+
+    for (final vocabulary in state.vocabularies) {
+      if (vocabulary.id == event.vocabularyId) {
+        selectedVocabulary = vocabulary;
+        break;
+      }
+    }
+
+    if (selectedVocabulary == null) {
+      return;
+    }
+
+    final originalSavedStatus = selectedVocabulary.isSaved;
+
+    final optimisticSavedStatus = !originalSavedStatus;
+
+    final optimisticVocabularies = _updateVocabularySavedStatus(
+      vocabularies: state.vocabularies,
+      vocabularyId: event.vocabularyId,
+      isSaved: optimisticSavedStatus,
+    );
+
+    final savingIds = Set<String>.from(state.savingVocabularyIds)..add(event.vocabularyId);
+
+    emit(
+      state.copyWith(
+        vocabularies: optimisticVocabularies,
+        savingVocabularyIds: savingIds,
+        vocabularySaveStatus: VocabularySaveStatus.loading,
+        clearVocabularyActionMessage: true,
+      ),
+    );
+
+    final result = await learnUseCase.saveVocabulary(
+      vocabularyId: event.vocabularyId,
+    );
+
+    await result.fold<Future<void>>(
+      (failure) async {
+        // Roll back only this vocabulary. This avoids
+        // changing other concurrent favorite requests.
+        final rolledBackVocabularies = _updateVocabularySavedStatus(
+          vocabularies: state.vocabularies,
+          vocabularyId: event.vocabularyId,
+          isSaved: originalSavedStatus,
+        );
+
+        final updatedSavingIds = Set<String>.from(
+          state.savingVocabularyIds,
+        )..remove(event.vocabularyId);
+
+        emit(
+          state.copyWith(
+            vocabularies: rolledBackVocabularies,
+            savingVocabularyIds: updatedSavingIds,
+            vocabularySaveStatus: VocabularySaveStatus.failure,
+            vocabularyActionMessage: _vocabularySaveFailureMessage(
+              failure,
+            ),
+          ),
+        );
+      },
+      (response) async {
+        // Always use the backend response as the
+        // final source of truth.
+        final updatedVocabularies = _updateVocabularySavedStatus(
+          vocabularies: state.vocabularies,
+          vocabularyId: event.vocabularyId,
+          isSaved: response.saved,
+        );
+
+        await learnUseCase.saveVideoVocabulariesCache(
+          videoId: event.videoId,
+          vocabularies: updatedVocabularies,
+        );
+
+        final updatedSavingIds = Set<String>.from(
+          state.savingVocabularyIds,
+        )..remove(event.vocabularyId);
+
+        emit(
+          state.copyWith(
+            vocabularies: updatedVocabularies,
+            savingVocabularyIds: updatedSavingIds,
+            vocabularySaveStatus: VocabularySaveStatus.success,
+            vocabularyActionMessage: response.saved
+                ? 'Vocabulary saved.'
+                : 'Vocabulary removed from saved items.',
+          ),
+        );
+      },
+    );
+  }
+
+  List<VideoVocabularyModel> _updateVocabularySavedStatus({
+    required List<VideoVocabularyModel> vocabularies,
+    required String vocabularyId,
+    required bool isSaved,
+  }) {
+    return vocabularies
+        .map((vocabulary) {
+          if (vocabulary.id != vocabularyId) {
+            return vocabulary;
+          }
+
+          return vocabulary.copyWith(
+            isSaved: isSaved,
+          );
+        })
+        .toList(growable: false);
+  }
+
+  String _vocabularySaveFailureMessage(
+    Failure failure,
+  ) {
+    if (failure is ConnectionFailure) {
+      return 'Unable to update the vocabulary. Please check your internet connection.';
+    }
+
+    final message = failure.e?.toString().trim();
+
+    if (message == null || message.isEmpty) {
+      return 'Unable to update the saved vocabulary.';
     }
 
     return message;

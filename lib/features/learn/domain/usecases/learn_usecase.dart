@@ -270,4 +270,12 @@ class LearnUseCase {
       vocabularies: vocabularies,
     );
   }
+
+  Future<Either<Failure, VocabularySaveResponse>> saveVocabulary({
+    required String vocabularyId,
+  }) {
+    return learnRepo.saveVocabulary(
+      vocabularyId: vocabularyId,
+    );
+  }
 }

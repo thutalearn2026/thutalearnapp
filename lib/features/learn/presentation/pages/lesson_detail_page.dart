@@ -77,168 +77,191 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<LessonDownloadCubit, LessonDownloadState>(
+    return BlocListener<LessonDetailBloc, LessonDetailState>(
       listenWhen: (previous, current) {
-        return previous.message != current.message && current.message != null;
+        return previous.vocabularyActionMessage != current.vocabularyActionMessage &&
+            current.vocabularyActionMessage != null;
       },
       listener: (context, state) {
-        final message = state.message;
-
-        if (message == null) {
-          return;
-        }
-
         context.showSnackBar(
-          message,
-          snackBarType: state.status == VideoDownloadStatus.downloaded
+          state.vocabularyActionMessage!,
+          snackBarType: state.vocabularySaveStatus == VocabularySaveStatus.success
               ? SnackBarType.success
               : SnackBarType.error,
         );
       },
-      child: BlocBuilder<LessonDetailBloc, LessonDetailState>(
-        builder: (context, state) {
-          if (state.isLoading && state.video == null) {
-            return const _LessonDetailLoadingPage();
+      child: BlocListener<LessonDownloadCubit, LessonDownloadState>(
+        listenWhen: (previous, current) {
+          return previous.message != current.message && current.message != null;
+        },
+        listener: (context, state) {
+          final message = state.message;
+
+          if (message == null) {
+            return;
           }
 
-          if (state.status == LessonDetailStatus.failure && state.video == null) {
-            return _LessonDetailErrorPage(
-              message: state.message ?? 'Unable to load this lesson.',
-              onRetry: _retry,
-            );
-          }
-
-          final video = state.video;
-
-          if (video == null) {
-            return const SizedBox.shrink();
-          }
-
-          final title = video.title.trim().isEmpty ? 'Untitled Lesson' : video.title.trim();
-
-          return Scaffold(
-            backgroundColor: ColorUtils.scaffoldBackgroundColor,
-            appBar: AppBar(
-              backgroundColor: ColorUtils.scaffoldBackgroundColor,
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(
-                onPressed: context.pop,
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: ColorUtils.primaryColor,
-                ),
-              ),
-              actions: [
-                BlocBuilder<LessonDownloadCubit, LessonDownloadState>(
-                  builder: (context, downloadState) {
-                    return LessonDownloadButton(
-                      status: downloadState.status,
-                      progress: downloadState.progress,
-                      onPressed: () {
-                        final video = state.video;
-
-                        if (video == null) {
-                          return;
-                        }
-
-                        context.read<LessonDownloadCubit>().download(video);
-                      },
-                    );
-                  },
-                ),
-                IconButton(
-                  tooltip: _isFavorite ? 'Remove from favorites' : 'Add to favorites',
-                  onPressed: () {
-                    setState(() {
-                      _isFavorite = !_isFavorite;
-                    });
-                  },
-                  icon: Icon(
-                    _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                    color: _isFavorite ? ColorUtils.secondaryColor : ColorUtils.primaryColor,
-                    size: 30,
-                  ),
-                ),
-                8.gw,
-              ],
-            ),
-            body: TtFadeIn(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  12,
-                  16,
-                  32,
-                ),
-                children: [
-                  TtText(
-                    title,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: ColorUtils.primaryColor,
-                  ),
-                  8.gh,
-                  TtText(
-                    video.videoSource == null
-                        ? 'Video lesson'
-                        : '${video.videoSource!.toUpperCase()} video lesson',
-                    fontSize: 14,
-                    color: ColorUtils.greyTextColor,
-                  ),
-                  20.gh,
-                  BlocBuilder<LessonDownloadCubit, LessonDownloadState>(
-                    buildWhen: (previous, current) {
-                      return previous.localFilePath != current.localFilePath ||
-                          previous.status != current.status;
-                    },
-
-                    builder: (context, downloadState) {
-                      return LessonVideoSectionView(
-                        video: video,
-                        localFilePath: downloadState.isDownloaded
-                            ? downloadState.localFilePath
-                            : null,
-                      );
-                    },
-                  ),
-
-                  12.gh,
-                  BlocBuilder<LessonDownloadCubit, LessonDownloadState>(
-                    builder: (context, downloadState) {
-                      return LessonDownloadStatusView(
-                        status: downloadState.status,
-                        progress: downloadState.progress,
-                      );
-                    },
-                  ),
-
-                  // The endpoint currently does not return
-                  // transcript, vocabulary or special notes.
-                  // These sections can remain as existing
-                  // placeholder UI until their APIs are ready.
-                  20.gh,
-                  const LessonTranscriptSectionView(),
-                  24.gh,
-                  LessonVocabularySectionView(
-                    status: state.vocabularyStatus,
-                    vocabularies: state.vocabularies,
-                    errorMessage: state.vocabularyMessage,
-                    onRetry: () {
-                      context.read<LessonDetailBloc>().add(
-                        OnGetLessonVocabularies(
-                          videoId: widget.args.videoId,
-                        ),
-                      );
-                    },
-                  ),
-                  28.gh,
-                  const LessonSpecialNotesView(),
-                ],
-              ),
-            ),
+          context.showSnackBar(
+            message,
+            snackBarType: state.status == VideoDownloadStatus.downloaded
+                ? SnackBarType.success
+                : SnackBarType.error,
           );
         },
+        child: BlocBuilder<LessonDetailBloc, LessonDetailState>(
+          builder: (context, state) {
+            if (state.isLoading && state.video == null) {
+              return const _LessonDetailLoadingPage();
+            }
+
+            if (state.status == LessonDetailStatus.failure && state.video == null) {
+              return _LessonDetailErrorPage(
+                message: state.message ?? 'Unable to load this lesson.',
+                onRetry: _retry,
+              );
+            }
+
+            final video = state.video;
+
+            if (video == null) {
+              return const SizedBox.shrink();
+            }
+
+            final title = video.title.trim().isEmpty ? 'Untitled Lesson' : video.title.trim();
+
+            return Scaffold(
+              backgroundColor: ColorUtils.scaffoldBackgroundColor,
+              appBar: AppBar(
+                backgroundColor: ColorUtils.scaffoldBackgroundColor,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  onPressed: context.pop,
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: ColorUtils.primaryColor,
+                  ),
+                ),
+                actions: [
+                  BlocBuilder<LessonDownloadCubit, LessonDownloadState>(
+                    builder: (context, downloadState) {
+                      return LessonDownloadButton(
+                        status: downloadState.status,
+                        progress: downloadState.progress,
+                        onPressed: () {
+                          final video = state.video;
+
+                          if (video == null) {
+                            return;
+                          }
+
+                          context.read<LessonDownloadCubit>().download(video);
+                        },
+                      );
+                    },
+                  ),
+                  IconButton(
+                    tooltip: _isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                    onPressed: () {
+                      setState(() {
+                        _isFavorite = !_isFavorite;
+                      });
+                    },
+                    icon: Icon(
+                      _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      color: _isFavorite ? ColorUtils.secondaryColor : ColorUtils.primaryColor,
+                      size: 30,
+                    ),
+                  ),
+                  8.gw,
+                ],
+              ),
+              body: TtFadeIn(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(
+                    16,
+                    12,
+                    16,
+                    32,
+                  ),
+                  children: [
+                    TtText(
+                      title,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: ColorUtils.primaryColor,
+                    ),
+                    8.gh,
+                    TtText(
+                      video.videoSource == null
+                          ? 'Video lesson'
+                          : '${video.videoSource!.toUpperCase()} video lesson',
+                      fontSize: 14,
+                      color: ColorUtils.greyTextColor,
+                    ),
+                    20.gh,
+                    BlocBuilder<LessonDownloadCubit, LessonDownloadState>(
+                      buildWhen: (previous, current) {
+                        return previous.localFilePath != current.localFilePath ||
+                            previous.status != current.status;
+                      },
+
+                      builder: (context, downloadState) {
+                        return LessonVideoSectionView(
+                          video: video,
+                          localFilePath: downloadState.isDownloaded
+                              ? downloadState.localFilePath
+                              : null,
+                        );
+                      },
+                    ),
+
+                    12.gh,
+                    BlocBuilder<LessonDownloadCubit, LessonDownloadState>(
+                      builder: (context, downloadState) {
+                        return LessonDownloadStatusView(
+                          status: downloadState.status,
+                          progress: downloadState.progress,
+                        );
+                      },
+                    ),
+
+                    // The endpoint currently does not return
+                    // transcript, vocabulary or special notes.
+                    // These sections can remain as existing
+                    // placeholder UI until their APIs are ready.
+                    20.gh,
+                    const LessonTranscriptSectionView(),
+                    24.gh,
+                    LessonVocabularySectionView(
+                      status: state.vocabularyStatus,
+                      vocabularies: state.vocabularies,
+                      errorMessage: state.vocabularyMessage,
+                      savingVocabularyIds: state.savingVocabularyIds,
+                      onRetry: () {
+                        context.read<LessonDetailBloc>().add(
+                          OnGetLessonVocabularies(
+                            videoId: widget.args.videoId,
+                          ),
+                        );
+                      },
+                      onSaved: (vocabulary) {
+                        context.read<LessonDetailBloc>().add(
+                          OnToggleVocabularySaved(
+                            videoId: widget.args.videoId,
+                            vocabularyId: vocabulary.id,
+                          ),
+                        );
+                      },
+                    ),
+                    28.gh,
+                    const LessonSpecialNotesView(),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

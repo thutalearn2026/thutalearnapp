@@ -156,4 +156,9 @@ abstract class RestClient {
   Future<VideoVocabulariesResponse> getVideoVocabularies(
     @Path('video') String videoId,
   );
+
+  @POST('vocabularies/{vocabulary}/save')
+  Future<VocabularySaveResponse> saveVocabulary(
+    @Path('vocabulary') String vocabularyId,
+  );
 }

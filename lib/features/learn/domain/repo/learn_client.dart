@@ -61,4 +61,8 @@ abstract class LearnClient {
   Future<VideoVocabulariesResponse> getVideoVocabularies({
     required String videoId,
   });
+
+  Future<VocabularySaveResponse> saveVocabulary({
+    required String vocabularyId,
+  });
 }

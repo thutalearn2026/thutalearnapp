@@ -8,13 +8,18 @@ class LessonVocabularySectionView extends StatefulWidget {
   final List<VideoVocabularyModel> vocabularies;
   final String? errorMessage;
   final VoidCallback onRetry;
+  final Set<String> savingVocabularyIds;
+
+  final ValueChanged<VideoVocabularyModel> onSaved;
 
   const LessonVocabularySectionView({
     super.key,
     required this.status,
     required this.vocabularies,
     required this.errorMessage,
+    required this.savingVocabularyIds,
     required this.onRetry,
+    required this.onSaved,
   });
 
   @override
@@ -24,25 +29,6 @@ class LessonVocabularySectionView extends StatefulWidget {
 }
 
 class _LessonVocabularySectionViewState extends State<LessonVocabularySectionView> {
-  final Map<String, bool> _savedOverrides = {};
-
-  bool _isSaved(
-    VideoVocabularyModel vocabulary,
-  ) {
-    return _savedOverrides[vocabulary.id] ?? vocabulary.isSaved;
-  }
-
-  void _toggleSaved(
-    VideoVocabularyModel vocabulary,
-  ) {
-    setState(() {
-      _savedOverrides[vocabulary.id] = !_isSaved(vocabulary);
-    });
-
-    // This is visual-only until the save/remove
-    // vocabulary endpoints are integrated.
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -92,10 +78,11 @@ class _LessonVocabularySectionViewState extends State<LessonVocabularySectionVie
           builder: (context, isSpeaking) {
             return VocabularyItemView(
               vocabulary: vocabulary,
-              isSaved: _isSaved(vocabulary),
+              isSaved: vocabulary.isSaved,
+              isSaving: widget.savingVocabularyIds.contains(vocabulary.id),
               isSpeaking: isSpeaking,
               onSaved: () {
-                _toggleSaved(vocabulary);
+                widget.onSaved(vocabulary);
               },
               onAudio: () {
                 context.read<VocabularySpeechCubit>().speak(vocabulary);
@@ -114,6 +101,7 @@ class VocabularyItemView extends StatelessWidget {
   final bool isSpeaking;
   final VoidCallback onSaved;
   final VoidCallback onAudio;
+  final bool isSaving;
 
   const VocabularyItemView({
     super.key,
@@ -122,6 +110,7 @@ class VocabularyItemView extends StatelessWidget {
     required this.isSpeaking,
     required this.onSaved,
     required this.onAudio,
+    required this.isSaving,
   });
 
   @override
@@ -154,13 +143,9 @@ class VocabularyItemView extends StatelessWidget {
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: Icon(
-                isSpeaking
-                    ? Icons.stop_rounded
-                    : Icons.volume_up_outlined,
+                isSpeaking ? Icons.stop_rounded : Icons.volume_up_outlined,
                 key: ValueKey(isSpeaking),
-                color: isSpeaking
-                    ? Colors.white
-                    : ColorUtils.secondaryColor,
+                color: isSpeaking ? Colors.white : ColorUtils.secondaryColor,
                 size: 26,
               ),
             ),
@@ -212,11 +197,27 @@ class VocabularyItemView extends StatelessWidget {
           ),
         ),
         IconButton(
-          onPressed: onSaved,
+          onPressed: isSaving ? null : onSaved,
           tooltip: isSaved ? 'Remove from saved vocabulary' : 'Save vocabulary',
-          icon: Icon(
-            isSaved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-            color: isSaved ? ColorUtils.secondaryColor : const Color(0xFF8294A9),
+          icon: AnimatedSwitcher(
+            duration: const Duration(
+              milliseconds: 200,
+            ),
+            child: isSaving
+                ? const SizedBox(
+                    key: ValueKey('saving'),
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: ColorUtils.secondaryColor,
+                    ),
+                  )
+                : Icon(
+                    isSaved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                    key: ValueKey(isSaved),
+                    color: isSaved ? ColorUtils.secondaryColor : const Color(0xFF8294A9),
+                  ),
           ),
         ),
       ],

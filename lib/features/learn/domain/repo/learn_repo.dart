@@ -132,4 +132,8 @@ abstract class LearnRepo {
     required String videoId,
     required List<VideoVocabularyModel> vocabularies,
   });
+
+  Future<Either<Failure, VocabularySaveResponse>> saveVocabulary({
+    required String vocabularyId,
+  });
 }

@@ -142,4 +142,13 @@ class ILearnClient implements LearnClient {
       videoId,
     );
   }
+
+  @override
+  Future<VocabularySaveResponse> saveVocabulary({
+    required String vocabularyId,
+  }) {
+    return client.saveVocabulary(
+      vocabularyId,
+    );
+  }
 }

@@ -3,8 +3,7 @@ part of 'lesson_detail_bloc.dart';
 @immutable
 sealed class LessonDetailEvent {}
 
-class OnGetLessonDetail
-    extends LessonDetailEvent {
+class OnGetLessonDetail extends LessonDetailEvent {
   final String chapterId;
   final String videoId;
 
@@ -14,11 +13,20 @@ class OnGetLessonDetail
   });
 }
 
-class OnGetLessonVocabularies
-    extends LessonDetailEvent {
+class OnGetLessonVocabularies extends LessonDetailEvent {
   final String videoId;
 
   OnGetLessonVocabularies({
     required this.videoId,
+  });
+}
+
+class OnToggleVocabularySaved extends LessonDetailEvent {
+  final String videoId;
+  final String vocabularyId;
+
+  OnToggleVocabularySaved({
+    required this.videoId,
+    required this.vocabularyId,
   });
 }

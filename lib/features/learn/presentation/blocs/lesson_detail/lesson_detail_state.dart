@@ -7,6 +7,13 @@ enum LessonDetailStatus {
   failure,
 }
 
+enum VocabularySaveStatus {
+  initial,
+  loading,
+  success,
+  failure,
+}
+
 enum LessonVocabularyStatus {
   initial,
   loading,
@@ -19,6 +26,10 @@ class LessonDetailState {
   final ChapterVideoModel? video;
   final bool isRefreshing;
   final String? message;
+
+  final Set<String> savingVocabularyIds;
+  final VocabularySaveStatus vocabularySaveStatus;
+  final String? vocabularyActionMessage;
 
   final LessonVocabularyStatus vocabularyStatus;
 
@@ -37,6 +48,9 @@ class LessonDetailState {
     this.vocabularies = const [],
     this.isVocabularyRefreshing = false,
     this.vocabularyMessage,
+    this.savingVocabularyIds = const <String>{},
+    this.vocabularySaveStatus = VocabularySaveStatus.initial,
+    this.vocabularyActionMessage,
   });
 
   bool get isLoading {
@@ -54,6 +68,12 @@ class LessonDetailState {
         vocabularies.isEmpty;
   }
 
+  bool isVocabularySaving(String vocabularyId) {
+    return savingVocabularyIds.contains(
+      vocabularyId,
+    );
+  }
+
   LessonDetailState copyWith({
     LessonDetailStatus? status,
     ChapterVideoModel? video,
@@ -65,6 +85,10 @@ class LessonDetailState {
     bool? isVocabularyRefreshing,
     String? vocabularyMessage,
     bool clearVocabularyMessage = false,
+    Set<String>? savingVocabularyIds,
+    VocabularySaveStatus? vocabularySaveStatus,
+    String? vocabularyActionMessage,
+    bool clearVocabularyActionMessage = false,
   }) {
     return LessonDetailState(
       status: status ?? this.status,
@@ -77,6 +101,11 @@ class LessonDetailState {
       vocabularyMessage: clearVocabularyMessage
           ? null
           : vocabularyMessage ?? this.vocabularyMessage,
+      savingVocabularyIds: savingVocabularyIds ?? this.savingVocabularyIds,
+      vocabularySaveStatus: vocabularySaveStatus ?? this.vocabularySaveStatus,
+      vocabularyActionMessage: clearVocabularyActionMessage
+          ? null
+          : vocabularyActionMessage ?? this.vocabularyActionMessage,
     );
   }
 }
