@@ -3,7 +3,15 @@ import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/home/home.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({
+    super.key,
+  });
+
+  static const String _demoBannerUrl =
+      'https://learnthailikealocal.com/'
+      'wp-content/uploads/2024/07/'
+      'colorful-notepad-sight-words-flashcards10.png'
+      '?w=1024';
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +29,8 @@ class HomePage extends StatelessWidget {
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 children: [
-                  LetsLearnTodaySectionView(),
-                  Positioned(
+                  const LetsLearnTodaySectionView(),
+                  const Positioned(
                     left: 16,
                     right: 16,
                     bottom: 16,
@@ -35,11 +43,30 @@ class HomePage extends StatelessWidget {
           SliverList(
             delegate: SliverChildListDelegate(
               [
-                AskAiSectionView(),
+                HomeBannerSectionView(
+                  imageUrls: const [
+                    _demoBannerUrl,
+                    _demoBannerUrl,
+                    _demoBannerUrl,
+                  ],
+                  onBannerTap: (index) {
+                    // Handle banner navigation after
+                    // the API supplies target actions.
+                  },
+                ),
+                14.gh,
+
+                // New Quick Menu section
+                const QuickMenuSectionView(
+                  savedVocabularyCount: 178,
+                ),
+
+                18.gh,
+                const AskAiSectionView(),
                 16.gh,
-                CurrentLearningSectionView(),
+                const CurrentLearningSectionView(),
                 16.gh,
-                ReviewSectionView(),
+                const ReviewSectionView(),
                 100.gh,
               ],
             ),

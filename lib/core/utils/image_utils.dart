@@ -20,6 +20,10 @@ class ImageUtils {
   static const String facebook = "$IMAGE_BASE_URL/facebook.png";
   static const String askAi = "$IMAGE_BASE_URL/ask_ai.png";
 
-  static const String logoutIcon =
-      '$IMAGE_BASE_URL/logout_icon.png';
+  static const String logoutIcon = '$IMAGE_BASE_URL/logout_icon.png';
+
+  /// Home Quick Menu
+  static const String reviewVocabularies = '$IMAGE_BASE_URL/review_vocabularies.png';
+
+  static const String learningJourney = '$IMAGE_BASE_URL/learning_journey.png';
 }

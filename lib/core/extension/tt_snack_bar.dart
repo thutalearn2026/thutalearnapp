@@ -7,7 +7,7 @@ extension TtSnackBar on BuildContext {
     SnackBarType snackBarType = SnackBarType.success,
     EdgeInsetsGeometry? margin,
   }) {
-    HapticFeedback.vibrate();
+    HapticFeedback.mediumImpact();
     ScaffoldMessenger.of(this).hideCurrentSnackBar();
     ScaffoldMessenger.of(this).showSnackBar(
       SnackBar(

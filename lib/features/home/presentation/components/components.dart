@@ -5,3 +5,5 @@ export 'ask_ai_section_view.dart';
 export 'current_learning_section_view.dart';
 export 'shadow_container.dart';
 export 'review_section_view.dart';
+export 'home_banner_section_view.dart';
+export 'quick_menu_section_view.dart';
