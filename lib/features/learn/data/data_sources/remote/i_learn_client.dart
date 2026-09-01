@@ -156,4 +156,9 @@ class ILearnClient implements LearnClient {
   Future<SavedVocabulariesResponse> getSavedVocabularies() {
     return client.getSavedVocabularies();
   }
+
+  @override
+  Future<WordOfTheDayResponse> getWordOfTheDay() {
+    return client.getWordOfTheDay();
+  }
 }

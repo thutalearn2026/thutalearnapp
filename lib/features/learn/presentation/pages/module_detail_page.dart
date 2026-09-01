@@ -465,17 +465,17 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
                           child: ModuleDetailHeader(
                             module: headerModule,
                             videoCount: state.totalVideoCount,
+                            teacherName: widget.args.teacherName,
                             onResume: () {
                               _handleResume(state);
                             },
-                            secondaryActionLabel: _isLessonsTab ? 'Overview' : 'Take Quiz',
+                            secondaryActionLabel:
+                            _isLessonsTab ? 'Overview' : 'Take Quiz',
                             secondaryActionIcon: _isLessonsTab
                                 ? Icons.play_arrow_rounded
                                 : Icons.lightbulb_outline_rounded,
                             onSecondaryAction: () {
-                              _handleSecondaryAction(
-                                state,
-                              );
+                              _handleSecondaryAction(state);
                             },
                           ),
                         ),

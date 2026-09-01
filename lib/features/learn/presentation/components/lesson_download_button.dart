@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:thuta_learn/core/core.dart';
 
-class LessonDownloadButton extends StatelessWidget {
+class LessonDownloadButton
+    extends StatelessWidget {
   final VideoDownloadStatus status;
   final int progress;
   final VoidCallback onPressed;
@@ -13,39 +14,70 @@ class LessonDownloadButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  bool get _isDownloading {
-    return status == VideoDownloadStatus.queued ||
-        status ==
-            VideoDownloadStatus.downloading;
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (_isDownloading) {
-      return SizedBox(
-        width: 48,
-        height: 48,
-        child: Center(
-          child: SizedBox(
-            width: 27,
-            height: 27,
-            child: CircularProgressIndicator(
-              value: progress > 0
-                  ? progress / 100
-                  : null,
-              strokeWidth: 2.6,
-              color: ColorUtils.secondaryColor,
-              backgroundColor:
-              ColorUtils.secondaryColor
-                  .withValues(alpha: 0.15),
-            ),
+    if (status ==
+        VideoDownloadStatus.downloading) {
+      return IconButton(
+        tooltip: 'Pause download',
+        onPressed: onPressed,
+        icon: SizedBox(
+          width: 30,
+          height: 30,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CircularProgressIndicator(
+                value: progress > 0
+                    ? progress / 100
+                    : null,
+                strokeWidth: 2.5,
+                color:
+                ColorUtils.secondaryColor,
+                backgroundColor:
+                ColorUtils.secondaryColor
+                    .withValues(alpha: 0.15),
+              ),
+              const Icon(
+                Icons.pause_rounded,
+                size: 18,
+                color: ColorUtils.primaryColor,
+              ),
+            ],
           ),
         ),
       );
     }
 
+    if (status ==
+        VideoDownloadStatus.queued) {
+      return IconButton(
+        tooltip: 'Cancel download',
+        onPressed: onPressed,
+        icon: const Icon(
+          Icons.close_rounded,
+          color: ColorUtils.primaryColor,
+          size: 28,
+        ),
+      );
+    }
+
+    if (status ==
+        VideoDownloadStatus.paused) {
+      return IconButton(
+        tooltip: 'Resume download',
+        onPressed: onPressed,
+        icon: const Icon(
+          Icons.play_circle_outline_rounded,
+          color: ColorUtils.secondaryColor,
+          size: 30,
+        ),
+      );
+    }
+
     final isDownloaded =
-        status == VideoDownloadStatus.downloaded;
+        status ==
+            VideoDownloadStatus.downloaded;
 
     final hasFailed =
         status == VideoDownloadStatus.failed;

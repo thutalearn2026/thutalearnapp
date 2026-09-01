@@ -149,13 +149,25 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
                         status: downloadState.status,
                         progress: downloadState.progress,
                         onPressed: () {
-                          final video = state.video;
+                          final cubit =
+                          context.read<LessonDownloadCubit>();
 
-                          if (video == null) {
-                            return;
+                          switch (downloadState.status) {
+                            case VideoDownloadStatus.downloading:
+                              cubit.pause();
+                              break;
+
+                            case VideoDownloadStatus.queued:
+                              cubit.cancel();
+                              break;
+
+                            case VideoDownloadStatus.paused:
+                              cubit.resume();
+                              break;
+
+                            default:
+                              cubit.download(video);
                           }
-
-                          context.read<LessonDownloadCubit>().download(video);
                         },
                       );
                     },
@@ -222,6 +234,21 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
                         return LessonDownloadStatusView(
                           status: downloadState.status,
                           progress: downloadState.progress,
+                          onPause: () {
+                            context
+                                .read<LessonDownloadCubit>()
+                                .pause();
+                          },
+                          onResume: () {
+                            context
+                                .read<LessonDownloadCubit>()
+                                .resume();
+                          },
+                          onCancel: () {
+                            context
+                                .read<LessonDownloadCubit>()
+                                .cancel();
+                          },
                         );
                       },
                     ),

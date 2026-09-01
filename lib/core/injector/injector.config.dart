@@ -82,6 +82,12 @@ import '../../features/profile/presentation/blocs/profile/profile_bloc.dart'
 import '../../features/profile/presentation/blocs/saved_vocabulary/saved_vocabulary_bloc.dart'
     as _i407;
 import '../../features/profile/profile.dart' as _i315;
+import '../../features/reels/data/data_sources/remote/i_reels_client.dart'
+    as _i593;
+import '../../features/reels/data/repo/i_reels_repo.dart' as _i126;
+import '../../features/reels/domain/domain.dart' as _i944;
+import '../../features/reels/domain/usecases/reels_usecase.dart' as _i1063;
+import '../../features/reels/reels.dart' as _i732;
 import '../../features/search/data/data_sources/remote/i_search_client.dart'
     as _i24;
 import '../../features/search/data/repo/i_search_repo.dart' as _i217;
@@ -145,6 +151,9 @@ _i174.GetIt $initGetIt(
       config: gh<_i351.IConfig>(),
     ),
   );
+  gh.factory<_i732.ReelsClient>(
+    () => _i593.IReelsClient(dio: gh<_i361.Dio>(), config: gh<_i351.IConfig>()),
+  );
   gh.factory<_i827.SplashClient>(
     () =>
         _i363.ISplashClient(dio: gh<_i361.Dio>(), config: gh<_i351.IConfig>()),
@@ -171,6 +180,9 @@ _i174.GetIt $initGetIt(
   gh.factory<_i686.SearchRepo>(
     () => _i217.ISearchRepo(client: gh<_i686.SearchClient>()),
   );
+  gh.factory<_i944.ReelsRepo>(
+    () => _i126.IReelsRepo(client: gh<_i944.ReelsClient>()),
+  );
   gh.factory<_i178.SplashUseCase>(
     () => _i178.SplashUseCase(splashRepo: gh<_i502.SplashRepo>()),
   );
@@ -188,6 +200,9 @@ _i174.GetIt $initGetIt(
   );
   gh.factory<_i592.LearnRepo>(
     () => _i92.ILearnRepo(client: gh<_i592.LearnClient>()),
+  );
+  gh.factory<_i1063.ReelsUseCase>(
+    () => _i1063.ReelsUseCase(reelsRepo: gh<_i944.ReelsRepo>()),
   );
   gh.factory<_i573.AuthenticationUseCase>(
     () => _i573.AuthenticationUseCase(

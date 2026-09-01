@@ -165,7 +165,10 @@ class _CourseDetailView extends StatelessWidget {
           ),
           children: [
             // Keep the old UI unchanged.
-            const LearnOverviewSectionView(),
+            LearnOverviewSectionView(
+              wordOfTheDay: state.wordOfTheDay,
+              isWordOfTheDayLoading: state.isWordOfTheDayLoading,
+            ),
             20.gh,
 
             _CourseTitleSectionView(
@@ -194,6 +197,7 @@ class _CourseDetailView extends StatelessWidget {
                           courseId: courseId,
                           moduleId: module.id,
                           moduleNumber: index + 1,
+                          teacherName: course.teacher?.name,
                         ),
                       );
                     },

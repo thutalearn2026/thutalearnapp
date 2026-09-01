@@ -8,15 +8,14 @@ import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
 
-const String videoDownloadPortName =
-    'thuta_learn_video_download_port';
+const String videoDownloadPortName = 'thuta_learn_video_download_port';
 
 @pragma('vm:entry-point')
 void videoDownloadCallback(
-    String taskId,
-    int status,
-    int progress,
-    ) {
+  String taskId,
+  int status,
+  int progress,
+) {
   final sendPort = IsolateNameServer.lookupPortByName(
     videoDownloadPortName,
   );
@@ -54,13 +53,11 @@ class VideoDownloadSnapshot {
   });
 
   bool get isDownloading {
-    return status == VideoDownloadStatus.queued ||
-        status == VideoDownloadStatus.downloading;
+    return status == VideoDownloadStatus.queued || status == VideoDownloadStatus.downloading;
   }
 
   bool get isDownloaded {
-    return status == VideoDownloadStatus.downloaded &&
-        localFilePath != null;
+    return status == VideoDownloadStatus.downloaded && localFilePath != null;
   }
 }
 
@@ -68,9 +65,10 @@ class VideoDownloadSnapshot {
 class VideoDownloadService {
   static const String _videoMarker = '__video_';
 
-  final StreamController<VideoDownloadSnapshot>
-  _downloadController =
-  StreamController<VideoDownloadSnapshot>.broadcast();
+  final Map<String, String> _activeTaskIds = {};
+
+  final StreamController<VideoDownloadSnapshot> _downloadController =
+      StreamController<VideoDownloadSnapshot>.broadcast();
 
   ReceivePort? _receivePort;
   bool _isInitialized = false;
@@ -114,10 +112,9 @@ class VideoDownloadService {
   }
 
   Future<VideoDownloadSnapshot> getVideoStatus(
-      String videoId,
-      ) async {
-    final tasks =
-        await FlutterDownloader.loadTasks() ?? [];
+    String videoId,
+  ) async {
+    final tasks = await FlutterDownloader.loadTasks() ?? [];
 
     DownloadTask? matchingTask;
 
@@ -130,14 +127,14 @@ class VideoDownloadService {
         continue;
       }
 
-      if (matchingTask == null ||
-          task.timeCreated >
-              matchingTask.timeCreated) {
+      if (matchingTask == null || task.timeCreated > matchingTask.timeCreated) {
         matchingTask = task;
       }
     }
 
     if (matchingTask != null) {
+      _activeTaskIds[videoId] = matchingTask.taskId;
+
       return _createSnapshot(
         videoId: videoId,
         task: matchingTask,
@@ -153,8 +150,7 @@ class VideoDownloadService {
         continue;
       }
 
-      final filename =
-          entity.uri.pathSegments.last;
+      final filename = entity.uri.pathSegments.last;
 
       if (_extractVideoId(filename) == videoId) {
         return VideoDownloadSnapshot(
@@ -172,12 +168,11 @@ class VideoDownloadService {
   }
 
   Future<VideoDownloadSnapshot> startDownload(
-      ChapterVideoModel video,
-      ) async {
+    ChapterVideoModel video,
+  ) async {
     final existing = await getVideoStatus(video.id);
 
-    if (existing.isDownloaded ||
-        existing.isDownloading) {
+    if (existing.isDownloaded || existing.isDownloading) {
       return existing;
     }
 
@@ -225,6 +220,8 @@ class VideoDownloadService {
       );
     }
 
+    _activeTaskIds[video.id] = taskId;
+
     final snapshot = VideoDownloadSnapshot(
       videoId: video.id,
       taskId: taskId,
@@ -236,29 +233,158 @@ class VideoDownloadService {
     return snapshot;
   }
 
-  Future<void> cancelDownload(
-      String taskId,
-      ) async {
-    await FlutterDownloader.cancel(
+  Future<VideoDownloadSnapshot> pauseDownload({
+    required String videoId,
+    required String taskId,
+  }) async {
+    await FlutterDownloader.pause(
       taskId: taskId,
     );
+
+    final task = await _waitForTaskStatus(
+      taskId: taskId,
+      acceptedStatuses: {
+        DownloadTaskStatus.paused,
+        DownloadTaskStatus.complete,
+        DownloadTaskStatus.failed,
+      },
+    );
+
+    if (task == null) {
+      throw StateError(
+        'Unable to pause this video download.',
+      );
+    }
+
+    final snapshot = await _createSnapshot(
+      videoId: videoId,
+      task: task,
+    );
+
+    _activeTaskIds[videoId] = task.taskId;
+    _downloadController.add(snapshot);
+
+    return snapshot;
+  }
+
+  Future<VideoDownloadSnapshot> resumeDownload({
+    required String videoId,
+    required String taskId,
+  }) async {
+    final previousTask = await _findTask(
+      taskId,
+    );
+
+    final newTaskId = await FlutterDownloader.resume(
+      taskId: taskId,
+      requiresStorageNotLow: true,
+      timeout: 30000,
+    );
+
+    if (newTaskId == null) {
+      throw StateError(
+        'Unable to resume this video download.',
+      );
+    }
+
+    // resume() creates a completely new task ID.
+    _activeTaskIds[videoId] = newTaskId;
+
+    final snapshot = VideoDownloadSnapshot(
+      videoId: videoId,
+      taskId: newTaskId,
+      status: VideoDownloadStatus.queued,
+      progress: previousTask?.progress ?? 0,
+    );
+
+    _downloadController.add(snapshot);
+
+    return snapshot;
+  }
+
+  Future<VideoDownloadSnapshot> cancelDownload({
+    required String videoId,
+    required String taskId,
+  }) async {
+    // remove() also cancels an active task. Setting
+    // shouldDeleteContent removes its partial file.
+    await FlutterDownloader.remove(
+      taskId: taskId,
+      shouldDeleteContent: true,
+    );
+
+    if (_activeTaskIds[videoId] == taskId) {
+      _activeTaskIds.remove(videoId);
+    }
+
+    final snapshot = VideoDownloadSnapshot(
+      videoId: videoId,
+      status: VideoDownloadStatus.canceled,
+      progress: 0,
+    );
+
+    _downloadController.add(snapshot);
+
+    return snapshot;
+  }
+
+  Future<DownloadTask?> _findTask(
+    String taskId,
+  ) async {
+    final tasks = await FlutterDownloader.loadTasks() ?? const <DownloadTask>[];
+
+    for (final task in tasks) {
+      if (task.taskId == taskId) {
+        return task;
+      }
+    }
+
+    return null;
+  }
+
+  Future<DownloadTask?> _waitForTaskStatus({
+    required String taskId,
+    required Set<DownloadTaskStatus> acceptedStatuses,
+  }) async {
+    for (var attempt = 0; attempt < 15; attempt++) {
+      final task = await _findTask(taskId);
+
+      if (task == null) {
+        return null;
+      }
+
+      if (acceptedStatuses.contains(
+        task.status,
+      )) {
+        return task;
+      }
+
+      await Future<void>.delayed(
+        const Duration(
+          milliseconds: 100,
+        ),
+      );
+    }
+
+    return null;
   }
 
   String? _getDownloadUrl(
-      ChapterVideoModel video,
-      ) {
-    final mp4Files = video.mp4Files
-        .where(
-          (file) => file.link.trim().isNotEmpty,
-    )
-        .toList()
-      ..sort(
+    ChapterVideoModel video,
+  ) {
+    final mp4Files =
+        video.mp4Files
+            .where(
+              (file) => file.link.trim().isNotEmpty,
+            )
+            .toList()
+          ..sort(
             (first, second) {
-          return (second.height ?? 0).compareTo(
-            first.height ?? 0,
+              return (second.height ?? 0).compareTo(
+                first.height ?? 0,
+              );
+            },
           );
-        },
-      );
 
     if (mp4Files.isNotEmpty) {
       return mp4Files.first.link.trim();
@@ -268,11 +394,7 @@ class VideoDownloadService {
 
     if (directPath != null &&
         directPath.isNotEmpty &&
-        Uri.tryParse(directPath)
-            ?.path
-            .toLowerCase()
-            .endsWith('.mp4') ==
-            true) {
+        Uri.tryParse(directPath)?.path.toLowerCase().endsWith('.mp4') == true) {
       return directPath;
     }
 
@@ -282,8 +404,7 @@ class VideoDownloadService {
   Future<Directory> _getVideoDirectory() async {
     // flutter_downloader supports NSDocumentDirectory
     // on iOS, so application documents are used here.
-    final documentsDirectory =
-    await getApplicationDocumentsDirectory();
+    final documentsDirectory = await getApplicationDocumentsDirectory();
 
     final directory = Directory(
       '${documentsDirectory.path}/offline_videos',
@@ -299,18 +420,18 @@ class VideoDownloadService {
   }
 
   String _createFilename(
-      ChapterVideoModel video,
-      ) {
+    ChapterVideoModel video,
+  ) {
     final cleanedTitle = video.title
         .trim()
         .replaceAll(
-      RegExp(r'[<>:"/\\|?*\x00-\x1F]'),
-      '',
-    )
+          RegExp(r'[<>:"/\\|?*\x00-\x1F]'),
+          '',
+        )
         .replaceAll(
-      RegExp(r'\s+'),
-      '_',
-    );
+          RegExp(r'\s+'),
+          '_',
+        );
 
     final safeTitle = cleanedTitle.isEmpty
         ? 'lesson'
@@ -322,22 +443,19 @@ class VideoDownloadService {
   }
 
   String? _extractVideoId(
-      String? filename,
-      ) {
-    if (filename == null ||
-        !filename.endsWith('.mp4')) {
+    String? filename,
+  ) {
+    if (filename == null || !filename.endsWith('.mp4')) {
       return null;
     }
 
-    final markerIndex =
-    filename.lastIndexOf(_videoMarker);
+    final markerIndex = filename.lastIndexOf(_videoMarker);
 
     if (markerIndex < 0) {
       return null;
     }
 
-    final start =
-        markerIndex + _videoMarker.length;
+    final start = markerIndex + _videoMarker.length;
     final end = filename.length - 4;
 
     if (start >= end) {
@@ -356,8 +474,7 @@ class VideoDownloadService {
     String? filePath;
 
     if (filename != null) {
-      final candidatePath =
-          '${task.savedDir}/$filename';
+      final candidatePath = '${task.savedDir}/$filename';
 
       final candidateFile = File(candidatePath);
 
@@ -376,18 +493,14 @@ class VideoDownloadService {
       taskId: task.taskId,
       status: status,
       progress: task.progress,
-      localFilePath: status ==
-          VideoDownloadStatus.downloaded
-          ? filePath
-          : null,
+      localFilePath: status == VideoDownloadStatus.downloaded ? filePath : null,
     );
   }
 
   Future<void> _publishTaskUpdate(
-      String taskId,
-      ) async {
-    final tasks =
-        await FlutterDownloader.loadTasks() ?? [];
+    String taskId,
+  ) async {
+    final tasks = await FlutterDownloader.loadTasks() ?? [];
 
     DownloadTask? matchingTask;
 
@@ -410,6 +523,16 @@ class VideoDownloadService {
       return;
     }
 
+    final activeTaskId = _activeTaskIds[videoId];
+
+    // Ignore callbacks from the old paused task after
+    // resume() creates a new task.
+    if (activeTaskId != null && activeTaskId != taskId) {
+      return;
+    }
+
+    _activeTaskIds[videoId] = taskId;
+
     final snapshot = await _createSnapshot(
       videoId: videoId,
       task: matchingTask,
@@ -419,9 +542,9 @@ class VideoDownloadService {
   }
 
   VideoDownloadStatus _mapDownloadStatus(
-      DownloadTaskStatus status, {
-        required bool fileExists,
-      }) {
+    DownloadTaskStatus status, {
+    required bool fileExists,
+  }) {
     switch (status) {
       case DownloadTaskStatus.enqueued:
         return VideoDownloadStatus.queued;
@@ -430,9 +553,7 @@ class VideoDownloadService {
         return VideoDownloadStatus.downloading;
 
       case DownloadTaskStatus.complete:
-        return fileExists
-            ? VideoDownloadStatus.downloaded
-            : VideoDownloadStatus.failed;
+        return fileExists ? VideoDownloadStatus.downloaded : VideoDownloadStatus.failed;
 
       case DownloadTaskStatus.failed:
         return VideoDownloadStatus.failed;

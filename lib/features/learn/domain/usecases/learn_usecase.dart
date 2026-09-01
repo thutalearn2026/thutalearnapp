@@ -282,4 +282,8 @@ class LearnUseCase {
   Future<Either<Failure, SavedVocabulariesResponse>> getSavedVocabularies() {
     return learnRepo.getSavedVocabularies();
   }
+
+  Future<Either<Failure, WordOfTheDayResponse>> getWordOfTheDay() {
+    return learnRepo.getWordOfTheDay();
+  }
 }

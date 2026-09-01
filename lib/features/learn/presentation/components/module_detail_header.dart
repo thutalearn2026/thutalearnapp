@@ -5,6 +5,7 @@ import 'package:thuta_learn/features/learn/learn.dart';
 class ModuleDetailHeader extends StatelessWidget {
   final LearnModuleItem module;
   final int videoCount;
+  final String? teacherName;
   final VoidCallback onResume;
   final String secondaryActionLabel;
   final IconData secondaryActionIcon;
@@ -14,6 +15,7 @@ class ModuleDetailHeader extends StatelessWidget {
     super.key,
     required this.module,
     required this.videoCount,
+    this.teacherName,
     required this.onResume,
     required this.secondaryActionLabel,
     required this.secondaryActionIcon,
@@ -46,8 +48,8 @@ class ModuleDetailHeader extends StatelessWidget {
           ),
           16.gh,
 
-          // Keep this UI unchanged until the API
-          // provides learner progress.
+          // Progress is kept at its current value until
+          // learner progress is returned by the API.
           _ModuleProgressView(
             progress: module.progress,
           ),
@@ -60,6 +62,7 @@ class ModuleDetailHeader extends StatelessWidget {
           ),
           18.gh,
           _ModuleMetadataView(
+            teacherName: teacherName,
             videoCount: videoCount,
           ),
           22.gh,
@@ -70,8 +73,7 @@ class ModuleDetailHeader extends StatelessWidget {
                   backgroundColor: Colors.white,
                   onTap: onResume,
                   child: const Row(
-                    mainAxisAlignment:
-                    MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.play_circle_fill_rounded,
@@ -91,12 +93,10 @@ class ModuleDetailHeader extends StatelessWidget {
               12.gw,
               Expanded(
                 child: TtButton(
-                  backgroundColor:
-                  ColorUtils.highlightColor,
+                  backgroundColor: ColorUtils.highlightColor,
                   onTap: onSecondaryAction,
                   child: Row(
-                    mainAxisAlignment:
-                    MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         secondaryActionIcon,
@@ -166,10 +166,8 @@ class _ModuleProgressView extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 7,
-              backgroundColor:
-              const Color(0xFFDCE3EC),
-              valueColor:
-              const AlwaysStoppedAnimation<Color>(
+              backgroundColor: const Color(0xFFDCE3EC),
+              valueColor: const AlwaysStoppedAnimation<Color>(
                 ColorUtils.secondaryColor,
               ),
             ),
@@ -187,36 +185,37 @@ class _ModuleProgressView extends StatelessWidget {
 }
 
 class _ModuleMetadataView extends StatelessWidget {
+  final String? teacherName;
   final int videoCount;
 
   const _ModuleMetadataView({
+    required this.teacherName,
     required this.videoCount,
   });
 
   @override
   Widget build(BuildContext context) {
+    final normalizedTeacherName = teacherName?.trim();
+
     return Wrap(
       spacing: 16,
       runSpacing: 12,
-      crossAxisAlignment:
-      WrapCrossAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        // Teacher is not returned by Module Detail API.
-        // Keep the existing UI value temporarily.
-        const _MetadataItem(
-          icon: Icons.person_rounded,
-          label: 'by Tr. Sora',
-        ),
+        if (normalizedTeacherName != null &&
+            normalizedTeacherName.isNotEmpty)
+          _MetadataItem(
+            icon: Icons.person_rounded,
+            label: 'by $normalizedTeacherName',
+          ),
         _MetadataItem(
           icon: Icons.smart_display_rounded,
           label: '$videoCount video'
               '${videoCount == 1 ? '' : 's'}',
         ),
-        // Duration is not returned by the API yet.
-        const _MetadataItem(
-          icon: Icons.schedule_rounded,
-          label: '45–55 minutes',
-        ),
+
+        // Duration is intentionally hidden because neither
+        // the course nor module API currently provides it.
       ],
     );
   }

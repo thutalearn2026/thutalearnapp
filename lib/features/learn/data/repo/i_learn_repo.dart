@@ -368,4 +368,11 @@ class ILearnRepo implements LearnRepo {
       () => client.getSavedVocabularies(),
     );
   }
+
+  @override
+  Future<Either<Failure, WordOfTheDayResponse>> getWordOfTheDay() {
+    return _request(
+      () => client.getWordOfTheDay(),
+    );
+  }
 }

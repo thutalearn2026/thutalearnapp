@@ -101,6 +101,95 @@ class LessonDownloadCubit
     }
   }
 
+  Future<void> pause() async {
+    final videoId = state.videoId;
+    final taskId = state.taskId;
+
+    if (videoId == null ||
+        taskId == null ||
+        state.status !=
+            VideoDownloadStatus.downloading) {
+      return;
+    }
+
+    await _performAction(
+          () {
+        return downloadService.pauseDownload(
+          videoId: videoId,
+          taskId: taskId,
+        );
+      },
+    );
+  }
+
+  Future<void> resume() async {
+    final videoId = state.videoId;
+    final taskId = state.taskId;
+
+    if (videoId == null ||
+        taskId == null ||
+        state.status !=
+            VideoDownloadStatus.paused) {
+      return;
+    }
+
+    await _performAction(
+          () {
+        return downloadService.resumeDownload(
+          videoId: videoId,
+          taskId: taskId,
+        );
+      },
+    );
+  }
+
+  Future<void> cancel() async {
+    final videoId = state.videoId;
+    final taskId = state.taskId;
+
+    if (videoId == null ||
+        taskId == null ||
+        !state.canCancel) {
+      return;
+    }
+
+    await _performAction(
+          () {
+        return downloadService.cancelDownload(
+          videoId: videoId,
+          taskId: taskId,
+        );
+      },
+    );
+  }
+
+  Future<void> _performAction(
+      Future<VideoDownloadSnapshot> Function()
+      action,
+      ) async {
+    try {
+      final snapshot = await action();
+
+      _applySnapshot(
+        snapshot,
+        notifyUser: false,
+      );
+    } catch (error) {
+      var message = error.toString();
+
+      message = message
+          .replaceFirst('Bad state: ', '')
+          .replaceFirst('Exception: ', '');
+
+      emit(
+        state.copyWith(
+          message: message,
+          isChecking: false,
+        ),
+      );
+    }
+  }
+
   void _applySnapshot(
       VideoDownloadSnapshot snapshot, {
         required bool notifyUser,
@@ -133,6 +222,7 @@ class LessonDownloadCubit
         clearLocalFilePath:
         snapshot.localFilePath == null,
         clearMessage: message == null,
+        clearTaskId: snapshot.taskId == null,
       ),
     );
   }

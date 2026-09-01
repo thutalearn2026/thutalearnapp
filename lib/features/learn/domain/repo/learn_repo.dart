@@ -138,4 +138,6 @@ abstract class LearnRepo {
   });
 
   Future<Either<Failure, SavedVocabulariesResponse>> getSavedVocabularies();
+
+  Future<Either<Failure, WordOfTheDayResponse>> getWordOfTheDay();
 }

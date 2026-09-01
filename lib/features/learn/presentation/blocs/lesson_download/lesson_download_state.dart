@@ -12,8 +12,7 @@ class LessonDownloadState {
   const LessonDownloadState({
     this.videoId,
     this.taskId,
-    this.status =
-        VideoDownloadStatus.notDownloaded,
+    this.status = VideoDownloadStatus.notDownloaded,
     this.progress = 0,
     this.localFilePath,
     this.message,
@@ -21,15 +20,19 @@ class LessonDownloadState {
   });
 
   bool get isDownloading {
-    return status == VideoDownloadStatus.queued ||
-        status ==
-            VideoDownloadStatus.downloading;
+    return status == VideoDownloadStatus.queued || status == VideoDownloadStatus.downloading;
   }
 
   bool get isDownloaded {
-    return status ==
-        VideoDownloadStatus.downloaded &&
-        localFilePath != null;
+    return status == VideoDownloadStatus.downloaded && localFilePath != null;
+  }
+
+  bool get isPaused {
+    return status == VideoDownloadStatus.paused;
+  }
+
+  bool get canCancel {
+    return isDownloading || isPaused;
   }
 
   LessonDownloadState copyWith({
@@ -40,21 +43,17 @@ class LessonDownloadState {
     String? localFilePath,
     String? message,
     bool? isChecking,
+    bool clearTaskId = false,
     bool clearLocalFilePath = false,
     bool clearMessage = false,
   }) {
     return LessonDownloadState(
       videoId: videoId ?? this.videoId,
-      taskId: taskId ?? this.taskId,
+      taskId: clearTaskId ? null : taskId ?? this.taskId,
       status: status ?? this.status,
       progress: progress ?? this.progress,
-      localFilePath: clearLocalFilePath
-          ? null
-          : localFilePath ??
-          this.localFilePath,
-      message: clearMessage
-          ? null
-          : message ?? this.message,
+      localFilePath: clearLocalFilePath ? null : localFilePath ?? this.localFilePath,
+      message: clearMessage ? null : message ?? this.message,
       isChecking: isChecking ?? this.isChecking,
     );
   }

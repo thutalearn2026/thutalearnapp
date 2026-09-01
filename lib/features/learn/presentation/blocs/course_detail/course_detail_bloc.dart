@@ -10,42 +10,40 @@ part 'course_detail_event.dart';
 part 'course_detail_state.dart';
 
 @Injectable()
-class CourseDetailBloc
-    extends Bloc<CourseDetailEvent, CourseDetailState> {
+class CourseDetailBloc extends Bloc<CourseDetailEvent, CourseDetailState> {
   final LearnUseCase learnUseCase;
 
   CourseDetailBloc({
     required this.learnUseCase,
   }) : super(const CourseDetailState()) {
     on<OnGetCourseDetail>(_onGetCourseDetail);
+
+    on<OnGetWordOfTheDay>(_onGetWordOfTheDay);
   }
 
   Future<void> _onGetCourseDetail(
-      OnGetCourseDetail event,
-      Emitter<CourseDetailState> emit,
-      ) async {
+    OnGetCourseDetail event,
+    Emitter<CourseDetailState> emit,
+  ) async {
     if (state.isRefreshing) {
       return;
     }
 
-    final cachedSnapshot =
-    await learnUseCase.getCachedCourseDetail(
+    add(OnGetWordOfTheDay());
+
+    final cachedSnapshot = await learnUseCase.getCachedCourseDetail(
       courseId: event.courseId,
     );
 
-    final visibleCourse =
-        cachedSnapshot?.course ?? state.course;
+    final visibleCourse = cachedSnapshot?.course ?? state.course;
 
-    final visibleModules =
-        cachedSnapshot?.modules ?? state.modules;
+    final visibleModules = cachedSnapshot?.modules ?? state.modules;
 
     final hasCachedData = visibleCourse != null;
 
     emit(
       state.copyWith(
-        status: hasCachedData
-            ? CourseDetailStatus.success
-            : CourseDetailStatus.loading,
+        status: hasCachedData ? CourseDetailStatus.success : CourseDetailStatus.loading,
         course: visibleCourse,
         modules: visibleModules,
         isRefreshing: true,
@@ -54,13 +52,11 @@ class CourseDetailBloc
     );
 
     // Start both API requests concurrently.
-    final courseFuture =
-    learnUseCase.getCourseDetail(
+    final courseFuture = learnUseCase.getCourseDetail(
       courseId: event.courseId,
     );
 
-    final modulesFuture =
-    learnUseCase.getCourseModules(
+    final modulesFuture = learnUseCase.getCourseModules(
       courseId: event.courseId,
     );
 
@@ -72,22 +68,22 @@ class CourseDetailBloc
     List<CourseModuleModel>? remoteModules;
 
     courseResult.fold(
-          (failure) {
+      (failure) {
         requestFailure = failure;
       },
-          (response) {
+      (response) {
         remoteCourse = response.data;
       },
     );
 
     modulesResult.fold(
-          (failure) {
+      (failure) {
         requestFailure ??= failure;
       },
-          (response) {
+      (response) {
         remoteModules = [...response.data]
           ..sort(
-                (first, second) {
+            (first, second) {
               return first.rank.compareTo(second.rank);
             },
           );
@@ -96,14 +92,10 @@ class CourseDetailBloc
 
     // Do not partially update the cache. Both responses
     // must succeed before the snapshot is replaced.
-    if (requestFailure != null ||
-        remoteCourse == null ||
-        remoteModules == null) {
+    if (requestFailure != null || remoteCourse == null || remoteModules == null) {
       emit(
         state.copyWith(
-          status: hasCachedData
-              ? CourseDetailStatus.success
-              : CourseDetailStatus.failure,
+          status: hasCachedData ? CourseDetailStatus.success : CourseDetailStatus.failure,
           course: visibleCourse,
           modules: visibleModules,
           isRefreshing: false,
@@ -138,10 +130,47 @@ class CourseDetailBloc
     );
   }
 
+  Future<void> _onGetWordOfTheDay(
+    OnGetWordOfTheDay event,
+    Emitter<CourseDetailState> emit,
+  ) async {
+    if (state.wordOfTheDayStatus == WordOfTheDayStatus.loading) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        wordOfTheDayStatus: WordOfTheDayStatus.loading,
+      ),
+    );
+
+    final result = await learnUseCase.getWordOfTheDay();
+
+    result.fold(
+      (failure) {
+        // Word of the Day is optional UI.
+        // Its failure must not block Course Detail.
+        emit(
+          state.copyWith(
+            wordOfTheDayStatus: WordOfTheDayStatus.failure,
+          ),
+        );
+      },
+      (response) {
+        emit(
+          state.copyWith(
+            wordOfTheDayStatus: WordOfTheDayStatus.success,
+            wordOfTheDay: response.data,
+          ),
+        );
+      },
+    );
+  }
+
   String _failureMessage(
-      Failure? failure, {
-        required bool hasCachedData,
-      }) {
+    Failure? failure, {
+    required bool hasCachedData,
+  }) {
     if (failure is ConnectionFailure) {
       return hasCachedData
           ? 'You are offline. Showing the saved course.'

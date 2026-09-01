@@ -67,4 +67,6 @@ abstract class LearnClient {
   });
 
   Future<SavedVocabulariesResponse> getSavedVocabularies();
+
+  Future<WordOfTheDayResponse> getWordOfTheDay();
 }

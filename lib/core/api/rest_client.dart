@@ -164,4 +164,7 @@ abstract class RestClient {
 
   @GET('profile/saved-vocabularies')
   Future<SavedVocabulariesResponse> getSavedVocabularies();
+
+  @GET('word-of-the-day')
+  Future<WordOfTheDayResponse> getWordOfTheDay();
 }
