@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:hive_ce/hive.dart';
+import 'package:thuta_learn/core/utils/feature_flags.dart';
 import 'package:thuta_learn/features/authentication/data/data_sources/box/auth_session_box.dart';
 import 'package:thuta_learn/features/learn/data/models/course_model.dart';
 
@@ -40,8 +41,18 @@ class CoursesCacheBox {
     return value.isEmpty ? null : value;
   }
 
-  static String _cacheKey(String userId) {
+  static String _allCoursesCacheKey(String userId) {
     return 'courses_snapshot_$userId';
+  }
+
+  static String _enrolledCoursesCacheKey(String userId) {
+    return 'enrolled_courses_snapshot_$userId';
+  }
+
+  static String _activeCacheKey(String userId) {
+    return FeatureFlags.enrolledCoursesOnly
+        ? _enrolledCoursesCacheKey(userId)
+        : _allCoursesCacheKey(userId);
   }
 
   static Future<CoursesCacheSnapshot?> read() async {
@@ -51,7 +62,7 @@ class CoursesCacheBox {
       return null;
     }
 
-    final key = _cacheKey(userId);
+    final key = _activeCacheKey(userId);
     final rawValue = _box.get(key);
 
     if (rawValue is! String || rawValue.isEmpty) {
@@ -73,33 +84,30 @@ class CoursesCacheBox {
         return null;
       }
 
-      final courses = rawCourses
-          .whereType<Map>()
-          .map(
-            (course) => CourseModel.fromJson(
-          Map<String, dynamic>.from(course),
-        ),
-      )
-          .toList()
-        ..sort(
+      final courses =
+          rawCourses
+              .whereType<Map>()
+              .map(
+                (course) => CourseModel.fromJson(
+                  Map<String, dynamic>.from(course),
+                ),
+              )
+              .toList()
+            ..sort(
               (first, second) {
-            return first.rank.compareTo(second.rank);
-          },
-        );
+                return first.rank.compareTo(second.rank);
+              },
+            );
 
       return CoursesCacheSnapshot(
         courses: courses,
-        currentPage:
-        (decoded['current_page'] as num?)?.toInt() ?? 1,
-        lastPage:
-        (decoded['last_page'] as num?)?.toInt() ?? 1,
-        total:
-        (decoded['total'] as num?)?.toInt() ??
-            courses.length,
+        currentPage: (decoded['current_page'] as num?)?.toInt() ?? 1,
+        lastPage: (decoded['last_page'] as num?)?.toInt() ?? 1,
+        total: (decoded['total'] as num?)?.toInt() ?? courses.length,
         cachedAt:
-        DateTime.tryParse(
-          decoded['cached_at']?.toString() ?? '',
-        ) ??
+            DateTime.tryParse(
+              decoded['cached_at']?.toString() ?? '',
+            ) ??
             DateTime.now(),
       );
     } catch (_) {
@@ -110,8 +118,8 @@ class CoursesCacheBox {
   }
 
   static Future<void> save(
-      CoursesCacheSnapshot snapshot,
-      ) async {
+    CoursesCacheSnapshot snapshot,
+  ) async {
     final userId = _currentUserId;
 
     if (userId == null) {
@@ -119,9 +127,7 @@ class CoursesCacheBox {
     }
 
     final payload = <String, dynamic>{
-      'courses': snapshot.courses
-          .map((course) => course.toJson())
-          .toList(),
+      'courses': snapshot.courses.map((course) => course.toJson()).toList(),
       'current_page': snapshot.currentPage,
       'last_page': snapshot.lastPage,
       'total': snapshot.total,
@@ -130,7 +136,7 @@ class CoursesCacheBox {
 
     try {
       await _box.put(
-        _cacheKey(userId),
+        _activeCacheKey(userId),
         jsonEncode(payload),
       );
     } catch (_) {
@@ -147,9 +153,10 @@ class CoursesCacheBox {
     }
 
     try {
-      await _box.delete(
-        _cacheKey(userId),
-      );
+      await _box.deleteAll([
+        _allCoursesCacheKey(userId),
+        _enrolledCoursesCacheKey(userId),
+      ]);
     } catch (_) {
       // Do not block logout because of a cache error.
     }

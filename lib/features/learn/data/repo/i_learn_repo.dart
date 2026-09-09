@@ -24,6 +24,13 @@ class ILearnRepo implements LearnRepo {
   }
 
   @override
+  Future<Either<Failure, EnrolledCoursesResponse>> getEnrolledCourses() {
+    return _request(
+      () => client.getEnrolledCourses(),
+    );
+  }
+
+  @override
   Future<Either<Failure, CourseDetailResponse>> getCourseDetail({
     required String courseId,
   }) {
@@ -144,7 +151,8 @@ class ILearnRepo implements LearnRepo {
   }
 
   @override
-  Future<Either<Failure, ChapterResourceDetailResponse>> getChapterResourceDetail({
+  Future<Either<Failure, ChapterResourceDetailResponse>>
+  getChapterResourceDetail({
     required String chapterId,
     required String resourceId,
   }) {

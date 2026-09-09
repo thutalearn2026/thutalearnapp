@@ -97,35 +97,31 @@ class LearnCourseCard extends StatelessWidget {
                       ),
                     ],
                     const Spacer(),
-                    const Divider(
-                      height: 18,
-                      color: Color(0xFFE5EAF0),
-                    ),
-                    Row(
-                      spacing: 2,
-                      children: [
-                        // const Icon(
-                        //   Icons.menu_book_outlined,
-                        //   size: 16,
-                        //   color: ColorUtils.greyTextColor,
-                        // ),
-                        // 4.gw,
-                        Expanded(
-                          child: TtText(
-                            '${course.moduleCount} module'
-                            '${course.moduleCount == 1 ? '' : 's'}',
-                            fontSize: 12,
-                            color: ColorUtils.greyTextColor,
+                    if (course.modules.isNotEmpty) ...[
+                      const Divider(
+                        height: 18,
+                        color: Color(0xFFE5EAF0),
+                      ),
+                      Row(
+                        spacing: 2,
+                        children: [
+                          Expanded(
+                            child: TtText(
+                              '${course.moduleCount} module'
+                              '${course.moduleCount == 1 ? '' : 's'}',
+                              fontSize: 12,
+                              color: ColorUtils.greyTextColor,
+                            ),
                           ),
-                        ),
-                        TtText(
-                          '${course.chapterCount} chapters',
-                          fontSize: 12,
-                          color: accentColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ],
-                    ),
+                          TtText(
+                            '${course.chapterCount} chapters',
+                            fontSize: 12,
+                            color: accentColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

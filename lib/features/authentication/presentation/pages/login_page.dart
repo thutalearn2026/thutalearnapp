@@ -147,28 +147,32 @@ class _LoginViewState extends State<_LoginView> {
                       onTap: _login,
                       child: state.isLoading
                           ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
                           : TtText(
-                        StringUtils.login,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
+                              StringUtils.login,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                     ),
                   ),
-                  20.gh,
-                  DoNotHaveAccountSectionView(
-                    content: StringUtils.doNotHaveAccount,
-                    actionButton: StringUtils.register,
-                    onTap: () {
-                      context.pushReplacement(Routes.register);
-                    },
-                  ),
+                  if (FeatureFlags.registrationEnabled) ...[
+                    20.gh,
+                    DoNotHaveAccountSectionView(
+                      content: StringUtils.doNotHaveAccount,
+                      actionButton: StringUtils.register,
+                      onTap: () {
+                        context.pushReplacement(
+                          Routes.register,
+                        );
+                      },
+                    ),
+                  ],
                   28.gh,
                   const OrLoginWith(
                     label: 'or login with',

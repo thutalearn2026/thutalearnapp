@@ -23,6 +23,11 @@ class ILearnClient implements LearnClient {
   }
 
   @override
+  Future<EnrolledCoursesResponse> getEnrolledCourses() {
+    return client.getEnrolledCourses();
+  }
+
+  @override
   Future<CourseDetailResponse> getCourseDetail({
     required String courseId,
   }) {

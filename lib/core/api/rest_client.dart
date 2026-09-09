@@ -86,6 +86,9 @@ abstract class RestClient {
     @Query('page') int page,
   );
 
+  @GET('profile/enrolled-courses')
+  Future<EnrolledCoursesResponse> getEnrolledCourses();
+
   @GET('courses/{course}')
   Future<CourseDetailResponse> getCourseDetail(
     @Path('course') String courseId,

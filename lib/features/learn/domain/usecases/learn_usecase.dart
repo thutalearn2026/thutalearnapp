@@ -13,9 +13,17 @@ class LearnUseCase {
 
   Future<Either<Failure, CoursesResponse>> getCourses({
     int page = 1,
-  }) {
-    return learnRepo.getCourses(
-      page: page,
+  }) async {
+    if (!FeatureFlags.enrolledCoursesOnly) {
+      return learnRepo.getCourses(
+        page: page,
+      );
+    }
+
+    final result = await learnRepo.getEnrolledCourses();
+
+    return result.map(
+      (response) => response.toCoursesResponse(),
     );
   }
 
@@ -89,7 +97,8 @@ class LearnUseCase {
     );
   }
 
-  Future<Either<Failure, ChapterResourceDetailResponse>> getChapterResourceDetail({
+  Future<Either<Failure, ChapterResourceDetailResponse>>
+  getChapterResourceDetail({
     required String chapterId,
     required String resourceId,
   }) {

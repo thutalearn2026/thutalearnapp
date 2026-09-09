@@ -66,6 +66,7 @@ dependencies:
   path_provider: ^2.1.6
   public_file_saver: ^1.1.0
   flutter_tts: ^4.2.5
+  webview_flutter: ^4.14.1
 
 dependency_overrides:
   # device_info_plus >= 12.4.0 references an iOS 26.1 SDK API.

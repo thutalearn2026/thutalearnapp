@@ -13,8 +13,7 @@ class LearnPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) {
-        return getIt<CoursesBloc>()
-          ..add(OnGetCourses());
+        return getIt<CoursesBloc>()..add(OnGetCourses());
       },
       child: const _LearnCoursesView(),
     );
@@ -30,10 +29,8 @@ class _LearnCoursesView extends StatefulWidget {
   }
 }
 
-class _LearnCoursesViewState
-    extends State<_LearnCoursesView> {
-  final ScrollController _scrollController =
-  ScrollController();
+class _LearnCoursesViewState extends State<_LearnCoursesView> {
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -61,13 +58,13 @@ class _LearnCoursesViewState
     // wait for it rather than dispatching a duplicate request.
     if (bloc.state.isRefreshing) {
       await bloc.stream.firstWhere(
-            (state) => !state.isRefreshing,
+        (state) => !state.isRefreshing,
       );
       return;
     }
 
     final completed = bloc.stream.firstWhere(
-          (state) {
+      (state) {
         return !state.isRefreshing &&
             (state.status == CoursesStatus.success ||
                 state.status == CoursesStatus.failure);
@@ -112,11 +109,9 @@ class _LearnCoursesViewState
           return const _CoursesLoadingView();
         }
 
-        if (state.status == CoursesStatus.failure &&
-            state.courses.isEmpty) {
+        if (state.status == CoursesStatus.failure && state.courses.isEmpty) {
           return _CoursesErrorView(
-            message:
-            state.message ?? 'Unable to load courses.',
+            message: state.message ?? 'Unable to load courses.',
             onRetry: () {
               context.read<CoursesBloc>().add(
                 OnGetCourses(),
@@ -126,23 +121,19 @@ class _LearnCoursesViewState
         }
 
         return Scaffold(
-          backgroundColor:
-          ColorUtils.scaffoldBackgroundColor,
+          backgroundColor: ColorUtils.scaffoldBackgroundColor,
           appBar: AppBar(
             toolbarHeight: 0,
-            backgroundColor:
-            ColorUtils.scaffoldBackgroundColor,
+            backgroundColor: ColorUtils.scaffoldBackgroundColor,
             surfaceTintColor: Colors.transparent,
           ),
           body: RefreshIndicator(
             color: ColorUtils.secondaryColor,
             onRefresh: _refreshCourses,
             child: TtFadeIn(
-
               child: CustomScrollView(
                 controller: _scrollController,
-                physics:
-                const AlwaysScrollableScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(
@@ -171,11 +162,9 @@ class _LearnCoursesViewState
                         16,
                       ),
                       sliver: SliverGrid(
-                        delegate:
-                        SliverChildBuilderDelegate(
-                              (context, index) {
-                            final course =
-                            state.courses[index];
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final course = state.courses[index];
 
                             return LearnCourseCard(
                               course: course,
@@ -190,8 +179,7 @@ class _LearnCoursesViewState
                           },
                           childCount: state.courses.length,
                         ),
-                        gridDelegate:
-                        SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 14,
@@ -233,8 +221,7 @@ class _CoursesLoadingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-      ColorUtils.scaffoldBackgroundColor,
+      backgroundColor: ColorUtils.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -246,29 +233,26 @@ class _CoursesLoadingView extends StatelessWidget {
                   height: 235,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius:
-                    BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(24),
                   ),
                 ),
                 16.gh,
                 Expanded(
                   child: GridView.builder(
-                    physics:
-                    const NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: 4,
                     gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 14,
-                      childAspectRatio: 0.58,
-                    ),
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 0.58,
+                        ),
                     itemBuilder: (_, __) {
                       return Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius:
-                          BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(18),
                         ),
                       );
                     },
@@ -295,8 +279,7 @@ class _CoursesErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-      ColorUtils.scaffoldBackgroundColor,
+      backgroundColor: ColorUtils.scaffoldBackgroundColor,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -326,8 +309,7 @@ class _CoursesErrorView extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  ColorUtils.primaryColor,
+                  backgroundColor: ColorUtils.primaryColor,
                   foregroundColor: Colors.white,
                 ),
                 icon: const Icon(
@@ -369,14 +351,18 @@ class _CoursesEmptyView extends StatelessWidget {
             ),
             SizedBox(height: 14),
             TtText(
-              'No courses available yet.',
+              FeatureFlags.enrolledCoursesOnly
+                  ? 'No enrolled courses yet.'
+                  : 'No courses available yet.',
               fontSize: 16,
               fontWeight: FontWeight.bold,
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 6),
             TtText(
-              'Please check again later.',
+              FeatureFlags.enrolledCoursesOnly
+                  ? 'Courses you purchase will appear here.'
+                  : 'Please check again later.',
               fontSize: 14,
               color: ColorUtils.greyTextColor,
               textAlign: TextAlign.center,
@@ -475,7 +461,7 @@ class _CoursesHeaderView extends StatelessWidget {
                 10.gh,
                 TtText(
                   'Explore practical Thai courses designed '
-                      'to help you learn step by step.',
+                  'to help you learn step by step.',
                   fontSize: 14,
                   height: 1.4,
                   color: Colors.white.withValues(

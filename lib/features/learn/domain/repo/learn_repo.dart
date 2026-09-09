@@ -7,6 +7,8 @@ abstract class LearnRepo {
     required int page,
   });
 
+  Future<Either<Failure, EnrolledCoursesResponse>> getEnrolledCourses();
+
   Future<Either<Failure, CourseDetailResponse>> getCourseDetail({
     required String courseId,
   });
@@ -42,7 +44,8 @@ abstract class LearnRepo {
     required String chapterId,
   });
 
-  Future<Either<Failure, ChapterResourceDetailResponse>> getChapterResourceDetail({
+  Future<Either<Failure, ChapterResourceDetailResponse>>
+  getChapterResourceDetail({
     required String chapterId,
     required String resourceId,
   });

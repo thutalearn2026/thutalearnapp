@@ -5,6 +5,8 @@ abstract class LearnClient {
     required int page,
   });
 
+  Future<EnrolledCoursesResponse> getEnrolledCourses();
+
   Future<CourseDetailResponse> getCourseDetail({
     required String courseId,
   });

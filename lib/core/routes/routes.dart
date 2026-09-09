@@ -208,6 +208,27 @@ class RouteClass {
         );
       },
     ),
+
+    GoRoute(
+      path: Routes.privacyPolicy,
+      builder: (context, state) {
+        return const LegalWebViewPage(
+          title: 'Privacy Policy',
+          url: 'https://thutalearn.com/privacy-policy',
+        );
+      },
+    ),
+
+    GoRoute(
+      path: Routes.termsOfUse,
+      builder: (context, state) {
+        return const LegalWebViewPage(
+          title: 'Terms of Use',
+          url:
+          'https://thutalearn.com/terms-and-conditions',
+        );
+      },
+    ),
   ];
 }
 
@@ -247,4 +268,7 @@ class Routes {
   static const splash = '/splash';
 
   static const resourceDetail = '/resource-detail';
+
+  static const privacyPolicy = '/privacy-policy';
+  static const termsOfUse = '/terms-of-use';
 }

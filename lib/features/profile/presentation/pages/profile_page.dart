@@ -406,13 +406,18 @@ class _ProfileViewState extends State<_ProfileView> {
             ProfileSettingTile(
               title: 'Privacy Policy',
               onTap: () {
-                // Open Privacy Policy page later.
+                context.push(
+                  Routes.privacyPolicy,
+                );
               },
             ),
+
             ProfileSettingTile(
               title: 'Terms of Use',
               onTap: () {
-                // Open Terms of Use page later.
+                context.push(
+                  Routes.termsOfUse,
+                );
               },
             ),
             const ProfileSettingTile(

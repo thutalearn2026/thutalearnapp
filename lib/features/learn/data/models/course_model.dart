@@ -59,13 +59,13 @@ class CourseModel {
   int get chapterCount {
     return modules.fold<int>(
       0,
-          (total, module) => total + module.chaptersCount,
+      (total, module) => total + module.chaptersCount,
     );
   }
 
   factory CourseModel.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return _$CourseModelFromJson(json);
   }
 
@@ -91,8 +91,8 @@ class CourseCategoryModel {
   });
 
   factory CourseCategoryModel.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return _$CourseCategoryModelFromJson(json);
   }
 
@@ -118,8 +118,8 @@ class CourseLevelModel {
   });
 
   factory CourseLevelModel.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return _$CourseLevelModelFromJson(json);
   }
 
@@ -149,8 +149,8 @@ class CourseTeacherModel {
   });
 
   factory CourseTeacherModel.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return _$CourseTeacherModelFromJson(json);
   }
 
@@ -182,8 +182,8 @@ class CourseModuleModel {
   });
 
   factory CourseModuleModel.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return _$CourseModuleModelFromJson(json);
   }
 
@@ -205,14 +205,121 @@ class CoursesResponse {
   });
 
   factory CoursesResponse.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return _$CoursesResponseFromJson(json);
   }
 
   Map<String, dynamic> toJson() {
     return _$CoursesResponseToJson(this);
   }
+}
+
+/// The enrolled-courses endpoint returns a non-paginated and lighter course
+/// payload. This response normalizes those items into the existing
+/// [CourseModel] used by the Learn page.
+class EnrolledCoursesResponse {
+  final List<CourseModel> data;
+
+  const EnrolledCoursesResponse({
+    required this.data,
+  });
+
+  factory EnrolledCoursesResponse.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final rawData = json['data'];
+
+    if (rawData is! List) {
+      return const EnrolledCoursesResponse(
+        data: [],
+      );
+    }
+
+    return EnrolledCoursesResponse(
+      data: rawData
+          .whereType<Map>()
+          .map(
+            (course) => CourseModel.fromJson(
+              _normalizeEnrolledCourse(
+                Map<String, dynamic>.from(course),
+              ),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  CoursesResponse toCoursesResponse() {
+    return CoursesResponse(
+      data: data,
+      links: const CoursePaginationLinks(),
+      meta: CoursePaginationMeta(
+        currentPage: 1,
+        lastPage: 1,
+        path: '/profile/enrolled-courses',
+        perPage: data.length,
+        total: data.length,
+      ),
+    );
+  }
+}
+
+Map<String, dynamic> _normalizeEnrolledCourse(
+  Map<String, dynamic> json,
+) {
+  return <String, dynamic>{
+    ...json,
+    'slug': json['slug']?.toString() ?? '',
+    'rank': (json['rank'] as num?)?.toInt() ?? 0,
+    'status': json['status']?.toString() ?? 'active',
+    'type': json['type']?.toString() ?? '',
+    'assignment': json['assignment'] as bool? ?? false,
+    'modules': json['modules'] is List ? json['modules'] : const [],
+    'category': _normalizeEnrolledRelation(
+      json['category'],
+    ),
+    'level': _normalizeEnrolledRelation(
+      json['level'],
+    ),
+    'teacher': _normalizeEnrolledTeacher(
+      json['teacher'],
+    ),
+  };
+}
+
+Map<String, dynamic>? _normalizeEnrolledRelation(
+  dynamic value,
+) {
+  if (value is! Map) {
+    return null;
+  }
+
+  final relation = Map<String, dynamic>.from(value);
+
+  return <String, dynamic>{
+    ...relation,
+    'slug': relation['slug']?.toString() ?? '',
+    'status': relation['status']?.toString() ?? 'active',
+    'rank': (relation['rank'] as num?)?.toInt() ?? 0,
+  };
+}
+
+Map<String, dynamic>? _normalizeEnrolledTeacher(
+  dynamic value,
+) {
+  if (value is! Map) {
+    return null;
+  }
+
+  final teacher = Map<String, dynamic>.from(value);
+
+  return <String, dynamic>{
+    ...teacher,
+    'slug': teacher['slug']?.toString() ?? '',
+    'status': teacher['status']?.toString() ?? 'active',
+    'rank': (teacher['rank'] as num?)?.toInt() ?? 0,
+  };
 }
 
 @JsonSerializable()
@@ -230,8 +337,8 @@ class CoursePaginationLinks {
   });
 
   factory CoursePaginationLinks.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return _$CoursePaginationLinksFromJson(json);
   }
 
@@ -261,8 +368,8 @@ class CoursePaginationMeta {
   });
 
   factory CoursePaginationMeta.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return _$CoursePaginationMetaFromJson(json);
   }
 
@@ -280,8 +387,8 @@ class CourseDetailResponse {
   });
 
   factory CourseDetailResponse.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return _$CourseDetailResponseFromJson(json);
   }
 
@@ -299,8 +406,8 @@ class CourseModulesResponse {
   });
 
   factory CourseModulesResponse.fromJson(
-      Map<String, dynamic> json,
-      ) {
+    Map<String, dynamic> json,
+  ) {
     return _$CourseModulesResponseFromJson(json);
   }
 
