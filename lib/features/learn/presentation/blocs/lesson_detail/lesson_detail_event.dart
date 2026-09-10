@@ -1,0 +1,32 @@
+part of 'lesson_detail_bloc.dart';
+
+@immutable
+sealed class LessonDetailEvent {}
+
+class OnGetLessonDetail extends LessonDetailEvent {
+  final String chapterId;
+  final String videoId;
+
+  OnGetLessonDetail({
+    required this.chapterId,
+    required this.videoId,
+  });
+}
+
+class OnGetLessonVocabularies extends LessonDetailEvent {
+  final String videoId;
+
+  OnGetLessonVocabularies({
+    required this.videoId,
+  });
+}
+
+class OnToggleVocabularySaved extends LessonDetailEvent {
+  final String videoId;
+  final String vocabularyId;
+
+  OnToggleVocabularySaved({
+    required this.videoId,
+    required this.vocabularyId,
+  });
+}

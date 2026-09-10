@@ -5,6 +5,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/onboarding/onboarding.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:thuta_learn/features/authentication/authentication.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
@@ -20,9 +21,15 @@ class OnboardingPage extends StatelessWidget {
       child: MultiBlocListener(
         listeners: [
           BlocListener<OnboardingBloc, OnboardingState>(
-            listener: (context, state) {
-              if(state.onboardingStatus == OnboardingStatus.skip) {
-                context.push(Routes.login);
+            listener: (context, state) async {
+              if (state.onboardingStatus == OnboardingStatus.skip) {
+                await OnboardingBox.completeOnboarding();
+
+                if (!context.mounted) return;
+
+                final nextRoute = AuthSessionBox.isLoggedIn ? Routes.bottomNav : Routes.login;
+
+                context.go(nextRoute);
               }
             },
           ),

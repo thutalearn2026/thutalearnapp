@@ -1,25 +1,37 @@
 part of 'account_set_up_bloc.dart';
 
+@immutable
 sealed class AccountSetUpEvent {}
 
-class OnChooseLearningReason extends AccountSetUpEvent {
-  final LearningReasonModel? learningReasonModel;
+class OnGetOnboardingOptions extends AccountSetUpEvent {}
 
-  OnChooseLearningReason(this.learningReasonModel);
+class OnChooseLearningReason extends AccountSetUpEvent {
+  final OnboardingOptionModel learningReason;
+
+  OnChooseLearningReason(
+      this.learningReason,
+      );
 }
 
 class OnChooseCurrentLevel extends AccountSetUpEvent {
-  final String? currentLevelTitle;
+  final OnboardingOptionModel currentLevel;
 
-  OnChooseCurrentLevel(this.currentLevelTitle);
+  OnChooseCurrentLevel(
+      this.currentLevel,
+      );
 }
 
 class OnChooseDailyGoal extends AccountSetUpEvent {
-  final DailyGoalModel? dailyGoalModel;
+  final OnboardingOptionModel dailyGoal;
 
-  OnChooseDailyGoal(this.dailyGoalModel);
+  OnChooseDailyGoal(
+      this.dailyGoal,
+      );
 }
 
-class OnBack extends AccountSetUpEvent {
+class OnSubmitOnboardingPreferences
+    extends AccountSetUpEvent {}
 
-}
+class OnSkipAccountSetUp extends AccountSetUpEvent {}
+
+class OnBack extends AccountSetUpEvent {}

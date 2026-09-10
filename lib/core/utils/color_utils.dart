@@ -13,4 +13,6 @@ class ColorUtils {
   static const Color scaffoldBackgroundColor = Color.fromRGBO(248, 248, 248, 1.0);
   static const Color secondaryBackgroundColor = Color.fromRGBO(232, 249, 246, 1.0);
   static const Color greyTextColor = Color.fromRGBO(100, 115, 139, 1.0);
+
+  static const Color homePageTitleColor = Color.fromRGBO(68, 91, 122, 1.0);
 }

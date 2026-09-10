@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:thuta_learn/core/core.dart';
+import 'package:thuta_learn/features/authentication/data/data_sources/box/auth_session_box.dart';
 
 class TokenInterceptor extends Interceptor {
   final Dio dio;
@@ -8,34 +9,42 @@ class TokenInterceptor extends Interceptor {
   TokenInterceptor(this.dio);
 
   @override
-  void onRequest(RequestOptions options,
-      RequestInterceptorHandler handler) async {
+  void onRequest(
+      RequestOptions options,
+      RequestInterceptorHandler handler,
+      ) async {
     thutaLog(
-        "Requested URL is ======> ${options.path} and ${options.queryParameters} and path is ===> ${options.path} and data is ===> ${options.data}");
+      'Requested URL is ======> ${options.uri} '
+          'and data is ===> ${options.data}',
+    );
 
-    options.headers["Accept"] = Headers.jsonContentType;
+    options.headers['Accept'] = Headers.jsonContentType;
     options.contentType = Headers.jsonContentType;
 
     options.connectTimeout = const Duration(seconds: 20);
     options.receiveTimeout = const Duration(seconds: 20);
     options.sendTimeout = const Duration(seconds: 20);
-    String path = options.uri.toString();
-    if (path.endsWith("login") ||
-        path.endsWith('register') ||
-        path.contains("without_auth") ||
-        path.contains("password/reset/user")) {
-      debugPrint("un auth-========-> $path");
-    } else {
-      debugPrint("auth-========-> $path");
 
-      // UserBox userBox = await UserBox.instance;
-      // UserModel userModel = userBox.getUser() ?? UserModel();
-      // if (userModel.token != null ||
-      //     (userModel.token ?? "").isNotEmpty) {
-      //   options.headers['Authorization'] =
-      //   'Bearer ${userModel.token}';
-      // }
+    final path = options.path;
+
+    final isPublicEndpoint =
+        path.contains('register/initiate') ||
+            path.contains('register/verify') ||
+            path.contains('register/complete') ||
+            path.endsWith('/login') ||
+            path.contains('forgot-password') ||
+            path.contains('reset-password') ||
+            path.contains('onboarding-options');
+
+    final token = AuthSessionBox.token;
+
+    if (!isPublicEndpoint && token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $token';
+      debugPrint('Authenticated request: $path');
+    } else {
+      debugPrint('Public request: $path');
     }
-    return handler.next(options);
+
+    handler.next(options);
   }
 }

@@ -1,21 +1,39 @@
 import 'package:flutter/material.dart';
 
 extension TtAnimatedDialog on BuildContext {
-  void showTtAnimatedDialog({required Widget dialog}) {
-    showGeneralDialog(
+  Future<T?> showTtAnimatedDialog<T>({
+    required Widget dialog,
+    bool barrierDismissible = true,
+  }) {
+    return showGeneralDialog<T>(
       context: this,
-      barrierLabel: '',
-      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierDismissible: barrierDismissible,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
       transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (context, animation1, animation2) {
-        return Container();
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return dialog;
       },
-      transitionBuilder: (context, animation1, animation2, widget) {
-        return Transform.scale(
-          scale: animation1.value,
-          child: Opacity(
-            opacity: animation1.value,
-            child: dialog,
+      transitionBuilder: (
+          context,
+          animation,
+          secondaryAnimation,
+          child,
+          ) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeIn,
+        );
+
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(
+              begin: 0.88,
+              end: 1,
+            ).animate(curvedAnimation),
+            child: child,
           ),
         );
       },
