@@ -31,8 +31,7 @@ class LearnOverviewSectionView extends StatelessWidget {
   }
 }
 
-class WordOfTheDaySectionView
-    extends StatelessWidget {
+class WordOfTheDaySectionView extends StatelessWidget {
   final WordOfTheDayModel wordOfTheDay;
 
   const WordOfTheDaySectionView({
@@ -43,18 +42,15 @@ class WordOfTheDaySectionView
   @override
   Widget build(BuildContext context) {
     final word = wordOfTheDay.word.trim();
-    final romanization =
-    wordOfTheDay.romanization.trim();
-    final meaning =
-    wordOfTheDay.meaning.trim();
+    final romanization = wordOfTheDay.romanization.trim();
+    final meaning = wordOfTheDay.meaning.trim();
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -63,8 +59,7 @@ class WordOfTheDaySectionView
                 ),
                 decoration: BoxDecoration(
                   color: ColorUtils.secondaryColor,
-                  borderRadius:
-                  BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(2),
                 ),
                 child: const TtText(
                   'Word of the day',
@@ -77,8 +72,7 @@ class WordOfTheDaySectionView
               Wrap(
                 spacing: 6,
                 runSpacing: 4,
-                crossAxisAlignment:
-                WrapCrossAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   TtText(
                     word,
@@ -89,8 +83,7 @@ class WordOfTheDaySectionView
                     TtText(
                       romanization,
                       fontSize: 9,
-                      color:
-                      ColorUtils.greyTextColor,
+                      color: ColorUtils.greyTextColor,
                     ),
                   if (meaning.isNotEmpty)
                     TtText(
@@ -122,8 +115,7 @@ class WordOfTheDaySectionView
   }
 }
 
-class _WordOfTheDayLoadingView
-    extends StatelessWidget {
+class _WordOfTheDayLoadingView extends StatelessWidget {
   const _WordOfTheDayLoadingView();
 
   @override
@@ -133,16 +125,14 @@ class _WordOfTheDayLoadingView
         children: [
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: 130,
                   height: 28,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius:
-                    BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 8.gh,
@@ -151,8 +141,7 @@ class _WordOfTheDayLoadingView
                   height: 18,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius:
-                    BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ],
@@ -172,15 +161,14 @@ class _WordOfTheDayLoadingView
   }
 }
 
-class CurrentLevelSectionView
-    extends StatelessWidget {
+class CurrentLevelSectionView extends StatelessWidget {
   const CurrentLevelSectionView({
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    const double currentProgress = 0.32;
+    const double currentProgress = 0;
     const int currentLevelIndex = 0;
     const int levelCount = 3;
 
@@ -188,17 +176,14 @@ class CurrentLevelSectionView
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:
-        ColorUtils.secondaryBackgroundColor,
+        color: ColorUtils.secondaryBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: ColorUtils.secondaryColor
-              .withValues(alpha: 0.55),
+          color: ColorUtils.secondaryColor.withValues(alpha: 0.55),
         ),
       ),
       child: Row(
-        crossAxisAlignment:
-        CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 52,
@@ -216,8 +201,7 @@ class CurrentLevelSectionView
           14.gw,
           const Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TtText(
                   'Current Level',
@@ -226,11 +210,9 @@ class CurrentLevelSectionView
                 ),
                 SizedBox(height: 12),
                 SegmentedLevelProgressView(
-                  currentLevelIndex:
-                  currentLevelIndex,
+                  currentLevelIndex: currentLevelIndex,
                   levelCount: levelCount,
-                  currentProgress:
-                  currentProgress,
+                  currentProgress: currentProgress,
                 ),
                 SizedBox(height: 12),
                 _CurrentLevelInformationView(),
@@ -243,8 +225,7 @@ class CurrentLevelSectionView
   }
 }
 
-class SegmentedLevelProgressView
-    extends StatelessWidget {
+class SegmentedLevelProgressView extends StatelessWidget {
   final int currentLevelIndex;
   final int levelCount;
   final double currentProgress;
@@ -273,28 +254,19 @@ class SegmentedLevelProgressView
     return Row(
       children: List.generate(
         levelCount,
-            (index) {
+        (index) {
           return Expanded(
             child: Padding(
               padding: EdgeInsets.only(
-                right:
-                index == levelCount - 1
-                    ? 0
-                    : 8,
+                right: index == levelCount - 1 ? 0 : 8,
               ),
               child: ClipRRect(
-                borderRadius:
-                BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20),
                 child: LinearProgressIndicator(
-                  value:
-                  _progressForLevel(index),
+                  value: _progressForLevel(index),
                   minHeight: 7,
-                  backgroundColor:
-                  const Color(0xFFE2E5E9),
-                  valueColor:
-                  const AlwaysStoppedAnimation<
-                      Color
-                  >(
+                  backgroundColor: const Color(0xFFE2E5E9),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
                     ColorUtils.secondaryColor,
                   ),
                 ),
@@ -307,8 +279,7 @@ class SegmentedLevelProgressView
   }
 }
 
-class _CurrentLevelInformationView
-    extends StatelessWidget {
+class _CurrentLevelInformationView extends StatelessWidget {
   const _CurrentLevelInformationView();
 
   @override
@@ -322,8 +293,7 @@ class _CurrentLevelInformationView
           ),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius:
-            BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: const TtText(
             'Beginner',
@@ -335,7 +305,7 @@ class _CurrentLevelInformationView
         12.gw,
         const Expanded(
           child: TtText(
-            '32% to intermediate level',
+            '0% to intermediate level',
             fontSize: 14,
             textAlign: TextAlign.right,
           ),

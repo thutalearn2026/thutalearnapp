@@ -308,18 +308,18 @@ class _ProfileViewState extends State<_ProfileView> {
         14.gh,
 
         // Certificates
-        ProfileSettingsCard(
-          children: [
-            ProfileSettingTile(
-              title: 'Get your certificates',
-              trailing: const _CountBadge(count: 1),
-              onTap: () {
-                context.push(Routes.certificates);
-              },
-            ),
-          ],
-        ),
-        14.gh,
+        // ProfileSettingsCard(
+        //   children: [
+        //     ProfileSettingTile(
+        //       title: 'Get your certificates',
+        //       trailing: const _CountBadge(count: 1),
+        //       onTap: () {
+        //         context.push(Routes.certificates);
+        //       },
+        //     ),
+        //   ],
+        // ),
+        // 14.gh,
 
         // Learning information
         ProfileSettingsCard(
@@ -341,68 +341,68 @@ class _ProfileViewState extends State<_ProfileView> {
         14.gh,
 
         // Application settings
-        ProfileSettingsCard(
-          children: [
-            ProfileSettingTile(
-              title: 'App Language',
-              trailing: const TtText(
-                'English',
-                fontSize: 14,
-                color: ColorUtils.greyTextColor,
-              ),
-              onTap: () {
-                // Open the language selection sheet later.
-              },
-            ),
-            ProfileSettingTile(
-              title: 'App Sound',
-              showArrow: false,
-              trailing: _ProfileSwitch(
-                value: _appSoundEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    _appSoundEnabled = value;
-                  });
-                },
-              ),
-            ),
-            ProfileSettingTile(
-              title: 'Notification',
-              showArrow: false,
-              trailing: _ProfileSwitch(
-                value: _notificationsEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    _notificationsEnabled = value;
-                  });
-                },
-              ),
-            ),
-            ProfileSettingTile(
-              title: 'Study Reminder',
-              showArrow: false,
-              trailing: _ProfileSwitch(
-                value: _studyReminderEnabled,
-                onChanged: (value) {
-                  setState(() {
-                    _studyReminderEnabled = value;
-                  });
-                },
-              ),
-            ),
-          ],
-        ),
-        14.gh,
+        // ProfileSettingsCard(
+        //   children: [
+        //     ProfileSettingTile(
+        //       title: 'App Language',
+        //       trailing: const TtText(
+        //         'English',
+        //         fontSize: 14,
+        //         color: ColorUtils.greyTextColor,
+        //       ),
+        //       onTap: () {
+        //         // Open the language selection sheet later.
+        //       },
+        //     ),
+        //     ProfileSettingTile(
+        //       title: 'App Sound',
+        //       showArrow: false,
+        //       trailing: _ProfileSwitch(
+        //         value: _appSoundEnabled,
+        //         onChanged: (value) {
+        //           setState(() {
+        //             _appSoundEnabled = value;
+        //           });
+        //         },
+        //       ),
+        //     ),
+        //     ProfileSettingTile(
+        //       title: 'Notification',
+        //       showArrow: false,
+        //       trailing: _ProfileSwitch(
+        //         value: _notificationsEnabled,
+        //         onChanged: (value) {
+        //           setState(() {
+        //             _notificationsEnabled = value;
+        //           });
+        //         },
+        //       ),
+        //     ),
+        //     ProfileSettingTile(
+        //       title: 'Study Reminder',
+        //       showArrow: false,
+        //       trailing: _ProfileSwitch(
+        //         value: _studyReminderEnabled,
+        //         onChanged: (value) {
+        //           setState(() {
+        //             _studyReminderEnabled = value;
+        //           });
+        //         },
+        //       ),
+        //     ),
+        //   ],
+        // ),
+        // 14.gh,
 
         // Legal and support information
         ProfileSettingsCard(
           children: [
-            ProfileSettingTile(
-              title: 'Contact Us',
-              onTap: () {
-                // Open Contact Us page later.
-              },
-            ),
+            // ProfileSettingTile(
+            //   title: 'Contact Us',
+            //   onTap: () {
+            //     // Open Contact Us page later.
+            //   },
+            // ),
             ProfileSettingTile(
               title: 'Privacy Policy',
               onTap: () {
@@ -436,22 +436,22 @@ class _ProfileViewState extends State<_ProfileView> {
         // Account actions
         ProfileSettingsCard(
           children: [
-            ProfileSettingTile(
-              title: 'Help',
-              onTap: () {
-                // Open Help page later.
-              },
-            ),
+            // ProfileSettingTile(
+            //   title: 'Help',
+            //   onTap: () {
+            //     // Open Help page later.
+            //   },
+            // ),
             ProfileSettingTile(
               title: 'Logout',
               titleColor: Colors.red,
               onTap: _showLogoutDialog,
             ),
-            ProfileSettingTile(
-              title: 'Delete Account',
-              titleColor: Colors.red,
-              onTap: _showDeleteAccountDialog,
-            ),
+            // ProfileSettingTile(
+            //   title: 'Delete Account',
+            //   titleColor: Colors.red,
+            //   onTap: _showDeleteAccountDialog,
+            // ),
           ],
         ),
       ],

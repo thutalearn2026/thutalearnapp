@@ -23,7 +23,9 @@ class CourseProgressCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
+            color: Colors.black.withValues(
+              alpha: 0.035,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -38,22 +40,68 @@ class CourseProgressCard extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
           24.gh,
-          ...List.generate(
-            courses.length,
-                (index) {
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: index == courses.length - 1
-                      ? 0
-                      : 22,
-                ),
-                child: CourseProgressItemView(
-                  course: courses[index],
-                ),
-              );
-            },
-          ),
+
+          if (courses.isEmpty)
+            const _EmptyCourseProgressView()
+          else
+            ...List.generate(
+              courses.length,
+                  (index) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == courses.length - 1
+                        ? 0
+                        : 22,
+                  ),
+                  child: CourseProgressItemView(
+                    course: courses[index],
+                  ),
+                );
+              },
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _EmptyCourseProgressView extends StatelessWidget {
+  const _EmptyCourseProgressView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(
+        vertical: 20,
+        horizontal: 12,
+      ),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              Icons.auto_graph_rounded,
+              size: 48,
+              color: ColorUtils.greyTextColor,
+            ),
+            SizedBox(height: 12),
+            TtText(
+              'No learning progress yet',
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: ColorUtils.primaryColor,
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            TtText(
+              'Start learning a lesson and your course '
+                  'progress will appear here.',
+              fontSize: 13,
+              height: 1.4,
+              color: ColorUtils.greyTextColor,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -109,7 +157,7 @@ class CourseProgressItemView extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: LinearProgressIndicator(
-            value: course.progress,
+            value: course.progress.clamp(0.0, 1.0),
             minHeight: 7,
             backgroundColor: const Color(0xFFE6E9EE),
             valueColor: AlwaysStoppedAnimation<Color>(

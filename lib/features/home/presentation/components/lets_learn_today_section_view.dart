@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:thuta_learn/core/core.dart';
+import 'package:thuta_learn/features/authentication/data/data_sources/box/auth_session_box.dart';
 import 'package:thuta_learn/features/home/home.dart';
 
 class LetsLearnTodaySectionView extends StatelessWidget {
-  const LetsLearnTodaySectionView({super.key});
+  const LetsLearnTodaySectionView({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return LetsLearnTodayFrame(
+    return const LetsLearnTodayFrame(
       child: Column(
         spacing: 16,
         children: [
@@ -26,23 +29,23 @@ class PersonalStatsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       spacing: 8,
       children: [
         PersonalStatItem(
           iconData: Icons.stairs_outlined,
-          title: "L1",
-          desc: "Current Level",
+          title: 'L1',
+          desc: 'Current Level',
         ),
         PersonalStatItem(
           iconData: Icons.watch_later_outlined,
-          title: "52min",
-          desc: "Study Time",
+          title: '0 min',
+          desc: 'Study Time',
         ),
         PersonalStatItem(
           iconData: Icons.calendar_today_outlined,
-          title: "8",
-          desc: "Day streak",
+          title: '1',
+          desc: 'Day streak',
         ),
       ],
     );
@@ -65,7 +68,10 @@ class PersonalStatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         decoration: BoxDecoration(
           color: ColorUtils.highlightColor,
           borderRadius: BorderRadius.circular(12),
@@ -106,8 +112,21 @@ class GreetingView extends StatelessWidget {
     super.key,
   });
 
+  String _getLoggedInUserName() {
+    final user = AuthSessionBox.user;
+    final name = user?['name']?.toString().trim();
+
+    if (name == null || name.isEmpty) {
+      return 'Learner';
+    }
+
+    return name;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final userName = _getLoggedInUserName();
+
     return Row(
       spacing: 12,
       children: [
@@ -121,8 +140,10 @@ class GreetingView extends StatelessWidget {
             spacing: 2,
             children: [
               TtText(
-                "Sawatdee, Sora",
+                'Sawatdee, $userName',
                 color: Colors.white,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               TtText(
                 StringUtils.letsLearnForToday,
@@ -133,7 +154,7 @@ class GreetingView extends StatelessWidget {
             ],
           ),
         ),
-        NotificationIcon(),
+        if (FeatureFlags.notificationsEnabled) const NotificationIcon(),
       ],
     );
   }
@@ -151,16 +172,21 @@ class LetsLearnTodayFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 200,
-      padding: EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 24),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 24,
+        bottom: 24,
+      ),
+      decoration: const BoxDecoration(
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(36),
           bottomRight: Radius.circular(36),
         ),
         gradient: LinearGradient(
           colors: [
-            Color.fromRGBO(29, 56, 92, 1.0),
-            Color.fromRGBO(22, 48, 77, 1.0),
+            Color.fromRGBO(29, 56, 92, 1),
+            Color.fromRGBO(22, 48, 77, 1),
           ],
         ),
       ),

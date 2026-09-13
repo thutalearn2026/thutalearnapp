@@ -318,20 +318,24 @@ class _TimelineIndicator extends StatelessWidget {
         Container(
           width: 24,
           height: 24,
-          decoration: const BoxDecoration(
-            color: ColorUtils.primaryColor,
+          decoration: BoxDecoration(
+            color: Colors.white,
             shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFFD9DEE5),
+              width: 2,
+            ),
           ),
           child: const Icon(
-            Icons.done_all_rounded,
-            size: 14,
-            color: Colors.white,
+            Icons.circle_outlined,
+            size: 10,
+            color: ColorUtils.greyTextColor,
           ),
         ),
         Expanded(
           child: Container(
             width: 1,
-            color: isLast ? Colors.transparent : ColorUtils.secondaryColor,
+            color: isLast ? Colors.transparent : const Color(0xFFD9DEE5),
           ),
         ),
       ],
@@ -376,20 +380,12 @@ class _ApiModuleCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Temporary UI values until the progress
-              // API provides these fields.
               const Row(
                 children: [
                   _ModuleStatusBadge(
-                    label: 'Completed',
-                    foregroundColor: ColorUtils.primaryColor,
+                    label: 'Not Started',
+                    foregroundColor: ColorUtils.greyTextColor,
                     backgroundColor: Color(0xFFEFF3F8),
-                  ),
-                  SizedBox(width: 8),
-                  _ModuleStatusBadge(
-                    label: 'Quiz Passed',
-                    foregroundColor: Color(0xFF21A965),
-                    backgroundColor: Color(0xFFE7F8ED),
                   ),
                 ],
               ),

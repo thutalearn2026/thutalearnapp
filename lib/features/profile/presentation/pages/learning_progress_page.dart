@@ -4,74 +4,60 @@ import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/profile/profile.dart';
 
 class LearningProgressPage extends StatelessWidget {
-  const LearningProgressPage({super.key});
+  const LearningProgressPage({
+    super.key,
+  });
 
   static const List<LearningProgressMetric> _metrics = [
     LearningProgressMetric(
-      value: '47',
+      value: '0',
       label: 'Lessons Done',
       icon: Icons.menu_book_outlined,
     ),
     LearningProgressMetric(
-      value: '312',
+      value: '0',
       label: 'Words Learned',
       icon: Icons.bookmark_border_rounded,
     ),
     LearningProgressMetric(
-      value: '12',
+      value: '0',
       label: 'Day Streak',
       icon: Icons.event_available_outlined,
     ),
   ];
 
   static const List<WeeklyActivityItem> _weeklyActivity = [
-    WeeklyActivityItem(day: 'M', minutes: 38),
-    WeeklyActivityItem(day: 'T', minutes: 52),
-    WeeklyActivityItem(day: 'W', minutes: 45),
+    WeeklyActivityItem(
+      day: 'M',
+      minutes: 0,
+    ),
     WeeklyActivityItem(
       day: 'T',
-      minutes: 67,
-      isCurrentDay: true,
+      minutes: 0,
     ),
-    WeeklyActivityItem(day: 'F', minutes: 41),
-    WeeklyActivityItem(day: 'S', minutes: 29),
-    WeeklyActivityItem(day: 'S', minutes: 20),
+    WeeklyActivityItem(
+      day: 'W',
+      minutes: 0,
+    ),
+    WeeklyActivityItem(
+      day: 'T',
+      minutes: 0,
+    ),
+    WeeklyActivityItem(
+      day: 'F',
+      minutes: 0,
+    ),
+    WeeklyActivityItem(
+      day: 'S',
+      minutes: 0,
+    ),
+    WeeklyActivityItem(
+      day: 'S',
+      minutes: 0,
+    ),
   ];
 
-  static const List<CourseProgressItem> _courses = [
-    CourseProgressItem(
-      title: 'Thai Pronunciation Essentials',
-      progress: 1,
-    ),
-    CourseProgressItem(
-      title: 'Greetings and Self-Introduction',
-      progress: 0.58,
-    ),
-    CourseProgressItem(
-      title: 'Numbers, Prices and Shopping',
-      progress: 0,
-    ),
-    CourseProgressItem(
-      title: 'Food and Drinks',
-      progress: 0,
-    ),
-    CourseProgressItem(
-      title: 'Time, Dates and Daily Schedule',
-      progress: 0,
-    ),
-    CourseProgressItem(
-      title: 'Places, Transport and Directions',
-      progress: 0,
-    ),
-    CourseProgressItem(
-      title: 'Everyday Conversation and Grammar',
-      progress: 0,
-    ),
-    CourseProgressItem(
-      title: 'Weather, Health and Practical Situations',
-      progress: 0,
-    ),
-  ];
+  static const List<CourseProgressItem> _courses = [];
 
   @override
   Widget build(BuildContext context) {
@@ -125,8 +111,8 @@ class LearningProgressPage extends StatelessWidget {
           16.gh,
           const WeeklyActivityCard(
             activities: _weeklyActivity,
-            totalMinutes: 67,
-            percentageChange: 18,
+            totalMinutes: 0,
+            percentageChange: 0,
           ),
           16.gh,
           const CourseProgressCard(

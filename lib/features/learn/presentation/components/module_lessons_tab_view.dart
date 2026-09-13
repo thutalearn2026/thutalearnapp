@@ -97,43 +97,45 @@ class ModuleLessonsTabView extends StatelessWidget {
             },
           ),
         ),
-        const SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              16,
-              24,
-              16,
-              16,
-            ),
-            child: TtText(
-              'Real-life Scenarios',
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+        if (FeatureFlags.realLifeScenariosEnabled) ...[
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                24,
+                16,
+                16,
+              ),
+              child: TtText(
+                'Real-life Scenarios',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            16,
-            0,
-            16,
-            32,
-          ),
-          sliver: SliverGrid.builder(
-            itemCount: 5,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 0.62,
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              16,
+              0,
+              16,
+              32,
             ),
-            itemBuilder: (context, index) {
-              return RealLifeScenarioView(
-                index: index,
-              );
-            },
+            sliver: SliverGrid.builder(
+              itemCount: 5,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 0.62,
+              ),
+              itemBuilder: (context, index) {
+                return RealLifeScenarioView(
+                  index: index,
+                );
+              },
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -412,7 +414,9 @@ class ChapterVideoView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = video.title.trim().isEmpty ? 'Untitled video' : video.title.trim();
+    final title = video.title.trim().isEmpty
+        ? 'Untitled video'
+        : video.title.trim();
 
     return Padding(
       padding: const EdgeInsets.all(14),
@@ -535,7 +539,8 @@ class _VideoDownloadControl extends StatelessWidget {
     final progress = download?.progress ?? 0;
 
     final isDownloading =
-        status == VideoDownloadStatus.queued || status == VideoDownloadStatus.downloading;
+        status == VideoDownloadStatus.queued ||
+        status == VideoDownloadStatus.downloading;
 
     final isDownloaded = download?.isDownloaded == true;
 

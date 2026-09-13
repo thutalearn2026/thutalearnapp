@@ -25,17 +25,21 @@ class HomePage extends StatelessWidget {
           SliverAppBar(
             backgroundColor: ColorUtils.scaffoldBackgroundColor,
             automaticallyImplyLeading: false,
-            expandedHeight: 412,
+            expandedHeight: FeatureFlags.continueLearningEnabled
+                ? 412
+                : 200,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 children: [
                   const LetsLearnTodaySectionView(),
-                  const Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 16,
-                    child: LearningProgressSectionView(),
-                  ),
+
+                  if (FeatureFlags.continueLearningEnabled)
+                    const Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                      child: LearningProgressSectionView(),
+                    ),
                 ],
               ),
             ),
@@ -43,6 +47,7 @@ class HomePage extends StatelessWidget {
           SliverList(
             delegate: SliverChildListDelegate(
               [
+                16.gh,
                 HomeBannerSectionView(
                   imageUrls: const [
                     _demoBannerUrl,

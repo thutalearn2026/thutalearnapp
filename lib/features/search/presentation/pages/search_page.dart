@@ -96,6 +96,10 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!FeatureFlags.searchEnabled) {
+      return const _SearchUnavailablePage();
+    }
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: ColorUtils.scaffoldBackgroundColor,
@@ -145,6 +149,88 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SearchUnavailablePage extends StatelessWidget {
+  const _SearchUnavailablePage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: ColorUtils.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: ColorUtils.scaffoldBackgroundColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          onPressed: context.pop,
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: ColorUtils.primaryColor,
+          ),
+        ),
+        title: const TtText(
+          'Search',
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      body: const Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: 32,
+            vertical: 24,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _SearchUnavailableIcon(),
+              SizedBox(height: 24),
+              TtText(
+                'Search is coming soon',
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: ColorUtils.primaryColor,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 12),
+              TtText(
+                'We\'re working on a better way to help you find '
+                'courses, lessons, and vocabulary. Please explore '
+                'the Learn page for now.',
+                fontSize: 14,
+                height: 1.5,
+                color: ColorUtils.greyTextColor,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchUnavailableIcon extends StatelessWidget {
+  const _SearchUnavailableIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 104,
+      height: 104,
+      decoration: const BoxDecoration(
+        color: ColorUtils.secondaryBackgroundColor,
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(
+        Icons.manage_search_rounded,
+        size: 54,
+        color: ColorUtils.secondaryColor,
       ),
     );
   }
@@ -239,7 +325,7 @@ class SearchSuggestionsView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: List.generate(
           suggestions.length,
-              (index) {
+          (index) {
             final suggestion = suggestions[index];
 
             return Column(

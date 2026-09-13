@@ -174,11 +174,11 @@ class _LoginViewState extends State<_LoginView> {
                     ),
                   ],
                   28.gh,
-                  const OrLoginWith(
-                    label: 'or login with',
-                  ),
-                  20.gh,
-                  const SocialLoginSectionView(),
+                  // const OrLoginWith(
+                  //   label: 'or login with',
+                  // ),
+                  // 20.gh,
+                  // const SocialLoginSectionView(),
                 ],
               ),
             ),

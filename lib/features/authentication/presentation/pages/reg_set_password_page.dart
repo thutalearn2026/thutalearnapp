@@ -80,7 +80,7 @@ class _RegSetPasswordViewState extends State<_RegSetPasswordView> {
             state.message ?? 'Registration successful.',
           );
 
-          context.go(Routes.accountSetUp);
+          context.go(Routes.bottomNav);
         }
       },
       builder: (context, state) {
@@ -153,18 +153,18 @@ class _RegSetPasswordViewState extends State<_RegSetPasswordView> {
                       onTap: _completeRegistration,
                       child: state.isLoading
                           ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
                           : TtText(
-                        StringUtils.continueLabel,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
+                              StringUtils.continueLabel,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                     ),
                   ),
                 ],

@@ -31,7 +31,7 @@ class _BottomNavState
     super.initState();
 
     _tabController = TabController(
-      length: 4,
+      length: 3,
       vsync: this,
     );
 
@@ -73,9 +73,9 @@ class _BottomNavState
             children: [
               const HomePage(),
               const LearnPage(),
-              ReelsPage(
-                isActive: _currentIndex == 2,
-              ),
+              // ReelsPage(
+              //   isActive: _currentIndex == 2,
+              // ),
               const ProfilePage(),
             ],
           ),
@@ -215,13 +215,13 @@ class BottomNavSectionView
                         ),
                         text: 'Learn',
                       ),
-                      Tab(
-                        icon: Icon(
-                          Icons
-                              .smart_display_outlined,
-                        ),
-                        text: 'Reels',
-                      ),
+                      // Tab(
+                      //   icon: Icon(
+                      //     Icons
+                      //         .smart_display_outlined,
+                      //   ),
+                      //   text: 'Reels',
+                      // ),
                       Tab(
                         icon: Icon(
                           Icons.person_outline,
