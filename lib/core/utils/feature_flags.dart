@@ -1,32 +1,25 @@
 class FeatureFlags {
   const FeatureFlags._();
 
-  /// Temporarily disabled for the initial production release.
-  ///
-  /// Set this to true when self-registration should be available again.
-  static const bool registrationEnabled = false;
+  /// Enables self-registration from the Login page.
+  static const bool registrationEnabled = true;
 
-  /// Uses the authenticated enrolled-courses endpoint on the Learn page.
+  /// false = show every available course using the public course catalogue.
+  /// true  = show only courses purchased by the logged-in user.
   ///
-  /// Set this to false to restore the original public course catalogue.
+  /// Keep this false because the PM changed the Learn page back
+  /// to displaying all available courses.
   static const bool enrolledCoursesOnly = false;
 
-  /// Temporarily hides the Home notification entry point for Phase 1.
-  ///
-  /// Set this to true when the notification feature is ready for release.
-  static const bool notificationsEnabled = false;
+  /// Displays the notification button on the Home page.
+  static const bool notificationsEnabled = true;
 
-  /// Temporarily hides Continue Learning until lesson-progress
-  /// tracking is available.
-  static const bool continueLearningEnabled = false;
+  /// Displays the Continue Learning section on the Home page.
+  static const bool continueLearningEnabled = true;
 
-  /// Temporarily hides Real-life Scenarios from module lessons for Phase 1.
-  ///
-  /// Set this to true when the scenario feature is ready for release.
-  static const bool realLifeScenariosEnabled = false;
+  /// Displays Real-life Scenarios below the chapter video list.
+  static const bool realLifeScenariosEnabled = true;
 
-  /// Temporarily replaces Search with a coming-soon state for Phase 1.
-  ///
-  /// Set this to true when the Search API and result flow are ready.
-  static const bool searchEnabled = false;
+  /// Enables the Search UI and Search Results flow.
+  static const bool searchEnabled = true;
 }

@@ -18,11 +18,13 @@ class ProfileUseCase {
   Future<Either<Failure, UpdateProfileResponse>> updateProfile({
     required String name,
     required String email,
+    required String phoneNumber,
     String? photoPath,
   }) {
     return profileRepo.updateProfile(
       name: name,
       email: email,
+      phoneNumber: phoneNumber,
       photoPath: photoPath,
     );
   }

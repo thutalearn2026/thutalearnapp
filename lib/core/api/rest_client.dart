@@ -62,6 +62,7 @@ abstract class RestClient {
   Future<UpdateProfileResponse> updateProfile(
     @Part(name: 'name') String name,
     @Part(name: 'email') String email,
+    @Part(name: 'phone_number') String phoneNumber,
     @Part(name: 'photo') MultipartFile? photo,
   );
 

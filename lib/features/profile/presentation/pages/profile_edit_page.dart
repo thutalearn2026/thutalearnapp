@@ -53,7 +53,9 @@ class _ProfileEditViewState extends State<_ProfileEditView> {
     );
 
     // Phone is currently not returned or accepted by the API.
-    _phoneController = TextEditingController();
+    _phoneController = TextEditingController(
+      text: widget.profile.phoneNumber ?? '',
+    );
   }
 
   Future<void> _changeProfilePhoto() async {
@@ -161,13 +163,24 @@ class _ProfileEditViewState extends State<_ProfileEditView> {
   void _saveProfileChanges() {
     final bloc = context.read<EditProfileBloc>();
 
-    if (bloc.state.isLoading) return;
+    if (bloc.state.isLoading) {
+      return;
+    }
 
     final name = _usernameController.text.trim();
+    final phoneNumber = _phoneController.text.trim();
 
     if (name.isEmpty) {
       context.showSnackBar(
         'Please enter your name.',
+        snackBarType: SnackBarType.error,
+      );
+      return;
+    }
+
+    if (phoneNumber.length > 30) {
+      context.showSnackBar(
+        'Phone number must not exceed 30 characters.',
         snackBarType: SnackBarType.error,
       );
       return;
@@ -179,6 +192,7 @@ class _ProfileEditViewState extends State<_ProfileEditView> {
       OnUpdateProfile(
         name: name,
         email: widget.profile.email,
+        phoneNumber: phoneNumber,
         photoPath: _selectedPhoto?.path,
       ),
     );
@@ -203,21 +217,42 @@ class _ProfileEditViewState extends State<_ProfileEditView> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<EditProfileBloc, EditProfileState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state.status == EditProfileStatus.failure) {
-          context.showSnackBar(
-            state.message ?? 'Unable to update your profile.',
-            snackBarType: SnackBarType.error,
+          await context.showTtAnimatedDialog<void>(
+            barrierDismissible: false,
+            dialog: ProfileUpdateResultDialog(
+              isSuccess: false,
+              message:
+              state.message ??
+                  'We could not update your profile. '
+                      'Please check your information and try again.',
+            ),
           );
+
+          return;
         }
 
         if (state.status == EditProfileStatus.success &&
             state.updatedProfile != null) {
-          // Do not show a snackbar here because this route
-          // is about to be popped.
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          await context.showTtAnimatedDialog<void>(
+            barrierDismissible: false,
+            dialog: ProfileUpdateResultDialog(
+              isSuccess: true,
+              message:
+              state.message ??
+                  'Your profile information has been '
+                      'updated successfully.',
+            ),
+          );
 
-          context.pop(state.updatedProfile);
+          if (!mounted) {
+            return;
+          }
+
+          context.pop(
+            state.updatedProfile,
+          );
         }
       },
       builder: (context, state) {

@@ -2,11 +2,14 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'profile_model.g.dart';
 
-@JsonSerializable(fieldRename: FieldRename.snake)
+@JsonSerializable(
+  fieldRename: FieldRename.snake,
+)
 class ProfileModel {
   final String id;
   final String name;
   final String email;
+  final String? phoneNumber;
   final String? photo;
   final String? emailVerifiedAt;
   final String createdAt;
@@ -16,17 +19,22 @@ class ProfileModel {
     required this.id,
     required this.name,
     required this.email,
+    this.phoneNumber,
     this.photo,
     this.emailVerifiedAt,
     required this.createdAt,
     required this.updatedAt,
   });
 
-  factory ProfileModel.fromJson(Map<String, dynamic> json) {
+  factory ProfileModel.fromJson(
+      Map<String, dynamic> json,
+      ) {
     return _$ProfileModelFromJson(json);
   }
 
-  Map<String, dynamic> toJson() => _$ProfileModelToJson(this);
+  Map<String, dynamic> toJson() {
+    return _$ProfileModelToJson(this);
+  }
 }
 
 @JsonSerializable()
@@ -37,11 +45,15 @@ class ProfileResponse {
     required this.data,
   });
 
-  factory ProfileResponse.fromJson(Map<String, dynamic> json) {
+  factory ProfileResponse.fromJson(
+      Map<String, dynamic> json,
+      ) {
     return _$ProfileResponseFromJson(json);
   }
 
-  Map<String, dynamic> toJson() => _$ProfileResponseToJson(this);
+  Map<String, dynamic> toJson() {
+    return _$ProfileResponseToJson(this);
+  }
 }
 
 @JsonSerializable()

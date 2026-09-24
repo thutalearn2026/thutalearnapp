@@ -59,6 +59,7 @@ class ProfileEditInformationCard extends StatelessWidget {
               FilteringTextInputFormatter.allow(
                 RegExp(r'[0-9+\-\s()]'),
               ),
+              LengthLimitingTextInputFormatter(30),
             ],
           ),
         ],

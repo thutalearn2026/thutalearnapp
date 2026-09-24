@@ -292,17 +292,6 @@ class _ProfileViewState extends State<_ProfileView> {
             context.read<ProfileBloc>().add(
               OnGetProfile(),
             );
-
-            // Wait for the Edit Profile route transition to finish.
-            await Future<void>.delayed(
-              const Duration(milliseconds: 350),
-            );
-
-            if (!mounted) return;
-
-            context.showSnackBar(
-              'Profile updated successfully.',
-            );
           },
         ),
         14.gh,

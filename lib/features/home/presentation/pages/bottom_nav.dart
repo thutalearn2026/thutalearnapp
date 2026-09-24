@@ -6,6 +6,7 @@ import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/home/home.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
 import 'package:thuta_learn/features/profile/profile.dart';
+import 'package:thuta_learn/features/reels/reels.dart';
 
 class BottomNav extends StatefulWidget {
   const BottomNav({
@@ -28,8 +29,9 @@ class _BottomNavState extends State<BottomNav>
   void initState() {
     super.initState();
 
+    // Home, Learn, Reels, Profile
     _tabController = TabController(
-      length: 3,
+      length: 4,
       vsync: this,
     );
 
@@ -70,9 +72,9 @@ class _BottomNavState extends State<BottomNav>
             children: [
               const HomePage(),
               const LearnPage(),
-              // ReelsPage(
-              //   isActive: _currentIndex == 2,
-              // ),
+              ReelsPage(
+                isActive: _currentIndex == 2,
+              ),
               const ProfilePage(),
             ],
           ),
@@ -155,7 +157,7 @@ class BottomNavSectionView extends StatelessWidget {
                         ),
                         spreadRadius: 2,
                         blurRadius: 5,
-                        offset: const Offset(1, -1),
+                        offset: Offset(1, -1),
                       ),
                     ],
                   ),
@@ -172,7 +174,8 @@ class BottomNavSectionView extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
-                    unselectedLabelColor: ColorUtils.primaryColor,
+                    unselectedLabelColor:
+                    ColorUtils.primaryColor,
                     unselectedLabelStyle: const TextStyle(
                       fontWeight: FontWeight.w400,
                       fontSize: 11,
@@ -185,7 +188,9 @@ class BottomNavSectionView extends StatelessWidget {
                     ),
                     tabs: const [
                       Tab(
-                        icon: Icon(Icons.home),
+                        icon: Icon(
+                          Icons.home,
+                        ),
                         text: 'Home',
                       ),
                       Tab(
@@ -194,13 +199,12 @@ class BottomNavSectionView extends StatelessWidget {
                         ),
                         text: 'Learn',
                       ),
-                      // Tab(
-                      //   icon: Icon(
-                      //     Icons
-                      //         .smart_display_outlined,
-                      //   ),
-                      //   text: 'Reels',
-                      // ),
+                      Tab(
+                        icon: Icon(
+                          Icons.smart_display_outlined,
+                        ),
+                        text: 'Reels',
+                      ),
                       Tab(
                         icon: Icon(
                           Icons.person_outline,

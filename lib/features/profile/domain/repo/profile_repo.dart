@@ -8,15 +8,14 @@ abstract class ProfileRepo {
 
   Future<Either<Failure, ProfileResponse>> getProfile();
 
-  Future<Either<Failure, UpdateProfileResponse>>
-  updateProfile({
+  Future<Either<Failure, UpdateProfileResponse>> updateProfile({
     required String name,
     required String email,
+    required String phoneNumber,
     String? photoPath,
   });
 
-  Future<Either<Failure, ChangePasswordResponse>>
-  changePassword(
-      ChangePasswordRequest request,
-      );
+  Future<Either<Failure, ChangePasswordResponse>> changePassword(
+    ChangePasswordRequest request,
+  );
 }

@@ -10,3 +10,4 @@ export 'learning_progress_metric_card.dart';
 export 'weekly_activity_card.dart';
 export 'saved_vocabulary_item_view.dart';
 export 'profile_logout_dialog.dart';
+export 'profile_update_result_dialog.dart';

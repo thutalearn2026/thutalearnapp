@@ -7,6 +7,7 @@ abstract class ProfileClient {
   Future<UpdateProfileResponse> updateProfile({
     required String name,
     required String email,
+    required String phoneNumber,
     String? photoPath,
   });
 

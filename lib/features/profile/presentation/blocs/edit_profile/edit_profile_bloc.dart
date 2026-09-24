@@ -10,8 +10,7 @@ part 'edit_profile_event.dart';
 part 'edit_profile_state.dart';
 
 @Injectable()
-class EditProfileBloc
-    extends Bloc<EditProfileEvent, EditProfileState> {
+class EditProfileBloc extends Bloc<EditProfileEvent, EditProfileState> {
   final ProfileUseCase profileUseCase;
 
   EditProfileBloc({
@@ -21,9 +20,13 @@ class EditProfileBloc
   }
 
   Future<void> _onUpdateProfile(
-      OnUpdateProfile event,
-      Emitter<EditProfileState> emit,
-      ) async {
+    OnUpdateProfile event,
+    Emitter<EditProfileState> emit,
+  ) async {
+    if (state.isLoading) {
+      return;
+    }
+
     emit(
       const EditProfileState(
         status: EditProfileStatus.loading,
@@ -33,11 +36,12 @@ class EditProfileBloc
     final result = await profileUseCase.updateProfile(
       name: event.name,
       email: event.email,
+      phoneNumber: event.phoneNumber,
       photoPath: event.photoPath,
     );
 
     result.fold(
-          (failure) {
+      (failure) {
         emit(
           EditProfileState(
             status: EditProfileStatus.failure,
@@ -45,7 +49,7 @@ class EditProfileBloc
           ),
         );
       },
-          (response) {
+      (response) {
         emit(
           EditProfileState(
             status: EditProfileStatus.success,
@@ -57,14 +61,16 @@ class EditProfileBloc
     );
   }
 
-  String _failureMessage(Failure failure) {
+  String _failureMessage(
+    Failure failure,
+  ) {
     if (failure is ConnectionFailure) {
       return 'Please check your internet connection and try again.';
     }
 
     final message = failure.e?.toString();
 
-    if (message == null || message.isEmpty) {
+    if (message == null || message.trim().isEmpty) {
       return 'Unable to update your profile.';
     }
 

@@ -256,6 +256,7 @@ class _RestClient implements RestClient {
   Future<UpdateProfileResponse> updateProfile(
     String name,
     String email,
+    String phoneNumber,
     MultipartFile? photo,
   ) async {
     final _extra = <String, dynamic>{};
@@ -265,6 +266,7 @@ class _RestClient implements RestClient {
     final _data = FormData();
     _data.fields.add(MapEntry('name', name));
     _data.fields.add(MapEntry('email', email));
+    _data.fields.add(MapEntry('phone_number', phoneNumber));
     if (photo != null) {
       _data.files.add(MapEntry('photo', photo));
     }

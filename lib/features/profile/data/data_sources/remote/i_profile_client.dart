@@ -11,9 +11,9 @@ class IProfileClient implements ProfileClient {
     required Dio dio,
     required IConfig config,
   }) : client = RestClient(
-         dio,
-         baseUrl: config.baseUrl,
-       );
+    dio,
+    baseUrl: config.baseUrl,
+  );
 
   @override
   Future<ProfileResponse> getProfile() {
@@ -24,25 +24,29 @@ class IProfileClient implements ProfileClient {
   Future<UpdateProfileResponse> updateProfile({
     required String name,
     required String email,
+    required String phoneNumber,
     String? photoPath,
   }) async {
     MultipartFile? photo;
 
-    if (photoPath != null && photoPath.isNotEmpty) {
-      photo = await MultipartFile.fromFile(photoPath);
+    if (photoPath != null && photoPath.trim().isNotEmpty) {
+      photo = await MultipartFile.fromFile(
+        photoPath,
+      );
     }
 
     return client.updateProfile(
       name,
       email,
+      phoneNumber,
       photo,
     );
   }
 
   @override
   Future<ChangePasswordResponse> changePassword(
-    ChangePasswordRequest request,
-  ) {
+      ChangePasswordRequest request,
+      ) {
     return client.changePassword(request);
   }
 }

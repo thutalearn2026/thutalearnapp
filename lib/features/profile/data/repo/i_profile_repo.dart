@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:thuta_learn/core/core.dart';
+import 'package:thuta_learn/features/authentication/data/data_sources/box/auth_session_box.dart';
 import 'package:thuta_learn/features/profile/profile.dart';
 
 @Injectable(as: ProfileRepo)
@@ -18,12 +19,10 @@ class IProfileRepo implements ProfileRepo {
   }
 
   @override
-  Future<Either<Failure, ProfileResponse>>
-  getProfile() async {
+  Future<Either<Failure, ProfileResponse>> getProfile() async {
     try {
       final response = await client.getProfile();
 
-      // Keep Hive synchronized with GET /profile.
       await ProfileCacheBox.save(
         response.data,
       );
@@ -49,22 +48,30 @@ class IProfileRepo implements ProfileRepo {
   }
 
   @override
-  Future<Either<Failure, UpdateProfileResponse>>
-  updateProfile({
+  Future<Either<Failure, UpdateProfileResponse>> updateProfile({
     required String name,
     required String email,
+    required String phoneNumber,
     String? photoPath,
   }) async {
     try {
       final response = await client.updateProfile(
         name: name,
         email: email,
+        phoneNumber: phoneNumber,
         photoPath: photoPath,
       );
 
-      // Update Hive immediately after PUT /profile succeeds.
+      // Keep the offline Profile cache synchronized.
       await ProfileCacheBox.save(
         response.data,
+      );
+
+      // Keep authenticated user data synchronized.
+      // This ensures the updated name is also reflected
+      // in "Sawatdee, [user name]" on the Home page.
+      await AuthSessionBox.updateUserData(
+        response.data.toJson(),
       );
 
       return Right(response);
@@ -88,10 +95,9 @@ class IProfileRepo implements ProfileRepo {
   }
 
   @override
-  Future<Either<Failure, ChangePasswordResponse>>
-  changePassword(
-      ChangePasswordRequest request,
-      ) async {
+  Future<Either<Failure, ChangePasswordResponse>> changePassword(
+    ChangePasswordRequest request,
+  ) async {
     try {
       final response = await client.changePassword(
         request,
