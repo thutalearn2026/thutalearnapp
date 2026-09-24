@@ -180,10 +180,14 @@ class _LearnCoursesViewState extends State<_LearnCoursesView> {
                           childCount: state.courses.length,
                         ),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
+                          crossAxisCount: context.adaptiveGridColumnCount(),
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 14,
-                          childAspectRatio: Platform.isAndroid ? 0.5 : 0.56,
+                          childAspectRatio: context.isTablet
+                              ? 0.54
+                              : Platform.isAndroid
+                              ? 0.5
+                              : 0.56,
                         ),
                       ),
                     ),
@@ -241,14 +245,13 @@ class _CoursesLoadingView extends StatelessWidget {
                   child: GridView.builder(
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: 4,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 14,
-                          childAspectRatio: 0.58,
-                        ),
-                    itemBuilder: (_, __) {
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: context.adaptiveGridColumnCount(),
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 14,
+                      childAspectRatio: context.isTablet ? 0.54 : 0.58,
+                    ),
+                    itemBuilder: (_, _) {
                       return Container(
                         decoration: BoxDecoration(
                           color: Colors.white,

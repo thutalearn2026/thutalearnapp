@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -15,13 +13,7 @@ import 'package:thuta_learn/features/onboarding/data/data_sources/box/onboarding
 import 'package:flutter/foundation.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 
-import 'package:thuta_learn/features/learn/data/data_sources/box/courses_cache_box.dart';
 import 'package:thuta_learn/features/profile/data/data_sources/box/profile_cache_box.dart';
-import 'package:thuta_learn/features/learn/data/data_sources/box/course_detail_cache_box.dart';
-import 'package:thuta_learn/features/learn/data/data_sources/box/module_lessons_cache_box.dart';
-import 'package:thuta_learn/features/learn/data/data_sources/box/lesson_detail_cache_box.dart';
-import 'package:thuta_learn/features/learn/data/data_sources/box/module_resources_cache_box.dart';
-import 'package:thuta_learn/features/learn/data/data_sources/box/downloaded_resource_box.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,10 +23,7 @@ void main() async {
     ignoreSsl: false,
   );
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  await _configurePreferredOrientations();
 
   await dotenv.load(fileName: '.env');
 
@@ -75,6 +64,11 @@ class MyApp extends StatelessWidget {
           child: MaterialApp.router(
             title: 'ThuTa Learn',
             debugShowCheckedModeBanner: false,
+            builder: (context, child) {
+              return TtResponsiveAppFrame(
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
             theme: ThemeData(
               fontFamily: "helvetica_neue",
               colorScheme: .fromSeed(seedColor: ColorUtils.primaryColor),
@@ -91,4 +85,31 @@ class MyApp extends StatelessWidget {
       },
     );
   }
+}
+
+Future<void> _configurePreferredOrientations() async {
+  final views = WidgetsBinding.instance.platformDispatcher.views;
+
+  if (views.isEmpty) {
+    return;
+  }
+
+  final view = views.first;
+  final logicalShortestSide =
+      view.physicalSize.shortestSide / view.devicePixelRatio;
+  final isTablet = logicalShortestSide >= TtResponsiveAppFrame.tabletBreakpoint;
+
+  await SystemChrome.setPreferredOrientations(
+    isTablet
+        ? const [
+            DeviceOrientation.portraitUp,
+            DeviceOrientation.portraitDown,
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ]
+        : const [
+            DeviceOrientation.portraitUp,
+            DeviceOrientation.portraitDown,
+          ],
+  );
 }

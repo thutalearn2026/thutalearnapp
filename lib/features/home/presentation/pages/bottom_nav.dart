@@ -6,7 +6,6 @@ import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/home/home.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
 import 'package:thuta_learn/features/profile/profile.dart';
-import 'package:thuta_learn/features/reels/reels.dart';
 
 class BottomNav extends StatefulWidget {
   const BottomNav({
@@ -19,8 +18,7 @@ class BottomNav extends StatefulWidget {
   }
 }
 
-class _BottomNavState
-    extends State<BottomNav>
+class _BottomNavState extends State<BottomNav>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
@@ -68,8 +66,7 @@ class _BottomNavState
         Positioned.fill(
           child: TabBarView(
             controller: _tabController,
-            physics:
-            const NeverScrollableScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             children: [
               const HomePage(),
               const LearnPage(),
@@ -91,8 +88,7 @@ class _BottomNavState
   }
 }
 
-class BottomNavSectionView
-    extends StatelessWidget {
+class BottomNavSectionView extends StatelessWidget {
   final TabController controller;
 
   const BottomNavSectionView({
@@ -113,8 +109,7 @@ class BottomNavSectionView
         children: [
           Expanded(
             child: ClipRRect(
-              borderRadius:
-              BorderRadius.circular(48),
+              borderRadius: BorderRadius.circular(48),
               child: BackdropFilter(
                 filter: ImageFilter.blur(
                   sigmaX: 10,
@@ -122,20 +117,16 @@ class BottomNavSectionView
                 ),
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius:
-                    BorderRadius.circular(48),
+                    borderRadius: BorderRadius.circular(48),
                     border: Border.all(
-                      color:
-                      Colors.white.withValues(
+                      color: Colors.white.withValues(
                         alpha: 0.9,
                       ),
                       width: 1.5,
                     ),
-                    gradient:
-                    const LinearGradient(
+                    gradient: const LinearGradient(
                       begin: Alignment.topLeft,
-                      end:
-                      Alignment.bottomRight,
+                      end: Alignment.bottomRight,
                       colors: [
                         Color.fromRGBO(
                           241,
@@ -159,50 +150,38 @@ class BottomNavSectionView
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black
-                            .withValues(
+                        color: Colors.black.withValues(
                           alpha: 0.1,
                         ),
                         spreadRadius: 2,
                         blurRadius: 5,
-                        offset:
-                        const Offset(1, -1),
+                        offset: const Offset(1, -1),
                       ),
                     ],
                   ),
                   child: TabBar(
                     controller: controller,
-                    splashFactory:
-                    NoSplash.splashFactory,
-                    indicatorSize:
-                    TabBarIndicatorSize.tab,
-                    indicatorPadding:
-                    const EdgeInsets.symmetric(
+                    splashFactory: NoSplash.splashFactory,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    indicatorPadding: const EdgeInsets.symmetric(
                       vertical: 4,
                       horizontal: 4,
                     ),
                     labelColor: Colors.white,
-                    labelStyle:
-                    const TextStyle(
+                    labelStyle: const TextStyle(
                       fontSize: 11,
-                      fontWeight:
-                      FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                     ),
-                    unselectedLabelColor:
-                    ColorUtils.primaryColor,
-                    unselectedLabelStyle:
-                    const TextStyle(
-                      fontWeight:
-                      FontWeight.w400,
+                    unselectedLabelColor: ColorUtils.primaryColor,
+                    unselectedLabelStyle: const TextStyle(
+                      fontWeight: FontWeight.w400,
                       fontSize: 11,
                     ),
                     indicatorWeight: 0,
                     dividerHeight: 0,
                     indicator: BoxDecoration(
-                      color:
-                      ColorUtils.primaryColor,
-                      borderRadius:
-                      BorderRadius.circular(48),
+                      color: ColorUtils.primaryColor,
+                      borderRadius: BorderRadius.circular(48),
                     ),
                     tabs: const [
                       Tab(
@@ -239,8 +218,7 @@ class BottomNavSectionView
               context.push(Routes.search);
             },
             child: ClipRRect(
-              borderRadius:
-              BorderRadius.circular(200),
+              borderRadius: BorderRadius.circular(200),
               child: BackdropFilter(
                 filter: ImageFilter.blur(
                   sigmaX: 10,
@@ -252,17 +230,14 @@ class BottomNavSectionView
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color:
-                      Colors.white.withValues(
+                      color: Colors.white.withValues(
                         alpha: 0.7,
                       ),
                       width: 1.5,
                     ),
-                    gradient:
-                    const LinearGradient(
+                    gradient: const LinearGradient(
                       begin: Alignment.topLeft,
-                      end:
-                      Alignment.bottomRight,
+                      end: Alignment.bottomRight,
                       colors: [
                         Color.fromRGBO(
                           241,
@@ -287,8 +262,7 @@ class BottomNavSectionView
                   ),
                   child: const Icon(
                     Icons.search,
-                    color:
-                    ColorUtils.primaryColor,
+                    color: ColorUtils.primaryColor,
                   ),
                 ),
               ),
