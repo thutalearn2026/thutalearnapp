@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/authentication/authentication.dart';
 import 'package:thuta_learn/features/profile/profile.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -123,51 +124,52 @@ class _ProfileViewState extends State<_ProfileView> {
     );
   }
 
-  Future<void> _showDeleteAccountDialog() async {
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const TtText(
-            'Delete Account',
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.red,
-          ),
-          content: const TtText(
-            'Deleting your account is permanent and cannot '
-            'be undone. Do you want to continue?',
-            fontSize: 14,
-            height: 1.4,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-              child: const TtText(
-                'Cancel',
-                fontSize: 14,
-                color: ColorUtils.greyTextColor,
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
+  static final Uri _accountDeletionUri = Uri.parse(
+    'https://thutalearn.com/account-deletion',
+  );
 
-                // Delete-account API integration will be added later.
-              },
-              child: const TtText(
-                'Delete',
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.red,
-              ),
-            ),
-          ],
-        );
-      },
+  Future<void> _showDeleteAccountDialog() async {
+    final confirmed = await context.showTtAnimatedDialog<bool>(
+      barrierDismissible: false,
+      dialog:
+      const ProfileAccountDeletionConfirmationDialog(),
     );
+
+    if (!mounted || confirmed != true) {
+      return;
+    }
+
+    await context.showTtAnimatedDialog<void>(
+      barrierDismissible: false,
+      dialog: ProfileAccountDeletionContactDialog(
+        onOpenLink: _openAccountDeletionPage,
+      ),
+    );
+  }
+
+  Future<void> _openAccountDeletionPage() async {
+    try {
+      final opened = await launchUrl(
+        _accountDeletionUri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!opened && mounted) {
+        context.showSnackBar(
+          'Unable to open the account deletion page.',
+          snackBarType: SnackBarType.error,
+        );
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      context.showSnackBar(
+        'Unable to open the account deletion page.',
+        snackBarType: SnackBarType.error,
+      );
+    }
   }
 
   Future<void> _refreshProfile() async {
@@ -436,22 +438,16 @@ class _ProfileViewState extends State<_ProfileView> {
         // Account actions
         ProfileSettingsCard(
           children: [
-            // ProfileSettingTile(
-            //   title: 'Help',
-            //   onTap: () {
-            //     // Open Help page later.
-            //   },
-            // ),
             ProfileSettingTile(
               title: 'Logout',
               titleColor: Colors.red,
               onTap: _showLogoutDialog,
             ),
-            // ProfileSettingTile(
-            //   title: 'Delete Account',
-            //   titleColor: Colors.red,
-            //   onTap: _showDeleteAccountDialog,
-            // ),
+            ProfileSettingTile(
+              title: 'Account Deletion',
+              titleColor: Colors.red,
+              onTap: _showDeleteAccountDialog,
+            ),
           ],
         ),
       ],
