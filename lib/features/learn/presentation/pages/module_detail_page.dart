@@ -67,6 +67,22 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
     return _selectedTabIndex == 0;
   }
 
+  bool _isSupportedQuiz(ChapterQuizModel quiz) {
+    if (FeatureFlags.advancedPracticeEnabled) {
+      return true;
+    }
+
+    final type = quiz.type
+        .trim()
+        .toLowerCase()
+        .replaceAll('-', '_')
+        .replaceAll(' ', '_');
+
+    return type == 'multiple_choice' ||
+        type == 'listening' ||
+        type == 'reading';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -120,11 +136,12 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
 
     for (final chapter in state.chapters) {
       final quizzes = state.quizzesByChapter[chapter.id];
+      final supportedQuizzes = quizzes?.where(_isSupportedQuiz).toList();
 
-      if (quizzes != null && quizzes.isNotEmpty) {
+      if (supportedQuizzes != null && supportedQuizzes.isNotEmpty) {
         _openQuizType(
           chapter,
-          quizzes.first,
+          supportedQuizzes.first,
         );
 
         return;
@@ -244,7 +261,15 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
     ChapterModel chapter,
     ChapterQuizModel quiz,
   ) {
-    final type = quiz.type.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+    if (!_isSupportedQuiz(quiz)) {
+      return;
+    }
+
+    final type = quiz.type
+        .trim()
+        .toLowerCase()
+        .replaceAll('-', '_')
+        .replaceAll(' ', '_');
 
     switch (type) {
       case 'multiple_choice':
@@ -262,18 +287,22 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
 
       case 'pronunciation':
       case 'pronunciation_drill':
-        context.push(
-          Routes.pronunciationDrill,
-        );
+        if (FeatureFlags.advancedPracticeEnabled) {
+          context.push(
+            Routes.pronunciationDrill,
+          );
+        }
         break;
 
       case 'vocabulary':
       case 'vocab':
       case 'flash_card':
       case 'flash_cards':
-        context.push(
-          Routes.vocabularyFlashCards,
-        );
+        if (FeatureFlags.advancedPracticeEnabled) {
+          context.push(
+            Routes.vocabularyFlashCards,
+          );
+        }
         break;
 
       default:
@@ -326,7 +355,8 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
         ),
         BlocListener<ModuleVideoDownloadsCubit, ModuleVideoDownloadsState>(
           listenWhen: (previous, current) {
-            return previous.message != current.message && current.message != null;
+            return previous.message != current.message &&
+                current.message != null;
           },
           listener: (context, state) {
             final message = state.message;
@@ -337,17 +367,15 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
 
             context.showSnackBar(
               message,
-              snackBarType: state.messageIsError ? SnackBarType.error : SnackBarType.success,
+              snackBarType: state.messageIsError
+                  ? SnackBarType.error
+                  : SnackBarType.success,
             );
           },
         ),
-        BlocListener<
-            ResourceDownloadCubit,
-            ResourceDownloadState
-        >(
+        BlocListener<ResourceDownloadCubit, ResourceDownloadState>(
           listenWhen: (previous, current) {
-            return previous.message !=
-                current.message &&
+            return previous.message != current.message &&
                 current.message != null;
           },
           listener: (context, state) {
@@ -363,24 +391,16 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
             );
           },
         ),
-        BlocListener<
-            ModuleDetailBloc,
-            ModuleDetailState
-        >(
+        BlocListener<ModuleDetailBloc, ModuleDetailState>(
           listenWhen: (previous, current) {
-            return previous.resourcesByChapter !=
-                current.resourcesByChapter;
+            return previous.resourcesByChapter != current.resourcesByChapter;
           },
           listener: (context, state) {
-            final resources = state
-                .resourcesByChapter.values
-                .expand(
-                  (chapterResources) => chapterResources,
+            final resources = state.resourcesByChapter.values.expand(
+              (chapterResources) => chapterResources,
             );
 
-            context
-                .read<ResourceDownloadCubit>()
-                .registerResources(resources);
+            context.read<ResourceDownloadCubit>().registerResources(resources);
           },
         ),
         // BlocListener<
@@ -406,7 +426,8 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
             return const _ModuleLoadingPage();
           }
 
-          if (state.status == ModuleDetailStatus.failure && state.module == null) {
+          if (state.status == ModuleDetailStatus.failure &&
+              state.module == null) {
             return _ModuleErrorPage(
               message: state.message ?? 'Unable to load this module.',
               onRetry: () {
@@ -469,8 +490,10 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
                             onResume: () {
                               _handleResume(state);
                             },
-                            secondaryActionLabel:
-                            _isLessonsTab ? 'Overview' : 'Take Quiz',
+                            showSecondaryAction: !_isLessonsTab,
+                            secondaryActionLabel: _isLessonsTab
+                                ? 'Overview'
+                                : 'Take Quiz',
                             secondaryActionIcon: _isLessonsTab
                                 ? Icons.play_arrow_rounded
                                 : Icons.lightbulb_outline_rounded,
@@ -527,7 +550,9 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
                       onRetryChapter: _loadChapterVideos,
                       onVideoTap: _openVideo,
                       onVideoDownload: (video) {
-                        context.read<ModuleVideoDownloadsCubit>().download(video);
+                        context.read<ModuleVideoDownloadsCubit>().download(
+                          video,
+                        );
                       },
                     ),
                     ModulePracticeTabView(
@@ -548,9 +573,9 @@ class _ModuleDetailViewState extends State<_ModuleDetailView>
                       onRetryChapter: _loadChapterResources,
                       onResourceTap: _openResource,
                       onDownload: (resource) {
-                        context
-                            .read<ResourceDownloadCubit>()
-                            .download(resource);
+                        context.read<ResourceDownloadCubit>().download(
+                          resource,
+                        );
                       },
                     ),
                   ],

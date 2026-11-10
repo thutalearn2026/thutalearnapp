@@ -141,22 +141,21 @@ class _RegisterViewState extends State<_RegisterView> {
                       onTap: _register,
                       child: state.isLoading
                           ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
                           : TtText(
-                        StringUtils.continueLabel,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
+                              StringUtils.continueLabel,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                     ),
                   ),
 
-                  // Keep your existing login and social-login sections here.
                   20.gh,
                   DoNotHaveAccountSectionView(
                     content: StringUtils.alreadyHaveAccount,
@@ -165,10 +164,14 @@ class _RegisterViewState extends State<_RegisterView> {
                       context.pushReplacement(Routes.login);
                     },
                   ),
-                  28.gh,
-                  OrLoginWith(label: "or login with"),
-                  20.gh,
-                  SocialLoginSectionView(),
+                  if (FeatureFlags.socialLoginEnabled) ...[
+                    28.gh,
+                    const OrLoginWith(
+                      label: 'or register with',
+                    ),
+                    20.gh,
+                    const SocialLoginSectionView(),
+                  ],
                 ],
               ),
             ),

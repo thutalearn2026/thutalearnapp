@@ -10,12 +10,12 @@ class LetsLearnTodaySectionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const LetsLearnTodayFrame(
+    return LetsLearnTodayFrame(
       child: Column(
         spacing: 16,
-        children: [
+        children: const [
           GreetingView(),
-          PersonalStatsView(),
+          if (FeatureFlags.homePersonalStatsEnabled) PersonalStatsView(),
         ],
       ),
     );
@@ -171,7 +171,7 @@ class LetsLearnTodayFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 200,
+      height: FeatureFlags.homePersonalStatsEnabled ? 200 : 112,
       padding: const EdgeInsets.only(
         left: 16,
         right: 16,

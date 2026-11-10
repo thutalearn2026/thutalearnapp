@@ -380,16 +380,18 @@ class _ApiModuleCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
-                children: [
-                  _ModuleStatusBadge(
-                    label: 'Not Started',
-                    foregroundColor: ColorUtils.greyTextColor,
-                    backgroundColor: Color(0xFFEFF3F8),
-                  ),
-                ],
-              ),
-              10.gh,
+              if (FeatureFlags.courseProgressEnabled) ...[
+                const Row(
+                  children: [
+                    _ModuleStatusBadge(
+                      label: 'Not Started',
+                      foregroundColor: ColorUtils.greyTextColor,
+                      backgroundColor: Color(0xFFEFF3F8),
+                    ),
+                  ],
+                ),
+                10.gh,
+              ],
               TtText(
                 module.title,
                 fontSize: 16,

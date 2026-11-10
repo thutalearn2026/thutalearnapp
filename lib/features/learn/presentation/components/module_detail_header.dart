@@ -10,6 +10,7 @@ class ModuleDetailHeader extends StatelessWidget {
   final String secondaryActionLabel;
   final IconData secondaryActionIcon;
   final VoidCallback onSecondaryAction;
+  final bool showSecondaryAction;
 
   const ModuleDetailHeader({
     super.key,
@@ -20,6 +21,7 @@ class ModuleDetailHeader extends StatelessWidget {
     required this.secondaryActionLabel,
     required this.secondaryActionIcon,
     required this.onSecondaryAction,
+    this.showSecondaryAction = true,
   });
 
   @override
@@ -48,12 +50,12 @@ class ModuleDetailHeader extends StatelessWidget {
           ),
           16.gh,
 
-          // Progress is kept at its current value until
-          // learner progress is returned by the API.
-          _ModuleProgressView(
-            progress: module.progress,
-          ),
-          18.gh,
+          if (FeatureFlags.moduleProgressEnabled) ...[
+            _ModuleProgressView(
+              progress: module.progress,
+            ),
+            18.gh,
+          ],
           TtText(
             module.description,
             fontSize: 14,
@@ -81,7 +83,7 @@ class ModuleDetailHeader extends StatelessWidget {
                       ),
                       SizedBox(width: 8),
                       TtText(
-                        'Resume',
+                        'Start Learning',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: ColorUtils.primaryColor,
@@ -90,29 +92,31 @@ class ModuleDetailHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              12.gw,
-              Expanded(
-                child: TtButton(
-                  backgroundColor: ColorUtils.highlightColor,
-                  onTap: onSecondaryAction,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        secondaryActionIcon,
-                        color: Colors.white,
-                      ),
-                      8.gw,
-                      TtText(
-                        secondaryActionLabel,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ],
+              if (showSecondaryAction) ...[
+                12.gw,
+                Expanded(
+                  child: TtButton(
+                    backgroundColor: ColorUtils.highlightColor,
+                    onTap: onSecondaryAction,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          secondaryActionIcon,
+                          color: Colors.white,
+                        ),
+                        8.gw,
+                        TtText(
+                          secondaryActionLabel,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ],
@@ -202,15 +206,15 @@ class _ModuleMetadataView extends StatelessWidget {
       runSpacing: 12,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        if (normalizedTeacherName != null &&
-            normalizedTeacherName.isNotEmpty)
+        if (normalizedTeacherName != null && normalizedTeacherName.isNotEmpty)
           _MetadataItem(
             icon: Icons.person_rounded,
             label: 'by $normalizedTeacherName',
           ),
         _MetadataItem(
           icon: Icons.smart_display_rounded,
-          label: '$videoCount video'
+          label:
+              '$videoCount video'
               '${videoCount == 1 ? '' : 's'}',
         ),
 

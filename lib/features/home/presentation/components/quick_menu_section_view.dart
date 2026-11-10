@@ -4,11 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:thuta_learn/core/core.dart';
 
 class QuickMenuSectionView extends StatelessWidget {
-  final int savedVocabularyCount;
-
   const QuickMenuSectionView({
     super.key,
-    this.savedVocabularyCount = 178,
   });
 
   @override
@@ -30,9 +27,7 @@ class QuickMenuSectionView extends StatelessWidget {
           QuickMenuItemView(
             imagePath: ImageUtils.reviewVocabularies,
             title: 'Review Vocabularies',
-            description:
-                'You saved $savedVocabularyCount '
-                'vocabularies in total. Review Now!',
+            description: 'Review and practice the words you have saved.',
             onTap: () {
               HapticFeedback.lightImpact();
 
@@ -41,21 +36,22 @@ class QuickMenuSectionView extends StatelessWidget {
               );
             },
           ),
-          10.gh,
-          QuickMenuItemView(
-            imagePath: ImageUtils.learningJourney,
-            title: 'Your Learning Journey',
-            description:
-                'Discover the milestones you\'ve '
-                'achieved along the way.',
-            onTap: () {
-              HapticFeedback.lightImpact();
+          if (FeatureFlags.learningProgressEnabled) ...[
+            10.gh,
+            QuickMenuItemView(
+              imagePath: ImageUtils.learningJourney,
+              title: 'Your Learning Journey',
+              description:
+                  'Discover the milestones you\'ve achieved along the way.',
+              onTap: () {
+                HapticFeedback.lightImpact();
 
-              context.push(
-                Routes.learningProgress,
-              );
-            },
-          ),
+                context.push(
+                  Routes.learningProgress,
+                );
+              },
+            ),
+          ],
         ],
       ),
     );

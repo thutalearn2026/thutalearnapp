@@ -109,7 +109,7 @@ class _ProfileAvatar extends StatelessWidget {
                     shape: BoxShape.circle,
                     image: DecorationImage(
                       image: imageProvider,
-                      fit: BoxFit.cover
+                      fit: BoxFit.cover,
                     ),
                   ),
                 );
@@ -153,34 +153,36 @@ class _ProfileInformationView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 4,
+        if (FeatureFlags.profileLevelEnabled) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 4,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.workspace_premium_outlined,
+                  size: 15,
+                  color: ColorUtils.secondaryColor,
+                ),
+                SizedBox(width: 4),
+                TtText(
+                  'Beginner',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: ColorUtils.primaryColor,
+                ),
+              ],
+            ),
           ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.workspace_premium_outlined,
-                size: 15,
-                color: ColorUtils.secondaryColor,
-              ),
-              SizedBox(width: 4),
-              TtText(
-                'Beginner',
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: ColorUtils.primaryColor,
-              ),
-            ],
-          ),
-        ),
-        8.gh,
+          8.gh,
+        ],
         TtText(
           name,
           fontSize: 16,

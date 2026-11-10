@@ -79,13 +79,15 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
   Widget build(BuildContext context) {
     return BlocListener<LessonDetailBloc, LessonDetailState>(
       listenWhen: (previous, current) {
-        return previous.vocabularyActionMessage != current.vocabularyActionMessage &&
+        return previous.vocabularyActionMessage !=
+                current.vocabularyActionMessage &&
             current.vocabularyActionMessage != null;
       },
       listener: (context, state) {
         context.showSnackBar(
           state.vocabularyActionMessage!,
-          snackBarType: state.vocabularySaveStatus == VocabularySaveStatus.success
+          snackBarType:
+              state.vocabularySaveStatus == VocabularySaveStatus.success
               ? SnackBarType.success
               : SnackBarType.error,
         );
@@ -114,7 +116,8 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
               return const _LessonDetailLoadingPage();
             }
 
-            if (state.status == LessonDetailStatus.failure && state.video == null) {
+            if (state.status == LessonDetailStatus.failure &&
+                state.video == null) {
               return _LessonDetailErrorPage(
                 message: state.message ?? 'Unable to load this lesson.',
                 onRetry: _retry,
@@ -127,7 +130,9 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
               return const SizedBox.shrink();
             }
 
-            final title = video.title.trim().isEmpty ? 'Untitled Lesson' : video.title.trim();
+            final title = video.title.trim().isEmpty
+                ? 'Untitled Lesson'
+                : video.title.trim();
 
             return Scaffold(
               backgroundColor: ColorUtils.scaffoldBackgroundColor,
@@ -149,8 +154,7 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
                         status: downloadState.status,
                         progress: downloadState.progress,
                         onPressed: () {
-                          final cubit =
-                          context.read<LessonDownloadCubit>();
+                          final cubit = context.read<LessonDownloadCubit>();
 
                           switch (downloadState.status) {
                             case VideoDownloadStatus.downloading:
@@ -172,20 +176,28 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
                       );
                     },
                   ),
-                  IconButton(
-                    tooltip: _isFavorite ? 'Remove from favorites' : 'Add to favorites',
-                    onPressed: () {
-                      setState(() {
-                        _isFavorite = !_isFavorite;
-                      });
-                    },
-                    icon: Icon(
-                      _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                      color: _isFavorite ? ColorUtils.secondaryColor : ColorUtils.primaryColor,
-                      size: 30,
+                  if (FeatureFlags.lessonFavoriteEnabled) ...[
+                    IconButton(
+                      tooltip: _isFavorite
+                          ? 'Remove from favorites'
+                          : 'Add to favorites',
+                      onPressed: () {
+                        setState(() {
+                          _isFavorite = !_isFavorite;
+                        });
+                      },
+                      icon: Icon(
+                        _isFavorite
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: _isFavorite
+                            ? ColorUtils.secondaryColor
+                            : ColorUtils.primaryColor,
+                        size: 30,
+                      ),
                     ),
-                  ),
-                  8.gw,
+                    8.gw,
+                  ],
                 ],
               ),
               body: TtFadeIn(
@@ -214,7 +226,8 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
                     20.gh,
                     BlocBuilder<LessonDownloadCubit, LessonDownloadState>(
                       buildWhen: (previous, current) {
-                        return previous.localFilePath != current.localFilePath ||
+                        return previous.localFilePath !=
+                                current.localFilePath ||
                             previous.status != current.status;
                       },
 
@@ -235,31 +248,24 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
                           status: downloadState.status,
                           progress: downloadState.progress,
                           onPause: () {
-                            context
-                                .read<LessonDownloadCubit>()
-                                .pause();
+                            context.read<LessonDownloadCubit>().pause();
                           },
                           onResume: () {
-                            context
-                                .read<LessonDownloadCubit>()
-                                .resume();
+                            context.read<LessonDownloadCubit>().resume();
                           },
                           onCancel: () {
-                            context
-                                .read<LessonDownloadCubit>()
-                                .cancel();
+                            context.read<LessonDownloadCubit>().cancel();
                           },
                         );
                       },
                     ),
 
-                    // The endpoint currently does not return
-                    // transcript, vocabulary or special notes.
-                    // These sections can remain as existing
-                    // placeholder UI until their APIs are ready.
-                    20.gh,
-                    const LessonTranscriptSectionView(),
-                    24.gh,
+                    if (FeatureFlags.lessonTranscriptEnabled) ...[
+                      20.gh,
+                      const LessonTranscriptSectionView(),
+                      24.gh,
+                    ] else
+                      20.gh,
                     LessonVocabularySectionView(
                       status: state.vocabularyStatus,
                       vocabularies: state.vocabularies,
@@ -281,8 +287,10 @@ class _LessonDetailViewState extends State<_LessonDetailView> {
                         );
                       },
                     ),
-                    28.gh,
-                    const LessonSpecialNotesView(),
+                    if (FeatureFlags.lessonSpecialNotesEnabled) ...[
+                      28.gh,
+                      const LessonSpecialNotesView(),
+                    ],
                   ],
                 ),
               ),

@@ -18,14 +18,14 @@ class LearnOverviewSectionView extends StatelessWidget {
       children: [
         if (isWordOfTheDayLoading) ...[
           const _WordOfTheDayLoadingView(),
-          16.gh,
+          if (FeatureFlags.courseProgressEnabled) 16.gh,
         ] else if (wordOfTheDay != null) ...[
           WordOfTheDaySectionView(
             wordOfTheDay: wordOfTheDay!,
           ),
-          16.gh,
+          if (FeatureFlags.courseProgressEnabled) 16.gh,
         ],
-        const CurrentLevelSectionView(),
+        if (FeatureFlags.courseProgressEnabled) const CurrentLevelSectionView(),
       ],
     );
   }

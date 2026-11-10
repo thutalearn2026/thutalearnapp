@@ -68,7 +68,11 @@ class _BottomNavState extends State<BottomNav>
             controller: _tabController,
             physics: const NeverScrollableScrollPhysics(),
             children: [
-              const HomePage(),
+              HomePage(
+                onExploreCourses: () {
+                  _tabController.animateTo(1);
+                },
+              ),
               const LearnPage(),
               // ReelsPage(
               //   isActive: _currentIndex == 2,
@@ -213,61 +217,62 @@ class BottomNavSectionView extends StatelessWidget {
               ),
             ),
           ),
-          TtZoomTap(
-            onTap: () {
-              context.push(Routes.search);
-            },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(200),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: 10,
-                  sigmaY: 8,
-                ),
-                child: Container(
-                  width: 65,
-                  height: 65,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(
-                        alpha: 0.7,
-                      ),
-                      width: 1.5,
-                    ),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color.fromRGBO(
-                          241,
-                          241,
-                          241,
-                          0.90,
-                        ),
-                        Color.fromRGBO(
-                          255,
-                          255,
-                          255,
-                          0.72,
-                        ),
-                        Color.fromRGBO(
-                          241,
-                          241,
-                          241,
-                          0.58,
-                        ),
-                      ],
-                    ),
+          if (FeatureFlags.searchEnabled)
+            TtZoomTap(
+              onTap: () {
+                context.push(Routes.search);
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(200),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: 10,
+                    sigmaY: 8,
                   ),
-                  child: const Icon(
-                    Icons.search,
-                    color: ColorUtils.primaryColor,
+                  child: Container(
+                    width: 65,
+                    height: 65,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(
+                          alpha: 0.7,
+                        ),
+                        width: 1.5,
+                      ),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color.fromRGBO(
+                            241,
+                            241,
+                            241,
+                            0.90,
+                          ),
+                          Color.fromRGBO(
+                            255,
+                            255,
+                            255,
+                            0.72,
+                          ),
+                          Color.fromRGBO(
+                            241,
+                            241,
+                            241,
+                            0.58,
+                          ),
+                        ],
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.search,
+                      color: ColorUtils.primaryColor,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

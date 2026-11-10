@@ -14,8 +14,7 @@ class ProfilePage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => getIt<ProfileBloc>()
-            ..add(OnGetProfile()),
+          create: (_) => getIt<ProfileBloc>()..add(OnGetProfile()),
         ),
         BlocProvider(
           create: (_) => getIt<LogoutBloc>(),
@@ -25,8 +24,7 @@ class ProfilePage extends StatelessWidget {
         listener: (context, state) {
           if (state.status == LogoutStatus.failure) {
             context.showSnackBar(
-              state.message ??
-                  'Unable to logout. Please try again.',
+              state.message ?? 'Unable to logout. Please try again.',
               snackBarType: SnackBarType.error,
             );
           }
@@ -131,8 +129,7 @@ class _ProfileViewState extends State<_ProfileView> {
   Future<void> _showDeleteAccountDialog() async {
     final confirmed = await context.showTtAnimatedDialog<bool>(
       barrierDismissible: false,
-      dialog:
-      const ProfileAccountDeletionConfirmationDialog(),
+      dialog: const ProfileAccountDeletionConfirmationDialog(),
     );
 
     if (!mounted || confirmed != true) {
@@ -177,14 +174,13 @@ class _ProfileViewState extends State<_ProfileView> {
 
     if (profileBloc.state.isRefreshing) {
       await profileBloc.stream.firstWhere(
-            (state) => !state.isRefreshing,
+        (state) => !state.isRefreshing,
       );
       return;
     }
 
-    final refreshCompleted =
-    profileBloc.stream.firstWhere(
-          (state) {
+    final refreshCompleted = profileBloc.stream.firstWhere(
+      (state) {
         return !state.isRefreshing &&
             (state.status == ProfileStatus.success ||
                 state.status == ProfileStatus.failure);
@@ -200,8 +196,7 @@ class _ProfileViewState extends State<_ProfileView> {
   Widget build(BuildContext context) {
     return BlocConsumer<ProfileBloc, ProfileState>(
       listenWhen: (previous, current) {
-        return previous.message != current.message &&
-            current.message != null;
+        return previous.message != current.message && current.message != null;
       },
       listener: (context, state) {
         context.showSnackBar(
@@ -326,12 +321,13 @@ class _ProfileViewState extends State<_ProfileView> {
         // Learning information
         ProfileSettingsCard(
           children: [
-            ProfileSettingTile(
-              title: 'Learning Progress',
-              onTap: () {
-                context.push(Routes.learningProgress);
-              },
-            ),
+            if (FeatureFlags.learningProgressEnabled)
+              ProfileSettingTile(
+                title: 'Learning Progress',
+                onTap: () {
+                  context.push(Routes.learningProgress);
+                },
+              ),
             ProfileSettingTile(
               title: 'Saved Vocabulary',
               onTap: () {
@@ -422,15 +418,16 @@ class _ProfileViewState extends State<_ProfileView> {
                 );
               },
             ),
-            const ProfileSettingTile(
-              title: 'Version',
-              showArrow: false,
-              trailing: TtText(
-                '1.0.0',
-                fontSize: 14,
-                color: ColorUtils.greyTextColor,
+            if (FeatureFlags.profileVersionEnabled)
+              const ProfileSettingTile(
+                title: 'Version',
+                showArrow: false,
+                trailing: TtText(
+                  '1.0.0',
+                  fontSize: 14,
+                  color: ColorUtils.greyTextColor,
+                ),
               ),
-            ),
           ],
         ),
         14.gh,

@@ -2,23 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:thuta_learn/core/core.dart';
 import 'package:thuta_learn/features/learn/learn.dart';
 
-typedef ChapterQuizTapCallback = void Function(
-    ChapterModel chapter,
-    ChapterQuizModel quiz,
+typedef ChapterQuizTapCallback =
+    void Function(
+      ChapterModel chapter,
+      ChapterQuizModel quiz,
     );
 
 class ModulePracticeTabView extends StatelessWidget {
   final List<ChapterModel> chapters;
 
-  final Map<String, List<ChapterQuizModel>>
-  quizzesByChapter;
+  final Map<String, List<ChapterQuizModel>> quizzesByChapter;
 
   final Set<String> loadingChapterIds;
 
   final Map<String, String> chapterErrors;
 
-  final ValueChanged<ChapterModel>
-  onChapterExpanded;
+  final ValueChanged<ChapterModel> onChapterExpanded;
 
   final ValueChanged<ChapterModel> onRetryChapter;
 
@@ -85,8 +84,7 @@ class ModulePracticeTabView extends StatelessWidget {
   }
 }
 
-class _PracticeChapterSection
-    extends StatelessWidget {
+class _PracticeChapterSection extends StatelessWidget {
   final ChapterModel chapter;
   final int chapterNumber;
   final bool initiallyExpanded;
@@ -109,17 +107,39 @@ class _PracticeChapterSection
     required this.onQuizTap,
   });
 
+  List<ChapterQuizModel>? get _visibleQuizzes {
+    if (quizzes == null || FeatureFlags.advancedPracticeEnabled) {
+      return quizzes;
+    }
+
+    return quizzes!
+        .where((quiz) {
+          final type = quiz.type
+              .trim()
+              .toLowerCase()
+              .replaceAll('-', '_')
+              .replaceAll(' ', '_');
+
+          return type == 'multiple_choice' ||
+              type == 'listening' ||
+              type == 'reading';
+        })
+        .toList(growable: false);
+  }
+
   String get _subtitle {
     if (isLoading) {
       return 'Loading practice activities...';
     }
 
-    if (quizzes == null) {
+    final visibleQuizzes = _visibleQuizzes;
+
+    if (visibleQuizzes == null) {
       return 'Tap to view practice activities';
     }
 
-    return '${quizzes!.length} activit'
-        '${quizzes!.length == 1 ? 'y' : 'ies'}';
+    return '${visibleQuizzes.length} activit'
+        '${visibleQuizzes.length == 1 ? 'y' : 'ies'}';
   }
 
   @override
@@ -135,12 +155,10 @@ class _PracticeChapterSection
       child: Theme(
         data: Theme.of(context).copyWith(
           dividerColor: Colors.transparent,
-          splashColor:
-          ColorUtils.secondaryColor.withValues(
+          splashColor: ColorUtils.secondaryColor.withValues(
             alpha: 0.08,
           ),
-          highlightColor:
-          ColorUtils.secondaryColor.withValues(
+          highlightColor: ColorUtils.secondaryColor.withValues(
             alpha: 0.04,
           ),
         ),
@@ -169,8 +187,7 @@ class _PracticeChapterSection
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color:
-              ColorUtils.secondaryColor.withValues(
+              color: ColorUtils.secondaryColor.withValues(
                 alpha: 0.45,
               ),
             ),
@@ -196,8 +213,7 @@ class _PracticeChapterSection
             ),
           ),
           iconColor: ColorUtils.primaryColor,
-          collapsedIconColor:
-          ColorUtils.primaryColor,
+          collapsedIconColor: ColorUtils.primaryColor,
           children: [
             const Divider(
               height: 1,
@@ -264,19 +280,19 @@ class _PracticeChapterSection
       );
     }
 
-    if (quizzes == null) {
+    final visibleQuizzes = _visibleQuizzes;
+
+    if (visibleQuizzes == null) {
       return const _PracticeMessageView(
         icon: Icons.touch_app_outlined,
-        message:
-        'Expand this chapter to load its practice activities.',
+        message: 'Expand this chapter to load its practice activities.',
       );
     }
 
-    if (quizzes!.isEmpty) {
+    if (visibleQuizzes.isEmpty) {
       return const _PracticeMessageView(
         icon: Icons.quiz_outlined,
-        message:
-        'No practice activities are available in this chapter.',
+        message: 'No practice activities are available in this chapter.',
       );
     }
 
@@ -284,16 +300,13 @@ class _PracticeChapterSection
       padding: const EdgeInsets.all(14),
       child: Column(
         children: List.generate(
-          quizzes!.length,
-              (index) {
-            final quiz = quizzes![index];
+          visibleQuizzes.length,
+          (index) {
+            final quiz = visibleQuizzes[index];
 
             return Padding(
               padding: EdgeInsets.only(
-                bottom:
-                index == quizzes!.length - 1
-                    ? 0
-                    : 14,
+                bottom: index == visibleQuizzes.length - 1 ? 0 : 14,
               ),
               child: PracticeOptionCard(
                 quiz: quiz,
@@ -377,10 +390,10 @@ class PracticeOptionCard extends StatelessWidget {
         .where((word) => word.isNotEmpty)
         .map(
           (word) {
-        return '${word[0].toUpperCase()}'
-            '${word.substring(1)}';
-      },
-    )
+            return '${word[0].toUpperCase()}'
+                '${word.substring(1)}';
+          },
+        )
         .join(' ');
   }
 
@@ -424,8 +437,7 @@ class PracticeOptionCard extends StatelessWidget {
               14.gw,
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TtText(
                       quiz.title.trim().isEmpty
@@ -438,12 +450,11 @@ class PracticeOptionCard extends StatelessWidget {
                     6.gh,
                     TtText(
                       '${quiz.questionsCount} question'
-                          '${quiz.questionsCount == 1 ? '' : 's'}'
-                          ' • $_typeLabel',
+                      '${quiz.questionsCount == 1 ? '' : 's'}'
+                      ' • $_typeLabel',
                       fontSize: 14,
                       height: 1.35,
-                      color:
-                      ColorUtils.greyTextColor,
+                      color: ColorUtils.greyTextColor,
                     ),
                   ],
                 ),
@@ -496,8 +507,7 @@ class _ChapterNumberView extends StatelessWidget {
   }
 }
 
-class _PracticeMessageView
-    extends StatelessWidget {
+class _PracticeMessageView extends StatelessWidget {
   final IconData icon;
   final String message;
 

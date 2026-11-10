@@ -63,9 +63,11 @@ class _HomeBannerSectionViewState extends State<HomeBannerSectionView> {
                   ),
                   child: _HomeBannerItemView(
                     imageUrl: widget.imageUrls[index],
-                    onTap: () {
-                      widget.onBannerTap?.call(index);
-                    },
+                    onTap: widget.onBannerTap == null
+                        ? null
+                        : () {
+                            widget.onBannerTap!(index);
+                          },
                   ),
                 );
               },
@@ -97,7 +99,7 @@ class _HomeBannerSectionViewState extends State<HomeBannerSectionView> {
 
 class _HomeBannerItemView extends StatelessWidget {
   final String imageUrl;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _HomeBannerItemView({
     required this.imageUrl,
@@ -106,52 +108,58 @@ class _HomeBannerItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TtZoomTap(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: const Color(0xFFE3E8EF),
-          ),
-          // boxShadow: [
-          //   BoxShadow(
-          //     color: Colors.black.withValues(
-          //       alpha: 0.08,
-          //     ),
-          //     blurRadius: 14,
-          //     offset: const Offset(0, 5),
-          //   ),
-          // ],
+    final banner = Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFFE3E8EF),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(17),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              TtNetworkImage(
-                imageUrl: imageUrl,
-              ),
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Colors.black.withValues(
+        //       alpha: 0.08,
+        //     ),
+        //     blurRadius: 14,
+        //     offset: const Offset(0, 5),
+        //   ),
+        // ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(17),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            TtNetworkImage(
+              imageUrl: imageUrl,
+            ),
 
-              // A subtle overlay makes light-colored
-              // images fit naturally with the app UI.
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Color(0x18000000),
-                    ],
-                  ),
+            // A subtle overlay makes light-colored
+            // images fit naturally with the app UI.
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Color(0x18000000),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+    );
+
+    if (onTap == null) {
+      return banner;
+    }
+
+    return TtZoomTap(
+      onTap: onTap!,
+      child: banner,
     );
   }
 }
